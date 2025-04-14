@@ -1,0 +1,533 @@
+﻿//Based on
+//https://github.com/qwe321qwe321qwe321/Unity-EasingAnimationCurve
+// https://github.com/thednp/bezier-easing/blob/master/src/index.ts
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using Unity.Mathematics;
+using UnityEngine;
+using EaseFunc = DG.Tweening.Ease;
+
+namespace Rails.Runtime
+{
+	[Serializable]
+	public class Ease : INotifyPropertyChanged, ISerializationCallbackReceiver
+	{
+		private static readonly Dictionary<EaseFunc, Vector2[]> _easeSplines = new()
+		{
+			{
+				EaseFunc.Linear, new Vector2[]
+				{
+					new (0,0),
+					new (0,0),
+					new (1,1),
+					new (1,1),
+				}
+			},
+			{
+				EaseFunc.InSine, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.360780f, -0.000436f),
+					new (0.673486f, 0.486554f),
+					new (1.0f, 1.0f)
+				}
+			},
+			{
+				EaseFunc.OutSine, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.330931f, 0.520737f),
+					new (0.641311f, 1.000333f),
+					new (1.0f, 1.0f)
+				}
+			},
+			{
+				EaseFunc.InOutSine, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.180390f, -0.000217f),
+					new (0.336743f, 0.243277f),
+					new (0.5f, 0.5f),
+					new (0.665465f, 0.760338f),
+					new (0.820656f, 1.000167f),
+					new (1.0f, 1.0f)
+				}
+			},
+			{
+				EaseFunc.InQuad, new Vector2[]
+				{
+					new(0.0f, 0.0f),
+					new(0.333333f, 0.0f),
+					new(0.666667f, 0.333333f),
+					new(1.0f, 1.0f)
+				}
+			},
+			{
+				EaseFunc.OutQuad, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.333333f, 0.666667f),
+					new (0.666667f, 1.0f),
+					new (1.0f, 1.0f)
+				}
+			},
+			{
+				EaseFunc.InOutQuad, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.166667f, 0.0f),
+					new (0.333333f, 0.166667f),
+					new (0.5f, 0.5f),
+					new (0.666667f, 0.833333f),
+					new (0.833333f, 1.0f),
+					new (1.0f, 1.0f)
+				}
+			},
+			{
+				EaseFunc.InCubic, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.333333f, 0.0f),
+					new (0.666667f, 0.0f),
+					new (1.0f, 1.0f)
+				}
+			},
+			{
+				EaseFunc.OutCubic, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.333333f, 1.0f),
+					new (0.666667f, 1.0f),
+					new (1.0f, 1.0f)
+				}
+			},
+			{
+				EaseFunc.InOutCubic, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.166667f, 0.0f),
+					new (0.333333f, 0.0f),
+					new (0.5f, 0.5f),
+					new (0.666667f, 1.0f),
+					new (0.833333f, 1.0f),
+					new (1.0f, 1.0f)
+				}
+			},
+			{
+				EaseFunc.InQuart, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.434789f, 0.006062f),
+					new (0.730901f, -0.07258f),
+					new (1.0f, 1.0f)
+				}
+			},
+			{
+				EaseFunc.OutQuart, new Vector2[]
+				{
+					new(0.0f, 0.0f),
+					new (0.269099f, 1.072581f),
+					new (0.565211f, 0.993938f),
+					new (1.0f, 1.0f)
+				}
+			},
+			{
+				EaseFunc.InOutQuart, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.217394f, 0.003031f),
+					new (0.365451f, -0.036291f),
+					new (0.5f, 0.5f),
+					new (0.634549f, 1.036290f),
+					new (0.782606f, 0.996969f),
+					new (1.0f, 1.0f)
+				}
+			},
+			{
+				EaseFunc.InQuint, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.519568f, 0.012531f),
+					new (0.774037f, -0.118927f),
+					new (1.0f, 1.0f)
+				}
+			},
+			{
+				EaseFunc.OutQuint, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.225963f, 1.11926f),
+					new (0.481099f, 0.987469f),
+					new (1.0f, 1.0f)
+				}
+			},
+			{
+				EaseFunc.InOutQuint, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.259784f, 0.006266f),
+					new (0.387018f, -0.059463f),
+					new (0.5f, 0.5f),
+					new (0.612982f, 1.059630f),
+					new (0.740549f, 0.993734f),
+					new (1.0f, 1.0f)
+				}
+			},
+			{
+				EaseFunc.InExpo, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.636963f, 0.0199012f),
+					new (0.844333f, -0.0609379f),
+					new (1.0f, 1.0f),
+				}
+			},
+			{
+				EaseFunc.OutExpo, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.155667f, 1.060938f),
+					new (0.363037f, 0.980099f),
+					new (1.0f, 1.0f)
+				}
+			},
+			{
+				EaseFunc.InOutExpo, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.318482f, 0.009951f),
+					new (0.422167f, -0.030469f),
+					new (0.5f, 0.5f),
+					new (0.577833f, 1.0304689f),
+					new (0.681518f, 0.9900494f),
+					new (1.0f, 1.0f)
+				}
+			},
+			{
+				EaseFunc.InCirc, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.55403f, 0.001198f),
+					new (0.998802f, 0.449801f),
+					new (1.0f, 1.0f)
+				}
+			},
+			{
+				EaseFunc.OutCirc, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.001198f, 0.553198f),
+					new (0.445976f, 0.998802f),
+					new (1.0f, 1.0f)
+				}
+			},
+			{
+				EaseFunc.InOutCirc, new Vector2[]
+				{
+				new (0.0f, 0.0f),
+				new (0.277013f, 0.000599f),
+				new (0.499401f, 0.223401f),
+				new (0.5f, 0.5f),
+				new (0.500599f, 0.776599f),
+				new (0.722987f, 0.999401f),
+				new (1.0f, 1.0f)
+				}
+			},
+			{
+				EaseFunc.InElastic, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.175f, 0.00250747f),
+					new (0.173542f, 0.0f),
+					new (0.175f, 0.0f),
+
+					new (0.4425f, -0.0184028f),
+					new (0.3525f, 0.05f),
+					new (0.475f, 0.0f),
+
+					new (0.735f, -0.143095f),
+					new (0.6575f, 0.383333f),
+					new (0.775f, 0.0f),
+
+					new (0.908125f, -0.586139f),
+					new (0.866875f, -0.666667f),
+					new (1.0f, 1.0f),
+				}
+			},
+			{
+				EaseFunc.OutElastic, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.133125f, 1.666667f),
+					new (0.091875f, 1.586139f),
+					new (0.225f, 1.0f),
+
+					new (0.3425f, 0.616667f),
+					new (0.265f, 1.143095f),
+					new (0.525f, 1.0f),
+
+					new (0.6475f, 0.95f),
+					new (0.5575f, 1.0184028f),
+					new (0.8250f, 1.0f),
+
+					new (0.826458f, 1.0f),
+					new (0.825f, 0.9974925f),
+					new (1.0f, 1.0f),
+				}
+			},
+			{
+				EaseFunc.InOutElastic, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.0875f, 0.001254f),
+					new (0.086771f, 0.0f),
+					new (0.0875f, 0.0f),
+
+					new (0.22125f, -0.009201f),
+					new (0.17625f, 0.025f),
+					new (0.2375f, 0.0f),
+
+					new (0.3675f, -0.071548f),
+					new (0.32875f, 0.191667f),
+					new (0.3875f, 0.0f),
+
+					new (0.454063f, -0.293070f),
+					new (0.433438f, -0.333334f),
+					new (0.5f, 0.5f),
+
+					new (0.5665625f, 1.333334f),
+					new (0.5459375f, 1.293070f),
+					new (0.6125f, 1.0f),
+
+					new (0.67125f, 0.808334f),
+					new (0.6325f, 1.071548f),
+					new (0.7625f, 1.0f),
+
+					new (0.82375f, 0.975f),
+					new (0.77875f, 1.009201f),
+					new (0.9125f, 1.0f),
+
+					new (0.913229f, 1.0f),
+					new (0.9125f, 0.9987463f),
+					new (1.0f, 1.0f),
+				}
+			},
+			{
+				EaseFunc.InBack, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.333333f, 0.0f),
+					new (0.666667f, -0.567193f),
+					new (1.0f, 1.0f),
+				}
+			},
+			{
+				EaseFunc.OutBack, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.333333f, 1.567193f),
+					new (0.666667f, 1.0f),
+					new (1.0f, 1.0f),
+				}
+			},
+			{
+				EaseFunc.InOutBack, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.166667f, 0.0f),
+					new (0.333333f, -0.432485f),
+					new (0.5f, 0.5f),
+
+					new (0.666667f, 1.432485f),
+					new (0.833333f, 1.0f),
+					new (1.0f, 1.0f)
+				}
+			},
+			{
+				EaseFunc.InBounce, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.030303f, 0.020833f),
+					new (0.060606f, 0.020833f),
+					new (0.0909f, 0.0f),
+
+					new (0.151515f, 0.083333f),
+					new (0.212121f, 0.083333f),
+					new (0.2727f, 0.0f),
+
+					new (0.393939f, 0.333333f),
+					new (0.515152f, 0.333333f),
+					new (0.6364f, 0.0f),
+
+					new (0.757576f, 0.666667f),
+					new (0.878788f, 1.0f),
+					new (1.0f, 1.0f),
+				}
+			},
+			{
+				EaseFunc.OutBounce, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.121212f, 0.0f),
+					new (0.242424f, 0.333333f),
+					new (0.3636f, 1.0f),
+
+					new (0.484848f, 0.666667f),
+					new (0.606060f, 0.666667f),
+					new (0.7273f, 1.0f),
+
+					new (0.787879f, 0.916667f),
+					new (0.848485f, 0.916667f),
+					new (0.9091f, 1.0f),
+
+					new (0.939394f, 0.9791667f),
+					new (0.969697f, 0.9791667f),
+					new (1.0f, 1.0f),
+				}
+			},
+			{
+				EaseFunc.InOutBounce, new Vector2[]
+				{
+					new (0.0f, 0.0f),
+					new (0.015152f, 0.010417f),
+					new (0.030303f, 0.010417f),
+					new (0.0455f, 0.0f),
+
+					new (0.075758f, 0.041667f),
+					new (0.106061f, 0.041667f),
+					new (0.1364f, 0.0f),
+
+					new (0.196970f, 0.166667f),
+					new (0.257576f, 0.166667f),
+					new (0.3182f, 0.0f),
+
+					new (0.378788f, 0.333333f),
+					new (0.439394f, 0.5f),
+					new (0.5f, 0.5f),
+
+					new (0.560606f, 0.5f),
+					new (0.621212f, 0.666667f),
+					new (0.6818f, 1.0f),
+
+					new (0.742424f, 0.833333f),
+					new (0.803030f, 0.833333f),
+					new (0.8636f, 1.0f),
+
+					new (0.893939f, 0.958333f),
+					new (0.924242f, 0.958333f),
+					new (0.9550f, 1.0f),
+
+					new (0.969697f, 0.989583f),
+					new (0.984848f, 0.989583f),
+					new (1.0f, 1.0f),
+}
+			},
+		};
+		private static readonly Vector2[] _splineNoAnimation = new Vector2[]
+		{
+			new(0,0),
+			new(0,0),
+			new(1,0),
+			new(1,0),
+			new(1,0),
+			new(1,1),
+			new(1,1),
+		};
+
+		[SerializeField] private EaseType _easeType;
+		[SerializeField] private float4 _controls = new(1 / 3f, 1 / 6f, 0, 1);
+		[SerializeField] private EaseFunc _easeFunc = EaseFunc.Linear;
+
+		public event PropertyChangedEventHandler PropertyChanged;
+
+		public EaseType Type
+		{
+			get => _easeType;
+			set
+			{
+				if (_easeType != value)
+				{
+					_easeType = value;
+					NotifyPropertyChanged();
+				}
+			}
+		}
+
+		public float4 Controls
+		{
+			get => _controls;
+			set
+			{
+				if (!Approximately(_controls, value))
+				{
+					_controls = value;
+					NotifyPropertyChanged();
+				}
+			}
+		}
+
+		public EaseFunc EaseFunc
+		{
+			get => _easeFunc;
+			set
+			{
+				if (_easeFunc != value)
+				{
+					_easeFunc = value;
+					NotifyPropertyChanged();
+				}
+			}
+		}
+
+
+		public Vector2[] GetEaseSpline() => _easeType switch
+		{
+			EaseType.NoAnimation => _splineNoAnimation,
+			EaseType.EaseFunction => _easeSplines[_easeFunc],
+			EaseType.EaseCurve => new Vector2[]
+			{
+				new(0,0),
+				new(_controls.x, _controls.z),
+				new(_controls.y, _controls.w),
+				new(1,1),
+			},
+			_ => _splineNoAnimation,
+		};
+
+		private void NotifyPropertyChanged([CallerMemberName] string property = "")
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
+		}
+
+		private bool Approximately(float4 a, float4 b)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				if (!Mathf.Approximately(a[i], b[i]))
+					return false;
+			}
+			return true;
+		}
+
+		public void OnBeforeSerialize()
+		{
+		}
+
+		public void OnAfterDeserialize()
+		{
+			NotifyPropertyChanged(nameof(Type));
+			NotifyPropertyChanged(nameof(Controls));
+			NotifyPropertyChanged(nameof(EaseFunc));
+		}
+
+		public enum EaseType 
+		{
+			NoAnimation,
+			EaseCurve,
+			EaseFunction,
+		}
+	}
+}

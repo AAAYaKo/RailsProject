@@ -1,0 +1,74 @@
+.ease-view {
+    flex-basis: 300px;
+}
+
+.ease-container {
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    background-color: rgb(40, 40, 40);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding-top: 30px;
+    padding-bottom: 30px;
+    padding-right: 0;
+    padding-left: 0;
+    overflow: hidden;
+}
+
+.ease-border {
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-left-color: rgb(0, 0, 0);
+    border-right-color: rgb(0, 0, 0);
+    border-top-color: rgb(0, 0, 0);
+    border-bottom-color: rgb(0, 0, 0);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.ease-handle {
+    width: 16px;
+    height: 16px;
+}
+
+.ease-start {
+    --handler-color: rgb(71, 244, 224);
+}
+
+.ease-end {
+    --handler-color: rgb(62, 133, 238);
+}
+
+.ease-axes {
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    border-left-color: rgb(106, 106, 106);
+    border-right-color: rgb(106, 106, 106);
+    border-top-color: rgb(106, 106, 106);
+    border-bottom-color: rgb(106, 106, 106);
+    flex-grow: 1;
+}
+
+.ease-spline {
+    --start-color: rgb(71, 244, 224);
+    --end-color: rgb(62, 133, 238);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
