@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: New Ease Test
   m_EditorClassIdentifier: 
   _ease:
-    _easeType: 1
+    _easeType: 0
     _controls:
-      x: 0.34
-      y: 0.66
-      z: 0
-      w: 1
-    _easeFunc: 20
+      x: 0.4507653
+      y: 0.48814124
+      z: 0.15499993
+      w: 0.91333324
+    _easeFunc: 1

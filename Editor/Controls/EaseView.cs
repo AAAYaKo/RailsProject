@@ -69,7 +69,7 @@ namespace Rails.Editor.Controls
 			}
 			set
 			{
-				if (!Utils.SpliteEquals(_spline, value))
+				if (!Utils.SplineEquals(_spline, value))
 				{
 					_spline = value;
 

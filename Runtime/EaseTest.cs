@@ -13,9 +13,9 @@ namespace Rails.Runtime
 	[CreateAssetMenu]
 	public class EaseTest : ScriptableObject
 	{
-		[SerializeField] private Ease _ease;
+		[SerializeField] private RailsEase _ease;
 
-		public Ease Ease => _ease;
+		public RailsEase Ease => _ease;
 		//[SerializeField] private float4 controls;
 		//[SerializeField] private DG.Tweening.Ease ease;
 		//[SerializeField] private AnimationCurve curve = null;

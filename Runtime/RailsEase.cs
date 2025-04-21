@@ -6,19 +6,20 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using DG.Tweening;
 using Unity.Mathematics;
 using UnityEngine;
-using EaseFunc = DG.Tweening.Ease;
 
 namespace Rails.Runtime
 {
 	[Serializable]
-	public class Ease : INotifyPropertyChanged, ISerializationCallbackReceiver
+	public class RailsEase : INotifyPropertyChanged, ISerializationCallbackReceiver
 	{
-		private static readonly Dictionary<EaseFunc, Vector2[]> _easeSplines = new()
+		#region Ease Preview Spline Curves
+		private static readonly Dictionary<Ease, Vector2[]> _easeSplines = new()
 		{
 			{
-				EaseFunc.Linear, new Vector2[]
+				Ease.Linear, new Vector2[]
 				{
 					new (0,0),
 					new (0,0),
@@ -27,7 +28,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.InSine, new Vector2[]
+				Ease.InSine, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.360780f, -0.000436f),
@@ -36,7 +37,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.OutSine, new Vector2[]
+				Ease.OutSine, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.330931f, 0.520737f),
@@ -45,7 +46,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.InOutSine, new Vector2[]
+				Ease.InOutSine, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.180390f, -0.000217f),
@@ -57,7 +58,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.InQuad, new Vector2[]
+				Ease.InQuad, new Vector2[]
 				{
 					new(0.0f, 0.0f),
 					new(0.333333f, 0.0f),
@@ -66,7 +67,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.OutQuad, new Vector2[]
+				Ease.OutQuad, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.333333f, 0.666667f),
@@ -75,7 +76,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.InOutQuad, new Vector2[]
+				Ease.InOutQuad, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.166667f, 0.0f),
@@ -87,7 +88,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.InCubic, new Vector2[]
+				Ease.InCubic, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.333333f, 0.0f),
@@ -96,7 +97,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.OutCubic, new Vector2[]
+				Ease.OutCubic, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.333333f, 1.0f),
@@ -105,7 +106,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.InOutCubic, new Vector2[]
+				Ease.InOutCubic, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.166667f, 0.0f),
@@ -117,7 +118,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.InQuart, new Vector2[]
+				Ease.InQuart, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.434789f, 0.006062f),
@@ -126,7 +127,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.OutQuart, new Vector2[]
+				Ease.OutQuart, new Vector2[]
 				{
 					new(0.0f, 0.0f),
 					new (0.269099f, 1.072581f),
@@ -135,7 +136,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.InOutQuart, new Vector2[]
+				Ease.InOutQuart, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.217394f, 0.003031f),
@@ -147,7 +148,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.InQuint, new Vector2[]
+				Ease.InQuint, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.519568f, 0.012531f),
@@ -156,7 +157,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.OutQuint, new Vector2[]
+				Ease.OutQuint, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.225963f, 1.11926f),
@@ -165,7 +166,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.InOutQuint, new Vector2[]
+				Ease.InOutQuint, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.259784f, 0.006266f),
@@ -177,7 +178,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.InExpo, new Vector2[]
+				Ease.InExpo, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.636963f, 0.0199012f),
@@ -186,7 +187,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.OutExpo, new Vector2[]
+				Ease.OutExpo, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.155667f, 1.060938f),
@@ -195,7 +196,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.InOutExpo, new Vector2[]
+				Ease.InOutExpo, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.318482f, 0.009951f),
@@ -207,7 +208,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.InCirc, new Vector2[]
+				Ease.InCirc, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.55403f, 0.001198f),
@@ -216,7 +217,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.OutCirc, new Vector2[]
+				Ease.OutCirc, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.001198f, 0.553198f),
@@ -225,7 +226,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.InOutCirc, new Vector2[]
+				Ease.InOutCirc, new Vector2[]
 				{
 				new (0.0f, 0.0f),
 				new (0.277013f, 0.000599f),
@@ -237,7 +238,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.InElastic, new Vector2[]
+				Ease.InElastic, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.175f, 0.00250747f),
@@ -258,7 +259,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.OutElastic, new Vector2[]
+				Ease.OutElastic, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.133125f, 1.666667f),
@@ -279,7 +280,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.InOutElastic, new Vector2[]
+				Ease.InOutElastic, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.0875f, 0.001254f),
@@ -316,7 +317,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.InBack, new Vector2[]
+				Ease.InBack, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.333333f, 0.0f),
@@ -325,7 +326,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.OutBack, new Vector2[]
+				Ease.OutBack, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.333333f, 1.567193f),
@@ -334,7 +335,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.InOutBack, new Vector2[]
+				Ease.InOutBack, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.166667f, 0.0f),
@@ -347,7 +348,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.InBounce, new Vector2[]
+				Ease.InBounce, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.030303f, 0.020833f),
@@ -368,7 +369,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.OutBounce, new Vector2[]
+				Ease.OutBounce, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.121212f, 0.0f),
@@ -389,7 +390,7 @@ namespace Rails.Runtime
 				}
 			},
 			{
-				EaseFunc.InOutBounce, new Vector2[]
+				Ease.InOutBounce, new Vector2[]
 				{
 					new (0.0f, 0.0f),
 					new (0.015152f, 0.010417f),
@@ -436,10 +437,11 @@ namespace Rails.Runtime
 			new(1,1),
 			new(1,1),
 		};
+		#endregion
 
 		[SerializeField] private EaseType _easeType;
 		[SerializeField] private float4 _controls = new(1 / 3f, 1 / 6f, 0, 1);
-		[SerializeField] private EaseFunc _easeFunc = EaseFunc.Linear;
+		[SerializeField] private Ease _Ease = Ease.Linear;
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
@@ -456,6 +458,9 @@ namespace Rails.Runtime
 			}
 		}
 
+		/// <summary>
+		/// format (x1, x2, y1, y2)
+		/// </summary>
 		public float4 Controls
 		{
 			get => _controls;
@@ -469,14 +474,14 @@ namespace Rails.Runtime
 			}
 		}
 
-		public EaseFunc EaseFunc
+		public Ease EaseFunc
 		{
-			get => _easeFunc;
+			get => _Ease;
 			set
 			{
-				if (_easeFunc != value)
+				if (_Ease != value)
 				{
-					_easeFunc = value;
+					_Ease = value;
 					NotifyPropertyChanged();
 				}
 			}
@@ -486,7 +491,7 @@ namespace Rails.Runtime
 		public Vector2[] GetEaseSpline() => _easeType switch
 		{
 			EaseType.NoAnimation => _splineNoAnimation,
-			EaseType.EaseFunction => _easeSplines[_easeFunc],
+			EaseType.EaseFunction => _easeSplines[_Ease],
 			EaseType.EaseCurve => new Vector2[]
 			{
 				new(0,0),

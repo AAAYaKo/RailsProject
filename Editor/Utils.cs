@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace Rails.Editor
 {
@@ -9,7 +10,7 @@ namespace Rails.Editor
 			return Mathf.Approximately(first.x, second.x) && Mathf.Approximately(first.y, second.y);
 		}
 
-		public static bool SpliteEquals(Vector2[] first, Vector2[] second)
+		public static bool SplineEquals(Vector2[] first, Vector2[] second)
 		{
 			if (first == null && second != null || first != null && second == null)
 				return false;
@@ -17,12 +18,31 @@ namespace Rails.Editor
 			if (first == null && second == null)
 				return true;
 
-			if (first?.Length != second.Length)
+			if (first.Length != second.Length)
 				return false;
 
 			for (int i = 0; i < first.Length; i++)
 			{
 				if (!Approximately(first[i], second[i]))
+					return false;
+			}
+			return true;
+		}
+
+		public static bool ListEquals<T>(List<T> first, List<T> second) where T : class
+		{
+			if (first == null && second != null || first != null && second == null)
+				return false;
+
+			if (first == null && second == null)
+				return true;
+
+			if (first.Count != second.Count)
+				return false;
+
+			for (int i = 0; i < first.Count; i++)
+			{
+				if (first[i] != second[i])
 					return false;
 			}
 			return true;

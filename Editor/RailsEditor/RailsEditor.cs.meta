@@ -6,6 +6,7 @@ MonoImporter:
   defaultReferences:
   - m_ViewDataDictionary: {instanceID: 0}
   - m_VisualTreeAsset: {fileID: 9197481963319205126, guid: 6162f4bc4c723544699a9ee960420fa9, type: 3}
+  - clipsTemplate: {fileID: 9197481963319205126, guid: aa638e0b8fff02741b7729cb8f70a606, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

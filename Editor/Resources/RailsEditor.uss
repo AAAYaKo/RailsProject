@@ -1,0 +1,47 @@
+.rails-clip-view {
+    flex-grow: 0;
+    justify-content: center;
+    padding-left: 8px;
+    padding-top: 8px;
+    padding-bottom: 10px;
+    height: 39px;
+    margin-bottom: 5px;
+}
+
+.rails-clip-view:hover {
+    margin-bottom: 5px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    border-bottom-left-radius: 5px;
+    border-left-color: rgb(76, 76, 76);
+    border-right-color: rgb(76, 76, 76);
+    border-top-color: rgb(76, 76, 76);
+    border-bottom-color: rgb(76, 76, 76);
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    height: 39px;
+    justify-content: center;
+    padding-left: 8px;
+    padding-top: 8px;
+    padding-bottom: 10px;
+}
+
+.rails-clip-view--selected {
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    border-bottom-left-radius: 5px;
+    background-color: rgb(76, 76, 76);
+    margin-bottom: 5px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 8px;
+    height: 39px;
+}
+
+.rails-clip-view--selected > Label {
+    color: rgb(255, 255, 255);
+}

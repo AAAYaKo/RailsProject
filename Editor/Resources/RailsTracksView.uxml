@@ -1,0 +1,9 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <ui:VisualElement name="clip-controls" style="flex-grow: 0; flex-basis: 45px; border-left-color: rgb(34, 34, 34); border-right-color: rgb(34, 34, 34); border-top-color: rgb(34, 34, 34); border-bottom-color: rgb(34, 34, 34); border-bottom-width: 1px;" />
+    <ui:ScrollView vertical-scroller-visibility="Hidden" style="flex-grow: 1; flex-basis: 100%;">
+        <ui:VisualElement name="tracks-container" style="flex-grow: 1;" />
+        <ui:VisualElement name="button-container" style="flex-grow: 1; padding-right: 20px; padding-left: 20px;">
+            <ui:Button text="+ Add Track" name="add-button" />
+        </ui:VisualElement>
+    </ui:ScrollView>
+</ui:UXML>
