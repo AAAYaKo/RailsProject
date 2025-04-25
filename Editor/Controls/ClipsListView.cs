@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Rails.Editor.ViewModel;
+using Rails.Runtime;
 using Unity.Properties;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -14,28 +15,34 @@ namespace Rails.Editor.Controls
 		public static readonly BindingId CanAddProperty = nameof(CanAdd);
 		private const string SelectedClass = "rails-clip-view--selected";
 
-		[UxmlAttribute("clips"), CreateProperty]
-		public List<RailsClipViewModel> Clips
+		[CreateProperty]
+		public ObservableList<RailsClipViewModel> Clips
 		{
 			get => clips;
 			set
 			{
-				if (!Utils.ListEquals(clips, value))
-				{
-					clips = value;
-					UpdateList();
-				}
+				if (clips == value)
+					return;
+
+				if (clips != null)
+					clips.ListChanged -= UpdateList;
+
+				clips = value;
+				clips.ListChanged += UpdateList;
+				UpdateList();
 			}
 		}
 		[UxmlAttribute("selected"), CreateProperty]
 		public int SelectedIndex
 		{
-			get => selectedIndex;
+			get => selectedIndex ?? 0;
 			set
 			{
 				if (selectedIndex == value)
 					return;
-				selectedIndex = value;
+
+				ChangeSelection(value);
+
 				NotifyPropertyChanged(SelectedIndexProperty);
 			}
 		}
@@ -54,14 +61,14 @@ namespace Rails.Editor.Controls
 			}
 		}
 
-		private List<RailsClipViewModel> clips;
+		private ObservableList<RailsClipViewModel> clips;
 
-		private VisualTreeAsset templateMain;
-		private VisualTreeAsset templateItem;
+		private static VisualTreeAsset templateMain;
+		private static VisualTreeAsset templateItem;
 		private VisualElement clipsContainer;
 		private VisualElement buttonContainer;
 		private List<VisualElement> clipViews = new();
-		private int selectedIndex;
+		private int? selectedIndex;
 		private bool? canAdd;
 
 		public event Action AddClicked;
@@ -69,8 +76,10 @@ namespace Rails.Editor.Controls
 
 		public ClipsListView()
 		{
-			templateMain = Resources.Load<VisualTreeAsset>("RailsClipsView");
-			templateItem = Resources.Load<VisualTreeAsset>("RailsClip");
+			if (templateMain == null)
+				templateMain = Resources.Load<VisualTreeAsset>("RailsClipsView");
+			if (templateItem == null)
+				templateItem = Resources.Load<VisualTreeAsset>("RailsClip");
 			var main = templateMain.Instantiate();
 			hierarchy.Add(main);
 			clipsContainer = main.Q<VisualElement>("clips-container");
@@ -82,11 +91,8 @@ namespace Rails.Editor.Controls
 		{
 			if (Clips == null)
 			{
-				foreach (var view in clipViews)
-				{
-					clipsContainer.Remove(view);
-					clipViews.Remove(view);
-				}
+				clipsContainer.Clear();
+				clipViews.Clear();
 				SelectedIndex = 0;
 				return;
 			}
@@ -107,7 +113,7 @@ namespace Rails.Editor.Controls
 					if (x.button == 0)
 					{
 						int index = clipViews.IndexOf(view);
-						ChangeSelection(index);
+						SelectedIndex = index;
 					}
 				});
 			}
@@ -121,19 +127,22 @@ namespace Rails.Editor.Controls
 			{
 				clipViews[i].dataSource = Clips[i];
 			}
-			if (Clips.Count > 0)
-			{
-				if (SelectedIndex >= Clips.Count)
-					SelectedIndex = 0;
-				ChangeSelection(SelectedIndex);
-			}
+			//if (Clips.Count > 0)
+			//{
+			//	if (SelectedIndex >= Clips.Count)
+			//		SelectedIndex = 0;
+			//	ChangeSelection(SelectedIndex);
+			//}
 		}
 
 		private void ChangeSelection(int index)
 		{
-			clipViews[SelectedIndex].RemoveFromClassList(SelectedClass);
-			SelectedIndex = index;
-			clipViews[SelectedIndex].AddToClassList(SelectedClass);
+			if (clipViews.Count > 0)
+			{
+				clipViews[SelectedIndex].RemoveFromClassList(SelectedClass);
+				clipViews[index].AddToClassList(SelectedClass);
+			}
+			selectedIndex = index;
 		}
 	}
 }

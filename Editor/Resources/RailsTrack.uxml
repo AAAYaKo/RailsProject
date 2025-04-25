@@ -1,0 +1,18 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <Style src="project://database/Assets/Rails/Editor/Resources/RailsEditor.uss?fileID=7433441132597879392&amp;guid=a52f72ccd09932d4795d5bf54f12136c&amp;type=3#RailsEditor" />
+    <ui:VisualElement name="track" style="height: 40px; border-left-color: rgb(32, 32, 32); border-right-color: rgb(32, 32, 32); border-top-color: rgb(32, 32, 32); border-bottom-color: rgb(32, 32, 32); border-top-width: 1px; border-right-width: 0; border-bottom-width: 1px; border-left-width: 1px; border-top-left-radius: 5px; border-bottom-left-radius: 5px; background-color: rgb(48, 48, 48); padding-left: 3px; padding-right: 5px; padding-top: 10px; padding-bottom: 10px; align-self: center; flex-direction: row; flex-grow: 1; width: 100%; margin-top: -1px;">
+        <ui:VisualElement style="flex-grow: 0; background-image: resource(&apos;Icons/drag_handler&apos;); flex-shrink: 0; width: 16px; height: 16px; margin-right: 3px;" />
+        <uie:ObjectField name="animated-component" style="margin-left: 0; margin-right: 5px; flex-grow: 1; flex-shrink: 6; flex-basis: 140px;">
+            <Bindings>
+                <ui:DataBinding property="value" data-source-path="Reference" binding-mode="TwoWay" />
+                <ui:DataBinding property="objectType" data-source-path="Type" binding-mode="ToTarget" />
+            </Bindings>
+        </uie:ObjectField>
+        <ui:VisualElement name="value-container" style="flex-grow: 1; flex-direction: row; align-items: center; flex-shrink: 4; flex-basis: 115px;">
+            <ui:Vector3Field name="vector3-value" style="flex-shrink: 4; flex-grow: 1;" />
+            <ui:Vector2Field name="vector2-value" style="margin-left: 0; margin-right: 0; flex-shrink: 1; flex-grow: 1; display: none;" />
+            <ui:FloatField value="42.2" name="float-value" style="margin-left: 0; margin-right: 0; display: none; flex-shrink: 1; flex-grow: 1;" />
+            <ui:Toggle class="rails_key_toggle" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

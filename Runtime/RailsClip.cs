@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using DG.Tweening;
+using Rails.Runtime.Tracks;
 using UnityEngine;
 
 namespace Rails.Runtime
@@ -18,7 +20,17 @@ namespace Rails.Runtime
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
-		public List<AnimationTrack> Tracks { get => tracks; set => tracks = value; }
+		public List<AnimationTrack> Tracks
+		{
+			get => tracks;
+			set
+			{
+				if (Utils.ListEquals(tracks, value))
+					return;
+				tracks = value;
+				NotifyPropertyChanged();
+			}
+		}
 		public EventsTrack EventTrack { get => eventTrack; set => eventTrack = value; }
 		public int Length { get => length; set => length = value; }
 		public string Name { get => name; set => name = value; }
@@ -35,11 +47,18 @@ namespace Rails.Runtime
 		public void AddTrack(AnimationTrack track)
 		{
 			Tracks.Add(track);
+			NotifyPropertyChanged(nameof(Tracks));
 		}
 
 		public void RemoveTrack(AnimationTrack track)
 		{
 			Tracks.Remove(track);
+			NotifyPropertyChanged(nameof(Tracks));
+		}
+
+		protected void NotifyPropertyChanged([CallerMemberName] string property = "")
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
 		}
 	}
 }

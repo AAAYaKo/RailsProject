@@ -1,0 +1,9 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <ui:VisualElement name="clip-controls" style="flex-grow: 0; flex-basis: 45px; border-left-color: rgb(34, 34, 34); border-right-color: rgb(34, 34, 34); border-top-color: rgb(34, 34, 34); border-bottom-color: rgb(34, 34, 34); border-bottom-width: 1px;" />
+    <Rails.Editor.Controls.TracksListView data-source-path="SelectedClip" style="flex-grow: 1; flex-basis: 100%;">
+        <Bindings>
+            <ui:DataBinding property="CanEdit" data-source-path="CanEdit" binding-mode="ToTarget" />
+            <ui:DataBinding property="Tracks" data-source-path="Tracks" binding-mode="ToTarget" />
+        </Bindings>
+    </Rails.Editor.Controls.TracksListView>
+</ui:UXML>

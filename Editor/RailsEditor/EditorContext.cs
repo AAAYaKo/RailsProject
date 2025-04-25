@@ -1,15 +1,17 @@
 using System;
+using Rails.Editor.ViewModel;
 using Rails.Runtime;
 using UnityEditor;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Rails.Editor
 {
 	public class EditorContext
 	{
+		public RailsClipViewModel SelectedClip { get; set; }
 		public static EditorContext Instance => _instance ??= new();
 		public RailsAnimator CurrentTarget { get; private set; }
+		public RailsAnimatorViewModel ViewModel { get; private set; } = new();
 		private static EditorContext _instance;
 		public event Action<RailsAnimator> CurrentTargetChanged;
 
@@ -77,6 +79,8 @@ namespace Rails.Editor
 				return;
 
 			CurrentTarget = next;
+			ViewModel.UnbindModel();
+			ViewModel.BindModel(CurrentTarget);
 			CurrentTargetChanged?.Invoke(CurrentTarget);
 		}
 	}

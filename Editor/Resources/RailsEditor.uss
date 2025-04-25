@@ -45,3 +45,24 @@
 .rails-clip-view--selected > Label {
     color: rgb(255, 255, 255);
 }
+
+.rails_key_toggle {
+    margin-bottom: 0;
+    margin-right: 0;
+    margin-left: 0;
+    margin-top: 0;
+    width: 10px;
+    height: 10px;
+}
+
+.rails_key_toggle > .unity-toggle__input > .unity-toggle__checkmark {
+    background-image: resource('Icons/gem_stroke_small');
+    width: 10px;
+    height: 10px;
+}
+
+.rails_key_toggle:checked > .unity-toggle__input > .unity-toggle__checkmark {
+    background-image: resource('Icons/gem_fill_small');
+    width: 10px;
+    height: 10px;
+}

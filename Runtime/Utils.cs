@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace Rails.Editor
+namespace Rails.Runtime
 {
 	public static class Utils
 	{

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 
-namespace Rails.Runtime
+namespace Rails.Runtime.Tracks
 {
 	[Serializable]
 	public class EventsTrack

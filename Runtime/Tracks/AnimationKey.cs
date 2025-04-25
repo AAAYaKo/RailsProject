@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Rails.Runtime
+namespace Rails.Runtime.Tracks
 {
 	[Serializable]
 	public class AnimationKey

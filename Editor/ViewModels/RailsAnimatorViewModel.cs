@@ -2,18 +2,19 @@
 using System.ComponentModel;
 using Rails.Runtime;
 using Unity.Properties;
+using UnityEngine;
 
 namespace Rails.Editor.ViewModel
 {
 	public class RailsAnimatorViewModel : BaseNotifyPropertyViewModel<RailsAnimator>
 	{
 		[CreateProperty]
-		public List<RailsClipViewModel> Clips
+		public ObservableList<RailsClipViewModel> Clips
 		{
 			get => clips;
 			set
 			{
-				if (Utils.ListEquals(clips, value))
+				if (clips == value)
 					return;
 				clips = value;
 				NotifyPropertyChanged();
@@ -31,15 +32,42 @@ namespace Rails.Editor.ViewModel
 				NotifyPropertyChanged();
 			}
 		}
+		[CreateProperty]
+		public int SelectedClipIndex
+		{
+			get => selectedClipIndex;
+			set
+			{
+				if (selectedClipIndex == value)
+					return;
+				selectedClipIndex = value;
+				NotifyPropertyChanged();
+				NotifyPropertyChanged(nameof(SelectedClip));
+				EditorContext.Instance.SelectedClip = SelectedClip;
+			}
+		}
+		[CreateProperty]
+		public RailsClipViewModel SelectedClip
+		{
+			get
+			{
+				if (SelectedClipIndex >= Clips.Count)
+					return RailsClipViewModel.Empty;
 
-		private List<RailsClipViewModel> clips;
+				return Clips[SelectedClipIndex];
+			}
+		}
+
+		private ObservableList<RailsClipViewModel> clips = new();
+		private int selectedClipIndex = 0;
 		private bool canAddClip;
+
 
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(RailsAnimator.Clips))
 			{
-				Clips = CreateViewModels(model.Clips);
+				UpdateViewModels(model.Clips);
 			}
 		}
 
@@ -48,35 +76,66 @@ namespace Rails.Editor.ViewModel
 			CanAddClip = model != null;
 			if (model == null)
 			{
-				Clips = new();
+				if (clips.Count > 0)
+					ClearViewModels();
+				NotifyPropertyChanged(nameof(SelectedClip));
 				return;
 			}
 
-			Clips = CreateViewModels(model.Clips);
+			UpdateViewModels(model.Clips);
+
+			if (SelectedClipIndex >= Clips.Count)
+				SelectedClipIndex = 0;
+			NotifyPropertyChanged(nameof(SelectedClip));
 		}
 
 		public void AddClip()
 		{
+			EditorContext.Instance.Record($"{EditorContext.Instance.CurrentTarget.name} Rails Clip Added");
 			model.AddClip();
 		}
 
 		public void RemoveClip(int index)
 		{
+			EditorContext.Instance.Record($"{EditorContext.Instance.CurrentTarget.name} Rails Clip Removed");
 			model.RemoveClip(model.Clips[index]);
 		}
 
-		private List<RailsClipViewModel> CreateViewModels(List<RailsClip> models)
+		private void UpdateViewModels(List<RailsClip> models)
 		{
 			if (models == null)
-				return new();
-			List<RailsClipViewModel> result = new();
-			foreach (var model in models)
 			{
-				RailsClipViewModel viewModel = new();
-				viewModel.BindModel(model);
-				result.Add(viewModel);
+				ClearViewModels();
+				return;
 			}
-			return result;
+
+			while (Clips.Count < model.Clips.Count)
+			{
+				Clips.AddWithoutNotify(new RailsClipViewModel());
+			}
+			while (Clips.Count > model.Clips.Count)
+			{
+				var clip = Clips[^1];
+				clip.UnbindModel();
+				Clips.RemoveWithoutNotify(clip);
+			}
+			for (int i = 0; i < model.Clips.Count; i++)
+			{
+				var clip = model.Clips[i];
+				var viewModel = Clips[i];
+
+				viewModel.UnbindModel();
+				viewModel.BindModel(clip);
+			}
+
+			Clips.NotifyListChanged();
+		}
+
+		private void ClearViewModels()
+		{
+			foreach (var clip in Clips)
+				clip.UnbindModel();
+			Clips.Clear();
 		}
 	}
 }

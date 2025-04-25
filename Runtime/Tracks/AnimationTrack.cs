@@ -1,20 +1,56 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using DG.Tweening;
+using Unity.Properties;
 using UnityEngine;
 
-namespace Rails.Runtime
+namespace Rails.Runtime.Tracks
 {
 	[Serializable]
-	public abstract class AnimationTrack
+	public abstract class AnimationTrack : INotifyPropertyChanged
 	{
 		[SerializeField] protected List<AnimationKey> animationKeys = new();
+		[SerializeField] private UnityEngine.Object sceneReference;
+
+		public List<AnimationKey> AnimationKeys
+		{
+			get => animationKeys;
+			set
+			{
+				if (animationKeys == value)
+					return;
+				animationKeys = value;
+				NotifyPropertyChanged();
+			}
+		}
+		public UnityEngine.Object SceneReference
+		{
+			get => sceneReference;
+			set
+			{
+				if (sceneReference == value)
+					return;
+				sceneReference = value;
+				NotifyPropertyChanged();
+			}
+		}
+
+		public abstract Type AnimationComponentType { get; }
+		public abstract ValueType Type { get; }
+		public event PropertyChangedEventHandler PropertyChanged;
 
 
 		public void InsertInSequence(Sequence sequence, float frameTime)
 		{
 			if (animationKeys.Count == 0)
 				return;
+			if (SceneReference == null)
+			{
+				Debug.LogWarning("Track hasn't Scene Reference");
+				return;
+			}
 			if (animationKeys.Count == 1)
 			{
 				InsertInstantChange(animationKeys[0], sequence, frameTime);
@@ -57,38 +93,37 @@ namespace Rails.Runtime
 			}
 			if (!inserted) //add to the end if the key is not already in the list
 				animationKeys.Add(key);
+
+			NotifyPropertyChanged(nameof(AnimationKeys));
 		}
 
 		public void RemoveKey(AnimationKey key)
 		{
 			animationKeys.Remove(key);
+			NotifyPropertyChanged(nameof(AnimationKeys));
 		}
 
-		protected abstract void InsertInstantChange(AnimationKey key, Sequence sequence, float frameTime);
-		protected abstract void InsertTween(AnimationKey keyStart, AnimationKey keyEnd, Sequence sequence, float frameTime);
-	}
-
-	[Serializable]
-	public class MoveAnchorTrack : AnimationTrack
-	{
-		[SerializeField] public RectTransform animationComponent;
-
-
-		protected override void InsertInstantChange(AnimationKey key, Sequence sequence, float frameTime)
+		protected void InsertInstantChange(AnimationKey key, Sequence sequence, float frameTime)
 		{
 			sequence.InsertCallback(key.TimePosition * frameTime, () =>
 			{
-				animationComponent.anchoredPosition = key.Vector2Value;
+				InstantChange(key);
 			});
 		}
 
-		protected override void InsertTween(AnimationKey keyStart, AnimationKey keyEnd, Sequence sequence, float frameTime)
+		protected abstract void InsertTween(AnimationKey keyStart, AnimationKey keyEnd, Sequence sequence, float frameTime);
+		protected abstract void InstantChange(AnimationKey key);
+
+		protected void NotifyPropertyChanged([CallerMemberName] string property = "")
 		{
-			float duration = (keyEnd.TimePosition - keyStart.TimePosition) * frameTime;
-			var tween = animationComponent
-				.DOAnchorPos(keyEnd.Vector2Value, duration)
-				.From(keyStart.Vector2Value);
-			sequence.Insert(keyStart.TimePosition * frameTime, tween);
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
+		}
+
+		public enum ValueType
+		{
+			Single,
+			Vector2,
+			Vector3,
 		}
 	}
 }

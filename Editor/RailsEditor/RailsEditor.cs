@@ -13,7 +13,7 @@ namespace Rails.Editor
 		[SerializeField] private VisualTreeAsset m_VisualTreeAsset = default;
 
 		private ThreePanelsView threePanels;
-		private RailsAnimatorViewModel viewModel = new();
+		private RailsAnimatorViewModel viewModel => EditorContext.Instance.ViewModel;
 
 
 		[MenuItem("Window/RailsEditor")]
@@ -42,33 +42,25 @@ namespace Rails.Editor
 
 			threePanels = root.Q<ThreePanelsView>();
 
-			var clips = new ClipsListView();
-			threePanels.FirstPanel.Add(clips);
-			clips.SetBinding("Clips", new DataBinding
-			{
-				dataSourcePath = new PropertyPath(nameof(RailsAnimatorViewModel.Clips)),
-				bindingMode = BindingMode.ToTarget,
-				updateTrigger = BindingUpdateTrigger.OnSourceChanged,
-			});
-			clips.SetBinding("CanAdd", new DataBinding
-			{
-				dataSourcePath = new PropertyPath(nameof(RailsAnimatorViewModel.CanAddClip)),
-				bindingMode = BindingMode.ToTarget,
-				updateTrigger = BindingUpdateTrigger.OnSourceChanged,
-			});
+			VisualElement firstPage = Resources.Load<VisualTreeAsset>("RailsFirstPage").Instantiate();
+			var clips = firstPage.Q<ClipsListView>("clips-view");
+			threePanels.FirstPanel.Add(firstPage);
+
 			clips.AddClicked += viewModel.AddClip;
-			clips.RemoveClicked += RemoveClicked;
+			clips.RemoveClicked += RemoveClipClicked;
+
+			VisualElement secondPage = Resources.Load<VisualTreeAsset>("RailsSecondPage").Instantiate();
+			threePanels.SecondPanel.Add(secondPage);
 
 			root.dataSource = viewModel;
 		}
 
 		private void TargetChangedHandler(RailsAnimator target)
 		{
-			viewModel.UnbindModel();
-			viewModel.BindModel(target);
+
 		}
 
-		private void RemoveClicked(int index)
+		private void RemoveClipClicked(int index)
 		{
 			bool choice = EditorUtility.DisplayDialog("Remove this Clip?",
 				$"Are you sure you want to delete {viewModel.Clips[index].Name}", "Delete", "Cancel");
@@ -77,5 +69,7 @@ namespace Rails.Editor
 				viewModel.RemoveClip(index);
 			}
 		}
+		
+
 	}
 }
