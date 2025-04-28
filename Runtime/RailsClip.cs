@@ -11,11 +11,12 @@ namespace Rails.Runtime
 	[Serializable]
 	public class RailsClip : INotifyPropertyChanged
 	{
-		private const float frameTime = 1f / 60;
+		public const float FrameTime = 1f / 60;
+		public const int Fps = 60;
 
 		[SerializeReference] private List<AnimationTrack> tracks = new();
 		[SerializeField] private EventsTrack eventTrack = new();
-		[SerializeField] private int length; //in frames
+		[SerializeField] private int duration; //in frames
 		[SerializeField] private string name;
 
 		public event PropertyChangedEventHandler PropertyChanged;
@@ -32,15 +33,15 @@ namespace Rails.Runtime
 			}
 		}
 		public EventsTrack EventTrack { get => eventTrack; set => eventTrack = value; }
-		public int Length { get => length; set => length = value; }
+		public int Duration { get => duration; set => duration = value; }
 		public string Name { get => name; set => name = value; }
 
 		public Sequence BuildSequence()
 		{
 			var sequence = DOTween.Sequence();
 			foreach (var track in Tracks)
-				track.InsertInSequence(sequence, frameTime);
-			EventTrack.InsertInSequence(sequence, frameTime);
+				track.InsertInSequence(sequence, FrameTime);
+			EventTrack.InsertInSequence(sequence, FrameTime);
 			return sequence;
 		}
 

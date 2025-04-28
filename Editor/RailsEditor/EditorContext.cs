@@ -81,6 +81,7 @@ namespace Rails.Editor
 			CurrentTarget = next;
 			ViewModel.UnbindModel();
 			ViewModel.BindModel(CurrentTarget);
+			SelectedClip = ViewModel.SelectedClip;
 			CurrentTargetChanged?.Invoke(CurrentTarget);
 		}
 	}

@@ -50,7 +50,27 @@ namespace Rails.Editor.ViewModel
 				NotifyPropertyChanged();
 			}
 		}
+		[CreateProperty]
+		public string Duration
+		{
+			get => duration;
+			set
+			{
+				if (duration == value)
+					return;
 
+				value = value.Replace(" ", "");
+
+				if (TimeUtils.TryReadValue(value, RailsClip.Fps, out int frames))
+				{
+					model.Duration = frames;
+					duration = TimeUtils.FormatTime(frames, RailsClip.Fps);
+				}
+				NotifyPropertyChanged();
+			}
+		}
+
+		private string duration;
 		private string name;
 		private ObservableList<AnimationTrackViewModel> tracks = new();
 		private bool canEdit = true;
@@ -62,6 +82,8 @@ namespace Rails.Editor.ViewModel
 				return;
 			Name = model.Name;
 			UpdateViewModels(model.Tracks);
+			duration = TimeUtils.FormatTime(model.Duration, RailsClip.Fps);
+			NotifyPropertyChanged(nameof(Duration));
 		}
 
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -73,6 +95,11 @@ namespace Rails.Editor.ViewModel
 			if (e.PropertyName == nameof(RailsClip.Tracks))
 			{
 				UpdateViewModels(model.Tracks);
+			}
+			if (e.PropertyName == nameof(RailsClip.Duration))
+			{
+				duration = TimeUtils.FormatTime(model.Duration, RailsClip.Fps);
+				NotifyPropertyChanged(nameof(Duration));
 			}
 		}
 

@@ -127,12 +127,12 @@ namespace Rails.Editor.Controls
 			{
 				clipViews[i].dataSource = Clips[i];
 			}
-			//if (Clips.Count > 0)
-			//{
-			//	if (SelectedIndex >= Clips.Count)
-			//		SelectedIndex = 0;
-			//	ChangeSelection(SelectedIndex);
-			//}
+			if (Clips.Count > 0)
+			{
+				if (SelectedIndex >= Clips.Count)
+					SelectedIndex = 0;
+				ChangeSelection(SelectedIndex);
+			}
 		}
 
 		private void ChangeSelection(int index)

@@ -131,7 +131,7 @@ namespace Rails.Runtime
 			clips.Add(new RailsClip
 			{
 				Name = $"Clip {clips.Count + 1}",
-				Length = 60,
+				Duration = 60,
 			});
 			NotifyPropertyChanged(nameof(Clips));
 		}

@@ -35,14 +35,14 @@
     border-bottom-right-radius: 5px;
     border-bottom-left-radius: 5px;
     background-color: rgb(76, 76, 76);
+    height: 39px;
     margin-bottom: 5px;
     padding-top: 10px;
     padding-bottom: 10px;
-    padding-left: 8px;
-    height: 39px;
+    padding-left: 0;
 }
 
-.rails-clip-view--selected > Label {
+.rails-clip-view--selected * Label {
     color: rgb(255, 255, 255);
 }
 
@@ -65,4 +65,51 @@
     background-image: resource('Icons/gem_fill_small');
     width: 10px;
     height: 10px;
+}
+
+.time-drop-down {
+    flex-direction: row-reverse;
+    background-color: rgba(0, 0, 0, 0);
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left-color: rgba(0, 0, 0, 0);
+    border-right-color: rgba(0, 0, 0, 0);
+    border-top-color: rgba(0, 0, 0, 0);
+    border-bottom-color: rgba(0, 0, 0, 0);
+    color: rgb(196, 196, 196);
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+}
+
+.time-drop-down > .unity-button__image {
+    padding-right: 0;
+    margin-right: 0;
+    margin-left: -2px;
+    -unity-background-image-tint-color: rgb(196, 196, 196);
+}
+
+.time-drop-down > .unity-text-element {
+    font-size: 14px;
+}
+
+.time-field > Label {
+    font-size: 14px;
+    -unity-text-align: middle-left;
+    min-width: 90px;
+}
+
+.time-field {
+    height: 25px;
 }
