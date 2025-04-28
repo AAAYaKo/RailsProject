@@ -33,7 +33,17 @@ namespace Rails.Runtime
 			}
 		}
 		public EventsTrack EventTrack { get => eventTrack; set => eventTrack = value; }
-		public int Duration { get => duration; set => duration = value; }
+		public int Duration
+		{
+			get => duration;
+			set
+			{
+				if (duration == value)
+					return;
+				duration = value;
+				NotifyPropertyChanged();
+			}
+		}
 		public string Name { get => name; set => name = value; }
 
 		public Sequence BuildSequence()

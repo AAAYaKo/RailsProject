@@ -2,6 +2,10 @@
     <Style src="project://database/Assets/Rails/Editor/Resources/RailsEditor.uss?fileID=7433441132597879392&amp;guid=a52f72ccd09932d4795d5bf54f12136c&amp;type=3#RailsEditor" />
     <ui:VisualElement style="flex-grow: 1; width: 200px; padding-top: 5px; padding-right: 5px; padding-bottom: 5px; padding-left: 5px;">
         <ui:TextField label="Current" placeholder-text="00:00:00" is-delayed="true" class="time-field" />
-        <ui:TextField label="Duration" placeholder-text="00:00" is-delayed="true" data-source-path="Duration" class="time-field" />
+        <ui:TextField label="Duration" placeholder-text="00:00" is-delayed="true" class="time-field">
+            <Bindings>
+                <ui:DataBinding property="value" data-source-path="Duration" binding-mode="TwoWay" />
+            </Bindings>
+        </ui:TextField>
     </ui:VisualElement>
 </ui:UXML>
