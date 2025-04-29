@@ -42,15 +42,15 @@ namespace Rails.Editor
 
 			threePanels = root.Q<ThreePanelsView>();
 
-			VisualElement firstPage = Resources.Load<VisualTreeAsset>("RailsFirstPage").Instantiate();
-			var clips = firstPage.Q<ClipsListView>("clips-view");
-			threePanels.FirstPanel.Add(firstPage);
-
+			Resources.Load<VisualTreeAsset>("RailsFirstPage").CloneTree(threePanels.FirstPanel);
+			var clips = threePanels.FirstPanel.Q<ClipsListView>("clips-view");
 			clips.AddClicked += viewModel.AddClip;
 			clips.RemoveClicked += RemoveClipClicked;
 
-			VisualElement secondPage = Resources.Load<VisualTreeAsset>("RailsSecondPage").Instantiate();
-			threePanels.SecondPanel.Add(secondPage);
+			Resources.Load<VisualTreeAsset>("RailsSecondPage").CloneTree(threePanels.SecondPanel);
+
+			Resources.Load<VisualTreeAsset>("RailsThirdPage").CloneTree(threePanels.ThirdPanel);
+			threePanels.ThirdPanel.style.flexBasis = new Length(100, LengthUnit.Percent);
 
 			root.dataSource = viewModel;
 		}

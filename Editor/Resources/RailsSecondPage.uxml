@@ -1,6 +1,6 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
     <Style src="project://database/Assets/Rails/Editor/Resources/RailsEditor.uss?fileID=7433441132597879392&amp;guid=a52f72ccd09932d4795d5bf54f12136c&amp;type=3#RailsEditor" />
-    <Rails.Editor.Controls.ClipControl />
+    <Rails.Editor.Controls.ClipControl data-source-path="SelectedClip" />
     <Rails.Editor.Controls.TracksListView data-source-path="SelectedClip" style="flex-grow: 1; flex-basis: 100%;">
         <Bindings>
             <ui:DataBinding property="CanEdit" data-source-path="CanEdit" binding-mode="ToTarget" />

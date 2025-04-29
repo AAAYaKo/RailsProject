@@ -36,12 +36,11 @@ namespace Rails.Editor.Controls
 		{
 			if (templateMain == null)
 				templateMain = Resources.Load<VisualTreeAsset>("RailsTrack");
-			var main = templateMain.Instantiate();
-			hierarchy.Add(main);
+			templateMain.CloneTree(this);
 
-			valueViews.Add(AnimationTrack.ValueType.Single, main.Q<FloatField>("float-value"));
-			valueViews.Add(AnimationTrack.ValueType.Vector2, main.Q<Vector2Field>("vector2-value"));
-			valueViews.Add(AnimationTrack.ValueType.Vector3, main.Q<Vector3Field>("vector3-value"));
+			valueViews.Add(AnimationTrack.ValueType.Single, this.Q<FloatField>("float-value"));
+			valueViews.Add(AnimationTrack.ValueType.Vector2, this.Q<Vector2Field>("vector2-value"));
+			valueViews.Add(AnimationTrack.ValueType.Vector3, this.Q<Vector3Field>("vector3-value"));
 			this.AddManipulator(new ContextualMenuManipulator(x =>
 			{
 				x.menu.AppendAction("Remove", x =>

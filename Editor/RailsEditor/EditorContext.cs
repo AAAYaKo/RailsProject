@@ -8,10 +8,11 @@ namespace Rails.Editor
 {
 	public class EditorContext
 	{
-		public RailsClipViewModel SelectedClip { get; set; }
+		public RailsClipViewModel SelectedClip => ViewModel.SelectedClip;
 		public static EditorContext Instance => _instance ??= new();
 		public RailsAnimator CurrentTarget { get; private set; }
 		public RailsAnimatorViewModel ViewModel { get; private set; } = new();
+		public float FramePixelSize { get; } = 30;
 		private static EditorContext _instance;
 		public event Action<RailsAnimator> CurrentTargetChanged;
 
@@ -81,7 +82,6 @@ namespace Rails.Editor
 			CurrentTarget = next;
 			ViewModel.UnbindModel();
 			ViewModel.BindModel(CurrentTarget);
-			SelectedClip = ViewModel.SelectedClip;
 			CurrentTargetChanged?.Invoke(CurrentTarget);
 		}
 	}

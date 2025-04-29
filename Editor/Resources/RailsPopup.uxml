@@ -4,7 +4,7 @@
         <ui:TextField label="Current" placeholder-text="00:00:00" is-delayed="true" class="time-field" />
         <ui:TextField label="Duration" placeholder-text="00:00" is-delayed="true" class="time-field">
             <Bindings>
-                <ui:DataBinding property="value" data-source-path="Duration" binding-mode="TwoWay" />
+                <ui:DataBinding property="value" data-source-path="DurationText" binding-mode="TwoWay" />
             </Bindings>
         </ui:TextField>
     </ui:VisualElement>

@@ -42,23 +42,26 @@ namespace Rails.Editor.ViewModel
 					return;
 				selectedClipIndex = value;
 				NotifyPropertyChanged();
-				NotifyPropertyChanged(nameof(SelectedClip));
-				EditorContext.Instance.SelectedClip = SelectedClip;
+				SelectedClip = Clips[SelectedClipIndex];
 			}
 		}
 		[CreateProperty]
 		public RailsClipViewModel SelectedClip
 		{
-			get
+			get => selectedClip;
+			set
 			{
-				if (SelectedClipIndex >= Clips.Count)
-					return RailsClipViewModel.Empty;
-
-				return Clips[SelectedClipIndex];
+				if (selectedClip == value)
+					return;
+				selectedClip?.Deselect();
+				selectedClip = value;
+				selectedClip.Select(() => NotifyPropertyChanged(nameof(SelectedClip)));
+				NotifyPropertyChanged();
 			}
 		}
 
 		private ObservableList<RailsClipViewModel> clips = new();
+		private RailsClipViewModel selectedClip;
 		private int selectedClipIndex = 0;
 		private bool canAddClip;
 
@@ -78,15 +81,18 @@ namespace Rails.Editor.ViewModel
 			{
 				if (clips.Count > 0)
 					ClearViewModels();
-				NotifyPropertyChanged(nameof(SelectedClip));
+				SelectedClip = RailsClipViewModel.Empty;
 				return;
 			}
 
 			UpdateViewModels(model.Clips);
 
 			if (SelectedClipIndex >= Clips.Count)
-				SelectedClipIndex = 0;
-			NotifyPropertyChanged(nameof(SelectedClip));
+			{
+				selectedClipIndex = 0;
+				NotifyPropertyChanged(nameof(SelectedClipIndex));
+			}
+			SelectedClip = Clips.Count > 0 ? Clips[SelectedClipIndex] : RailsClipViewModel.Empty;
 		}
 
 		public void AddClip()

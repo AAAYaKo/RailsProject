@@ -24,6 +24,7 @@ namespace Rails.Editor.ViewModel
 					return;
 				name = value;
 				NotifyPropertyChanged();
+				notify?.Invoke();
 			}
 		}
 		[CreateProperty]
@@ -36,6 +37,7 @@ namespace Rails.Editor.ViewModel
 					return;
 				tracks = value;
 				NotifyPropertyChanged();
+				notify?.Invoke();
 			}
 		}
 		[CreateProperty]
@@ -48,15 +50,16 @@ namespace Rails.Editor.ViewModel
 					return;
 				canEdit = value;
 				NotifyPropertyChanged();
+				notify?.Invoke();
 			}
 		}
 		[CreateProperty]
-		public string Duration
+		public string DurationText
 		{
-			get => duration;
+			get => durationText;
 			set
 			{
-				if (duration == value)
+				if (durationText == value)
 					return;
 
 				value = value.Replace(" ", "");
@@ -64,17 +67,36 @@ namespace Rails.Editor.ViewModel
 				if (TimeUtils.TryReadValue(value, RailsClip.Fps, out int frames))
 				{
 					EditorContext.Instance.Record($"{EditorContext.Instance.CurrentTarget.name} Rails Clip Duration Changed");
-					model.Duration = frames;
-					duration = TimeUtils.FormatTime(frames, RailsClip.Fps);
+					DurationFrames = frames;
+					durationText = TimeUtils.FormatTime(frames, RailsClip.Fps);
 				}
 				NotifyPropertyChanged();
+				notify?.Invoke();
+			}
+		}
+		[CreateProperty]
+		public int DurationFrames
+		{
+			get => durationFrames;
+			set
+			{
+				if (durationFrames == value)
+					return;
+
+				durationFrames = value;
+				model.Duration = value;
+
+				NotifyPropertyChanged();
+				notify?.Invoke();
 			}
 		}
 
-		private string duration;
+		private string durationText;
+		private int durationFrames;
 		private string name;
 		private ObservableList<AnimationTrackViewModel> tracks = new();
 		private bool canEdit = true;
+		private Action notify;
 
 
 		protected override void OnModelChanged()
@@ -83,8 +105,9 @@ namespace Rails.Editor.ViewModel
 				return;
 			Name = model.Name;
 			UpdateViewModels(model.Tracks);
-			duration = TimeUtils.FormatTime(model.Duration, RailsClip.Fps);
-			NotifyPropertyChanged(nameof(Duration));
+			DurationFrames = model.Duration;
+			durationText = TimeUtils.FormatTime(model.Duration, RailsClip.Fps);
+			NotifyPropertyChanged(nameof(DurationText));
 		}
 
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -99,8 +122,9 @@ namespace Rails.Editor.ViewModel
 			}
 			if (e.PropertyName == nameof(RailsClip.Duration))
 			{
-				duration = TimeUtils.FormatTime(model.Duration, RailsClip.Fps);
-				NotifyPropertyChanged(nameof(Duration));
+				DurationFrames = model.Duration;
+				durationText = TimeUtils.FormatTime(model.Duration, RailsClip.Fps);
+				NotifyPropertyChanged(nameof(DurationText));
 			}
 		}
 
@@ -119,6 +143,16 @@ namespace Rails.Editor.ViewModel
 		public void RemoveTrack(int index)
 		{
 			model.RemoveTrack(model.Tracks[index]);
+		}
+
+		public void Select(Action notify)
+		{
+			this.notify = notify;
+		}
+
+		public void Deselect()
+		{
+			notify = null;
 		}
 
 		private void UpdateViewModels(List<AnimationTrack> models)

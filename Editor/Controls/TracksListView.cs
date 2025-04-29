@@ -58,13 +58,11 @@ namespace Rails.Editor.Controls
 		public TracksListView()
 		{
 			if (templateMain == null)
-				templateMain = Resources.Load<VisualTreeAsset>("RailsTracksView");
-			var main = templateMain.Instantiate();
-			main.style.flexBasis = new Length(100, LengthUnit.Percent);
-			main.style.flexGrow = 1;
-			hierarchy.Add(main);
-			tracksContainer = main.Q<VisualElement>("tracks-container");
-			buttonContainer = main.Q<VisualElement>("button-container");
+				templateMain = Resources.Load<VisualTreeAsset>("RailsTracksListView");
+			templateMain.CloneTree(this);
+
+			tracksContainer = this.Q<VisualElement>("tracks-container");
+			buttonContainer = this.Q<VisualElement>("button-container");
 			var button = buttonContainer.Q<Button>("add-button");
 			button.clicked += () =>
 			{

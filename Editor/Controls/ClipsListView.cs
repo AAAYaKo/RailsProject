@@ -68,6 +68,7 @@ namespace Rails.Editor.Controls
 		private VisualElement clipsContainer;
 		private VisualElement buttonContainer;
 		private List<VisualElement> clipViews = new();
+		private VisualElement selected;
 		private int? selectedIndex;
 		private bool? canAdd;
 
@@ -80,10 +81,10 @@ namespace Rails.Editor.Controls
 				templateMain = Resources.Load<VisualTreeAsset>("RailsClipsView");
 			if (templateItem == null)
 				templateItem = Resources.Load<VisualTreeAsset>("RailsClip");
-			var main = templateMain.Instantiate();
-			hierarchy.Add(main);
-			clipsContainer = main.Q<VisualElement>("clips-container");
-			buttonContainer = main.Q<VisualElement>("button-container");
+			templateMain.CloneTree(this);
+
+			clipsContainer = this.Q<VisualElement>("clips-container");
+			buttonContainer = this.Q<VisualElement>("button-container");
 			buttonContainer.Q<Button>("add-button").clicked += () => AddClicked?.Invoke();
 		}
 
@@ -137,12 +138,13 @@ namespace Rails.Editor.Controls
 
 		private void ChangeSelection(int index)
 		{
+			selectedIndex = index;
 			if (clipViews.Count > 0)
 			{
-				clipViews[SelectedIndex].RemoveFromClassList(SelectedClass);
-				clipViews[index].AddToClassList(SelectedClass);
+				selected?.RemoveFromClassList(SelectedClass);
+				selected = clipViews[index];
+				selected?.AddToClassList(SelectedClass);
 			}
-			selectedIndex = index;
 		}
 	}
 }

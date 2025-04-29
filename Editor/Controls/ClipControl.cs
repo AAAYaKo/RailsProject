@@ -13,10 +13,9 @@ namespace Rails.Editor.Controls
 			if (templateMain == null)
 				templateMain = Resources.Load<VisualTreeAsset>("RailsClipControl");
 
-			var main = templateMain.Instantiate();
-			hierarchy.Add(main);
-
-			Button button = main.Q<Button>("time");
+			templateMain.CloneTree(this);
+			
+			Button button = this.Q<Button>("time");
 			RailsClipPopupContent windowContent = new();
 
 			button.clicked += () =>

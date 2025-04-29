@@ -90,7 +90,7 @@
     padding-top: 0;
     padding-right: 0;
     padding-bottom: 0;
-    padding-left: 0;
+    padding-left: 5px;
 }
 
 .time-drop-down > .unity-button__image {
@@ -112,4 +112,12 @@
 
 .time-field {
     height: 25px;
+}
+
+.time-drop-down:hover {
+    background-color: rgb(88, 88, 88);
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    border-bottom-left-radius: 3px;
 }
