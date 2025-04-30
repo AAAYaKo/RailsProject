@@ -19,7 +19,7 @@ namespace Rails.Editor.ViewModel
 
 				if (TimeUtils.TryReadValue(value, RailsClip.Fps, out int frames))
 				{
-					EditorContext.Instance.Record($"{EditorContext.Instance.CurrentTarget.name} Rails Clip Duration Changed");
+					EditorContext.Instance.Record("Clip Duration Changed");
 					model.Duration = frames;
 					duration = TimeUtils.FormatTime(frames, RailsClip.Fps);
 				}

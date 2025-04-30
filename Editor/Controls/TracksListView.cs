@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using Rails.Editor.ViewModel;
-using Rails.Runtime;
 using Rails.Runtime.Tracks;
 using Unity.Properties;
 using UnityEngine;
@@ -10,7 +8,7 @@ using UnityEngine.UIElements;
 namespace Rails.Editor.Controls
 {
 	[UxmlElement]
-	public partial class TracksListView : VisualElement
+	public partial class TracksListView : ListObserverElement<AnimationTrackViewModel, AnimationTrackView>
 	{
 		public static readonly Type[] TrackTypes = new[]
 		{
@@ -18,23 +16,6 @@ namespace Rails.Editor.Controls
 			typeof(FadeTrack),
 		};
 
-		[CreateProperty]
-		public ObservableList<AnimationTrackViewModel> Tracks
-		{
-			get => tracks;
-			set
-			{
-				if (tracks == value)
-					return;
-
-				if (tracks != null)
-					tracks.ListChanged -= UpdateList;
-
-				tracks = value;
-				tracks.ListChanged += UpdateList;
-				UpdateList();
-			}
-		}
 		[UxmlAttribute("can-edit"), CreateProperty]
 		public bool CanEdit
 		{
@@ -48,10 +29,8 @@ namespace Rails.Editor.Controls
 			}
 		}
 		private static VisualTreeAsset templateMain;
-		private VisualElement tracksContainer;
+		private ScrollView scrollView;
 		private VisualElement buttonContainer;
-		private List<AnimationTrackView> trackViews = new();
-		private ObservableList<AnimationTrackViewModel> tracks = new();
 		private bool? canEdit;
 
 
@@ -61,61 +40,72 @@ namespace Rails.Editor.Controls
 				templateMain = Resources.Load<VisualTreeAsset>("RailsTracksListView");
 			templateMain.CloneTree(this);
 
-			tracksContainer = this.Q<VisualElement>("tracks-container");
-			buttonContainer = this.Q<VisualElement>("button-container");
+			scrollView = this.Q<ScrollView>();
+			container = scrollView.Q<VisualElement>("tracks-container");
+			buttonContainer = scrollView.Q<VisualElement>("button-container");
 			var button = buttonContainer.Q<Button>("add-button");
 			button.clicked += () =>
 			{
 				GenericDropdownMenu menu = new();
 				foreach (var type in TrackTypes)
 					menu.AddItem(type.Name, false, () => OnAddClicked(type));
-				
+
 				menu.DropDown(button.worldBound, button, true);
 			};
+			RegisterCallback<WheelEvent>(ScrollHandler, TrickleDown.TrickleDown);
+			RegisterCallback<AttachToPanelEvent>(x =>
+			{
+				EditorContext.Instance.TrackScrollPerformed += ScrollPerformedHandler;
+			});
+			RegisterCallback<DetachFromPanelEvent>(x =>
+			{
+				EditorContext.Instance.TrackScrollPerformed -= ScrollPerformedHandler;
+			});
 		}
 
-		public void UpdateList()
+		protected override AnimationTrackView CreateElement()
 		{
-			if (Tracks == null)
+			var view = new AnimationTrackView();
+			view.SetBinding("ValueType", new DataBinding
 			{
-				tracksContainer.Clear();
-				trackViews.Clear();
-				return;
-			}
-			while (Tracks.Count > trackViews.Count)
-			{
-				var view = new AnimationTrackView();
-				view.SetBinding("ValueType", new DataBinding
-				{
-					dataSourcePath = new PropertyPath(nameof(AnimationTrackViewModel.ValueType)),
-					bindingMode = BindingMode.ToTarget,
-					updateTrigger = BindingUpdateTrigger.OnSourceChanged,
-				});
-				view.RemoveClicked += OnRemoveClicked;
-				tracksContainer.Add(view);
-				trackViews.Add(view);
-			}
-			while (Tracks.Count < trackViews.Count)
-			{
-				var view = trackViews[^1];
-				view.RemoveClicked -= OnRemoveClicked;
-				tracksContainer.Remove(view);
-				trackViews.Remove(view);
-			}
-			for (int i = 0; i < trackViews.Count; i++)
-			{
-				trackViews[i].dataSource = Tracks[i];
-			}
+				dataSourcePath = new PropertyPath(nameof(AnimationTrackViewModel.ValueType)),
+				bindingMode = BindingMode.ToTarget,
+				updateTrigger = BindingUpdateTrigger.OnSourceChanged,
+			});
+			view.RemoveClicked += OnRemoveClicked;
+			return view;
+		}
+
+		protected override void ResetElement(AnimationTrackView element)
+		{
+			element.RemoveClicked -= OnRemoveClicked;
 		}
 
 		private void OnRemoveClicked(AnimationTrackView view)
 		{
-			EditorContext.Instance.SelectedClip?.RemoveTrack(trackViews.IndexOf(view));
+			EditorContext.Instance.SelectedClip?.RemoveTrack(views.IndexOf(view));
 		}
 
 		private void OnAddClicked(Type type)
 		{
 			EditorContext.Instance.SelectedClip?.AddTrack(type);
+		}
+
+		private void ScrollPerformedHandler(Vector2 delta)
+		{
+			scrollView.scrollOffset += delta;
+		}
+
+		private void ScrollHandler(WheelEvent evt)
+		{
+			float num2 = scrollView.mouseWheelScrollSize;
+			float y = evt.delta.y * ((scrollView.verticalScroller.lowValue < scrollView.verticalScroller.highValue) ? 1f : (-1f)) * num2;
+			float x = evt.delta.x * ((scrollView.horizontalScroller.lowValue < scrollView.horizontalScroller.highValue) ? 1f : (-1f)) * num2;
+
+			//scrollView.scrollOffset += new Vector2(x, y);
+			EditorContext.Instance.PerformTrackScroll(new Vector2(x, y));
+
+			evt.StopPropagation();
 		}
 	}
 }

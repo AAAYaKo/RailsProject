@@ -144,4 +144,12 @@ namespace Rails.Editor.ViewModel
 			return GetEnumerator();
 		}
 	}
+
+	public static class ListExtension
+	{
+		public static bool IsNullOrEmpty<T>(this IList<T> list)
+		{
+			return list == null || list.Count == 0;
+		}
+	}
 }

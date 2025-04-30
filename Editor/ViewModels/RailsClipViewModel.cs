@@ -12,6 +12,7 @@ namespace Rails.Editor.ViewModel
 		public static readonly RailsClipViewModel Empty = new()
 		{
 			CanEdit = false,
+			durationText = "--:--",
 		};
 
 		[CreateProperty]
@@ -66,8 +67,13 @@ namespace Rails.Editor.ViewModel
 
 				if (TimeUtils.TryReadValue(value, RailsClip.Fps, out int frames))
 				{
-					EditorContext.Instance.Record($"{EditorContext.Instance.CurrentTarget.name} Rails Clip Duration Changed");
-					DurationFrames = frames;
+					if (frames < 1)
+						frames = 1;
+					if (DurationFrames != frames)
+					{
+						EditorContext.Instance.Record("Clip Duration Changed");
+						DurationFrames = frames;
+					}
 					durationText = TimeUtils.FormatTime(frames, RailsClip.Fps);
 				}
 				NotifyPropertyChanged();
@@ -130,6 +136,7 @@ namespace Rails.Editor.ViewModel
 
 		public void AddTrack(Type trackType)
 		{
+			EditorContext.Instance.Record($"Added {trackType.Name} to {name}");
 			if (trackType == typeof(MoveAnchorTrack))
 			{
 				model.AddTrack(new MoveAnchorTrack());
@@ -142,6 +149,7 @@ namespace Rails.Editor.ViewModel
 
 		public void RemoveTrack(int index)
 		{
+			EditorContext.Instance.Record($"Removed {model.Tracks[index].GetType().Name} from {name}");
 			model.RemoveTrack(model.Tracks[index]);
 		}
 

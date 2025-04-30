@@ -61,7 +61,7 @@ namespace Rails.Editor.ViewModel
 		}
 
 		private ObservableList<RailsClipViewModel> clips = new();
-		private RailsClipViewModel selectedClip;
+		private RailsClipViewModel selectedClip = RailsClipViewModel.Empty;
 		private int selectedClipIndex = 0;
 		private bool canAddClip;
 
@@ -97,13 +97,13 @@ namespace Rails.Editor.ViewModel
 
 		public void AddClip()
 		{
-			EditorContext.Instance.Record($"{EditorContext.Instance.CurrentTarget.name} Rails Clip Added");
+			EditorContext.Instance.Record("Clip Added");
 			model.AddClip();
 		}
 
 		public void RemoveClip(int index)
 		{
-			EditorContext.Instance.Record($"{EditorContext.Instance.CurrentTarget.name} Rails Clip Removed");
+			EditorContext.Instance.Record("Clip Removed");
 			model.RemoveClip(model.Clips[index]);
 		}
 

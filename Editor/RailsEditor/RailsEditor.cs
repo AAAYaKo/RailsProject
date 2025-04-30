@@ -30,6 +30,11 @@ namespace Rails.Editor
 			TargetChangedHandler(EditorContext.Instance.CurrentTarget);
 		}
 
+		private void OnDisable()
+		{
+			EditorContext.Instance.CurrentTargetChanged -= TargetChangedHandler;
+		}
+
 		private void CreateGUI()
 		{
 			// Each editor window contains a root VisualElement object
@@ -69,7 +74,7 @@ namespace Rails.Editor
 				viewModel.RemoveClip(index);
 			}
 		}
-		
+
 
 	}
 }

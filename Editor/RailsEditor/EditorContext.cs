@@ -2,6 +2,7 @@ using System;
 using Rails.Editor.ViewModel;
 using Rails.Runtime;
 using UnityEditor;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Rails.Editor
@@ -12,9 +13,22 @@ namespace Rails.Editor
 		public static EditorContext Instance => _instance ??= new();
 		public RailsAnimator CurrentTarget { get; private set; }
 		public RailsAnimatorViewModel ViewModel { get; private set; } = new();
-		public float FramePixelSize { get; } = 30;
+		public float FramePixelSize
+		{
+			get => framePixelSize;
+			set
+			{
+				if (framePixelSize == value)
+					return;
+				framePixelSize = value;
+				FramePixelSizeChanged?.Invoke(framePixelSize);
+			}
+		}
 		private static EditorContext _instance;
+		public event Action<Vector2> TrackScrollPerformed;
 		public event Action<RailsAnimator> CurrentTargetChanged;
+		public event Action<float> FramePixelSizeChanged;
+		private float framePixelSize = 30;
 
 
 		private EditorContext()
@@ -28,7 +42,7 @@ namespace Rails.Editor
 
 		public void Record(string undoRecordName)
 		{
-			Undo.RecordObject(CurrentTarget, undoRecordName);
+			Undo.RecordObject(CurrentTarget, $"Rails({CurrentTarget.name}) " + undoRecordName);
 		}
 
 		public void AnimatorDestroyed()
@@ -47,6 +61,10 @@ namespace Rails.Editor
 			TargetChangedHandler();
 		}
 
+		public void PerformTrackScroll(Vector2 delta)
+		{
+			TrackScrollPerformed?.Invoke(delta);
+		}
 
 		private void RegisterConverters()
 		{

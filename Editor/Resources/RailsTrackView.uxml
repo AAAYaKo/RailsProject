@@ -1,7 +1,6 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
     <ui:ScrollView mode="VerticalAndHorizontal" style="background-color: rgb(40, 40, 40); height: 100%;">
-        <ui:VisualElement name="tracks-container">
-            <ui:VisualElement style="background-color: rgb(255, 255, 255); height: 100px; width: 100px;" />
-        </ui:VisualElement>
+        <ui:VisualElement name="tracks-container" style="padding-bottom: 39px;" />
     </ui:ScrollView>
+    <ui:MinMaxSlider style="margin-top: 0; margin-left: 0; margin-right: 0; margin-bottom: 0;" />
 </ui:UXML>
