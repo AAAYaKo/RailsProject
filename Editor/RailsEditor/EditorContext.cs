@@ -13,23 +13,10 @@ namespace Rails.Editor
 		public static EditorContext Instance => _instance ??= new();
 		public RailsAnimator CurrentTarget { get; private set; }
 		public RailsAnimatorViewModel ViewModel { get; private set; } = new();
-		public float FramePixelSize
-		{
-			get => framePixelSize;
-			set
-			{
-				if (framePixelSize == value)
-					return;
-				framePixelSize = value;
-				FramePixelSizeChanged?.Invoke(framePixelSize);
-			}
-		}
-		private static EditorContext _instance;
-		public event Action<Vector2> TrackScrollPerformed;
-		public event Action<RailsAnimator> CurrentTargetChanged;
-		public event Action<float> FramePixelSizeChanged;
-		private float framePixelSize = 30;
 
+		private static EditorContext _instance;
+		public event Action<RailsAnimator> CurrentTargetChanged;
+		
 
 		private EditorContext()
 		{
@@ -59,11 +46,6 @@ namespace Rails.Editor
 			if (CurrentTarget == animator)
 				return;
 			TargetChangedHandler();
-		}
-
-		public void PerformTrackScroll(Vector2 delta)
-		{
-			TrackScrollPerformed?.Invoke(delta);
 		}
 
 		private void RegisterConverters()

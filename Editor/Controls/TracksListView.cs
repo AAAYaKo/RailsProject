@@ -28,6 +28,9 @@ namespace Rails.Editor.Controls
 				buttonContainer.style.display = CanEdit ? DisplayStyle.Flex : DisplayStyle.None;
 			}
 		}
+
+		public ScrollView Scroll => scrollView;
+
 		private static VisualTreeAsset templateMain;
 		private ScrollView scrollView;
 		private VisualElement buttonContainer;
@@ -52,15 +55,6 @@ namespace Rails.Editor.Controls
 
 				menu.DropDown(button.worldBound, button, true);
 			};
-			RegisterCallback<WheelEvent>(ScrollHandler, TrickleDown.TrickleDown);
-			RegisterCallback<AttachToPanelEvent>(x =>
-			{
-				EditorContext.Instance.TrackScrollPerformed += ScrollPerformedHandler;
-			});
-			RegisterCallback<DetachFromPanelEvent>(x =>
-			{
-				EditorContext.Instance.TrackScrollPerformed -= ScrollPerformedHandler;
-			});
 		}
 
 		protected override AnimationTrackView CreateElement()
@@ -89,23 +83,6 @@ namespace Rails.Editor.Controls
 		private void OnAddClicked(Type type)
 		{
 			EditorContext.Instance.SelectedClip?.AddTrack(type);
-		}
-
-		private void ScrollPerformedHandler(Vector2 delta)
-		{
-			scrollView.scrollOffset += delta;
-		}
-
-		private void ScrollHandler(WheelEvent evt)
-		{
-			float num2 = scrollView.mouseWheelScrollSize;
-			float y = evt.delta.y * ((scrollView.verticalScroller.lowValue < scrollView.verticalScroller.highValue) ? 1f : (-1f)) * num2;
-			float x = evt.delta.x * ((scrollView.horizontalScroller.lowValue < scrollView.horizontalScroller.highValue) ? 1f : (-1f)) * num2;
-
-			//scrollView.scrollOffset += new Vector2(x, y);
-			EditorContext.Instance.PerformTrackScroll(new Vector2(x, y));
-
-			evt.StopPropagation();
 		}
 	}
 }

@@ -12,7 +12,7 @@ namespace Rails.Editor
 	{
 		[SerializeField] private VisualTreeAsset m_VisualTreeAsset = default;
 
-		private ThreePanelsView threePanels;
+		private TwoPanelsView twoPanels;
 		private RailsAnimatorViewModel viewModel => EditorContext.Instance.ViewModel;
 
 
@@ -45,17 +45,18 @@ namespace Rails.Editor
 			uxml.style.flexBasis = new Length(100, LengthUnit.Percent);
 			root.Add(uxml);
 
-			threePanels = root.Q<ThreePanelsView>();
+			twoPanels = root.Q<TwoPanelsView>();
 
-			Resources.Load<VisualTreeAsset>("RailsFirstPage").CloneTree(threePanels.FirstPanel);
-			var clips = threePanels.FirstPanel.Q<ClipsListView>("clips-view");
+			Resources.Load<VisualTreeAsset>("RailsFirstPage").CloneTree(twoPanels.FirstPanel);
+			var clips = twoPanels.FirstPanel.Q<ClipsListView>("clips-view");
 			clips.AddClicked += viewModel.AddClip;
 			clips.RemoveClicked += RemoveClipClicked;
 
-			Resources.Load<VisualTreeAsset>("RailsSecondPage").CloneTree(threePanels.SecondPanel);
-
-			Resources.Load<VisualTreeAsset>("RailsThirdPage").CloneTree(threePanels.ThirdPanel);
-			threePanels.ThirdPanel.style.flexBasis = new Length(100, LengthUnit.Percent);
+			ClipView clipView = new();
+			clipView.style.width = new Length(100, LengthUnit.Percent);
+			clipView.style.height = new Length(100, LengthUnit.Percent);
+			clipView.style.flexGrow = 1;
+			twoPanels.SecondPanel.Add(clipView);
 
 			root.dataSource = viewModel;
 		}

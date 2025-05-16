@@ -132,3 +132,57 @@
     width: 100%;
     margin-top: 0;
 }
+
+.time-scroller * .unity-min-max-slider__tracker {
+    display: none;
+}
+
+.time-scroller > .unity-min-max-slider__input {
+    background-color: rgb(38, 38, 38);
+    border-top-width: 1px;
+    border-top-color: rgb(34, 34, 34);
+    border-right-width: 1px;
+}
+
+.time-scroller * .unity-min-max-slider__dragger {
+    margin-top: 3px;
+    background-color: rgb(95, 95, 95);
+}
+
+.time-scroller * .unity-min-max-slider__min-thumb {
+    border-right-width: 0;
+    background-color: rgb(90, 158, 222);
+}
+
+.time-scroller * .unity-min-max-slider__max-thumb {
+    background-color: rgb(90, 158, 222);
+    border-left-width: 0;
+}
+
+.ruler {
+    height: 22px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(113, 113, 113);
+    background-color: rgb(48, 48, 48);
+    overflow: hidden;
+}
+
+.ruler > .ruler-step {
+    flex-direction: row;
+    position: absolute;
+    top: 0%;
+    bottom: 100%;
+    align-items: flex-end;
+    height: 22px;
+    color: rgb(190, 190, 190);
+}
+
+.ruler > .ruler-step > .ruler-step-time {
+}
+
+.ruler > .ruler-step > .ruler-step-mark {
+    width: 1px;
+    height: 10px;
+    margin-right: 4px;
+    background-color: rgb(113, 113, 113);
+}
