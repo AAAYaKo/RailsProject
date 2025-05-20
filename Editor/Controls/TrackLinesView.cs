@@ -83,22 +83,23 @@ namespace Rails.Editor.Controls
 			}
 		}
 
-		public ScrollView Scroll => scrollView;
+		public ScrollView ScrollView => scrollView;
 		public Scroller VerticalScroller => verticalScroller;
-		public Scroller HorizontalScroller => horizontalScroller;
 		public MinMaxSlider Slider => slider;
 		public event Action<float> FramePixelSizeChanged;
 		public event Action<float> TimePositionChanged;
 
 		private static VisualTreeAsset templateMain;
 		private ScrollView scrollView;
-		private Scroller horizontalScroller;
 		private Scroller verticalScroller;
 		private MinMaxSlider slider;
+		private VisualElement viewport;
 		private int duration = -1;
 		private bool? canEdit;
 		private float currentDelta = float.NaN;
 		private float framePixelSize = 30;
+		private float containerSize = 0;
+		private float maxOffset => containerSize - viewport.layout.width;
 
 
 		public TrackLinesView()
@@ -107,18 +108,17 @@ namespace Rails.Editor.Controls
 				templateMain = Resources.Load<VisualTreeAsset>("RailsTrackView");
 			templateMain.CloneTree(this);
 			scrollView = this.Q<ScrollView>();
-			horizontalScroller = scrollView.horizontalScroller;
 			verticalScroller = scrollView.verticalScroller;
 			slider = this.Q<MinMaxSlider>();
 			slider.lowLimit = 0;
 			container = scrollView.Q<VisualElement>("tracks-container");
 
-			scrollView.contentViewport.RegisterCallback<GeometryChangedEvent>(x =>
+			viewport = scrollView.contentViewport;
+			viewport.RegisterCallback<GeometryChangedEvent>(x =>
 			{
 				AdjustFramePixelSize();
 			});
 			slider.RegisterCallback<ChangeEvent<Vector2>>(SliderChangedHandler);
-			horizontalScroller.valueChanged += HorizontalScrollerValueChangedHandler;
 		}
 
 		protected override TrackLine CreateElement()
@@ -153,28 +153,35 @@ namespace Rails.Editor.Controls
 
 			float position = math.remap(
 				slider.lowLimit, slider.highLimit - delta,
-				horizontalScroller.lowValue, horizontalScroller.highValue,
+				0, maxOffset,
 				value.x);
-			if (!Mathf.Approximately(horizontalScroller.value, position))
-				horizontalScroller.slider.SetValueWithoutNotify(position);
+			if (!Mathf.Approximately(container.layout.position.x, position))
+				container.style.left = -position;
 		}
 
-		private void HorizontalScrollerValueChangedHandler(float value)
+		public void Scroll(Vector2 delta)
 		{
-			if (float.IsNaN(value) || Mathf.Approximately(horizontalScroller.lowValue, horizontalScroller.highValue))
+			scrollView.scrollOffset += new Vector2(0, delta.y);
+			if (maxOffset <= 0)
 				return;
-			float position = math.remap(
-				horizontalScroller.lowValue, horizontalScroller.highValue,
+
+			float positionDelta = math.remap(
+				0, maxOffset,
 				slider.lowLimit, slider.highLimit - currentDelta,
-				value);
-			if (Mathf.Approximately(slider.value.x, position))
+				delta.x);
+			if (slider.minValue + positionDelta < slider.lowLimit)
+				positionDelta = slider.lowLimit - slider.minValue;
+			else if (slider.maxValue + positionDelta > slider.highLimit)
+				positionDelta = slider.highLimit - slider.maxValue;
+			if (Mathf.Approximately(0, positionDelta))
 				return;
-			slider.value = new Vector2(position, position + currentDelta);
+			slider.value += new Vector2(positionDelta, positionDelta);
 		}
 
 		private void AdjustContainer(float frameSize)
 		{
-			container.style.width = duration * frameSize + additional;
+			containerSize = duration * frameSize + additional;
+			container.style.width = containerSize;
 		}
 
 		private void AdjustFramePixelSize()

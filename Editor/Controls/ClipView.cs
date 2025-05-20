@@ -49,11 +49,11 @@ namespace Rails.Editor.Controls
 
 		private void ScrollHandler(WheelEvent evt)
 		{
-			float size = trackView.Scroll.mouseWheelScrollSize;
+			float size = trackView.ScrollView.mouseWheelScrollSize;
 			float y = evt.delta.y * ((trackView.VerticalScroller.lowValue < trackView.VerticalScroller.highValue) ? 1f : (-1f)) * size;
-			float x = evt.delta.x * ((trackView.HorizontalScroller.lowValue < trackView.HorizontalScroller.highValue) ? 1f : (-1f)) * size;
+			float x = evt.delta.x * size;
 
-			trackView.Scroll.scrollOffset += new Vector2(x, y);
+			trackView.Scroll(new Vector2(x, y));
 			tracksListView.Scroll.scrollOffset += new Vector2(0, y);
 
 			evt.StopPropagation();

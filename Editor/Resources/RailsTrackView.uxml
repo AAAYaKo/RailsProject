@@ -1,7 +1,9 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
     <Style src="project://database/Assets/Rails/Editor/Resources/RailsEditor.uss?fileID=7433441132597879392&amp;guid=a52f72ccd09932d4795d5bf54f12136c&amp;type=3#RailsEditor" />
-    <ui:ScrollView mode="VerticalAndHorizontal" horizontal-scroller-visibility="AlwaysVisible" touch-scroll-type="Clamped" style="background-color: rgb(40, 40, 40); height: 100%; width: 100%;">
-        <ui:VisualElement name="tracks-container" style="padding-bottom: 52px;" />
-    </ui:ScrollView>
+    <ui:VisualElement style="flex-grow: 1; background-color: rgb(40, 40, 40); height: 100%; width: 100%;">
+        <ui:ScrollView touch-scroll-type="Clamped" horizontal-scroller-visibility="Hidden" style="width: 100%;">
+            <ui:VisualElement name="tracks-container" class="tracks-container" style="padding-bottom: 52px; background-image: none;" />
+        </ui:ScrollView>
+    </ui:VisualElement>
     <ui:MinMaxSlider class="time-scroller" style="margin-top: 0; margin-left: 0; margin-right: 12px; margin-bottom: 0;" />
 </ui:UXML>
