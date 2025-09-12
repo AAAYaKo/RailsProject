@@ -9,9 +9,10 @@ using UnityEngine.UIElements;
 namespace Rails.Editor.Controls
 {
 	[UxmlElement]
-	public partial class TrackLinesView : ListObserverElement<AnimationTrackViewModel, TrackLine>
+	public partial class TrackLinesView : ListObserverElement<AnimationTrackViewModel, TrackLineView>
 	{
-		private const int additional = 60;
+		public const int EndAdditional = 60;
+		public const int StartAdditional = 10;
 		public static readonly BindingId DurationProperty = nameof(Duration);
 
 		[UxmlAttribute("duration"), CreateProperty]
@@ -121,14 +122,17 @@ namespace Rails.Editor.Controls
 			slider.RegisterCallback<ChangeEvent<Vector2>>(SliderChangedHandler);
 		}
 
-		protected override TrackLine CreateElement()
+		protected override TrackLineView CreateElement()
 		{
-			return new TrackLine();
+			TrackLineView line = new();
+			line.OnFramePixelSizeChanged(FramePixelSize);
+			FramePixelSizeChanged += line.OnFramePixelSizeChanged;
+			return line;
 		}
 
-		protected override void ResetElement(TrackLine element)
+		protected override void ResetElement(TrackLineView element)
 		{
-
+			FramePixelSizeChanged -= element.OnFramePixelSizeChanged;
 		}
 
 		private void SliderChangedHandler(ChangeEvent<Vector2> evt)
@@ -180,13 +184,13 @@ namespace Rails.Editor.Controls
 
 		private void AdjustContainer(float frameSize)
 		{
-			containerSize = duration * frameSize + additional;
+			containerSize = StartAdditional + duration * frameSize + EndAdditional;
 			container.style.width = containerSize;
 		}
 
 		private void AdjustFramePixelSize()
 		{
-			FramePixelSize = (scrollView.contentViewport.contentRect.width - additional) / currentDelta;
+			FramePixelSize = (scrollView.contentViewport.contentRect.width - EndAdditional - StartAdditional) / currentDelta;
 			AdjustContainer(FramePixelSize);
 		}
 	}

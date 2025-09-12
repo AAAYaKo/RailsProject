@@ -16,7 +16,8 @@ namespace Rails.Editor
 
 		private static EditorContext _instance;
 		public event Action<RailsAnimator> CurrentTargetChanged;
-		
+		public event Action<int> SelectedClipChanged;
+
 
 		private EditorContext()
 		{
@@ -30,6 +31,11 @@ namespace Rails.Editor
 		public void Record(string undoRecordName)
 		{
 			Undo.RecordObject(CurrentTarget, $"Rails({CurrentTarget.name}) " + undoRecordName);
+		}
+
+		public void Record(UnityEngine.Object target, string undoRecordName)
+		{
+			Undo.RecordObject(target, undoRecordName);
 		}
 
 		public void AnimatorDestroyed()
@@ -46,6 +52,11 @@ namespace Rails.Editor
 			if (CurrentTarget == animator)
 				return;
 			TargetChangedHandler();
+		}
+
+		public void NotifySelectedClipChanged(int selected)
+		{
+			SelectedClipChanged?.Invoke(selected);
 		}
 
 		private void RegisterConverters()

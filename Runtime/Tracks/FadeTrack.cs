@@ -10,8 +10,6 @@ namespace Rails.Runtime.Tracks
 	public class FadeTrack : AnimationTrack
 	{
 		public CanvasGroup Reference => (CanvasGroup)SceneReference;
-		public override Type AnimationComponentType => typeof(CanvasGroup);
-		public override ValueType Type => ValueType.Single;
 
 
 		protected override void InsertTween(AnimationKey keyStart, AnimationKey keyEnd, Sequence sequence, float frameTime)

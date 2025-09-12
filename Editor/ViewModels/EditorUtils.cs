@@ -1,17 +1,18 @@
 ﻿using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using UnityEngine.UIElements;
 
 namespace Rails.Editor.ViewModel
 {
-	public static class TimeUtils
+	public static class EditorUtils
 	{
 		private static readonly Regex regex = new(@"[^0-9:]", RegexOptions.Compiled);
 		private static readonly StringBuilder builder = new();
 		private const string format = "{0:00}";
 
 
-		public static bool TryReadValue(string value, int fps, out int frames)
+		public static bool TryReadTimeValue(string value, int fps, out int frames)
 		{
 			frames = 0;
 			if (regex.IsMatch(value))
@@ -51,5 +52,9 @@ namespace Rails.Editor.ViewModel
 
 			return builder.ToString();
 		}
+
+		public static DisplayStyle ToDisplay(this bool value) => value ? DisplayStyle.Flex : DisplayStyle.None;
+
+		public static bool IsNullOrEmpty(this string value) => string.IsNullOrEmpty(value);
 	}
 }

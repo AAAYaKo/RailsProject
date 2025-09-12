@@ -8,9 +8,7 @@ namespace Rails.Runtime.Tracks
 	[Serializable]
 	public class MoveAnchorTrack : AnimationTrack
 	{
-		public override Type AnimationComponentType => typeof(RectTransform);
 		public RectTransform Reference => (RectTransform)SceneReference;
-		public override ValueType Type => ValueType.Vector2;
 
 
 		protected override void InsertTween(AnimationKey keyStart, AnimationKey keyEnd, Sequence sequence, float frameTime)

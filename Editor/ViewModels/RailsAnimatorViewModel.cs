@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using Rails.Runtime;
 using Unity.Properties;
@@ -42,6 +43,7 @@ namespace Rails.Editor.ViewModel
 					return;
 				selectedClipIndex = value;
 				NotifyPropertyChanged();
+				EditorContext.Instance.NotifySelectedClipChanged(selectedClipIndex);
 				SelectedClip = Clips[SelectedClipIndex];
 			}
 		}

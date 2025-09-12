@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using DG.Tweening;
 using Unity.Properties;
@@ -37,8 +38,6 @@ namespace Rails.Runtime.Tracks
 			}
 		}
 
-		public abstract Type AnimationComponentType { get; }
-		public abstract ValueType Type { get; }
 		public event PropertyChangedEventHandler PropertyChanged;
 
 
@@ -56,20 +55,23 @@ namespace Rails.Runtime.Tracks
 				InsertInstantChange(animationKeys[0], sequence, frameTime);
 				return;
 			}
-			for (int i = 0; i < animationKeys.Count - 1; i++)
+
+			var sorted = animationKeys.OrderBy(x => x.TimePosition).ToArray();
+
+			for (int i = 0; i < sorted.Length - 1; i++)
 			{
-				var current = animationKeys[i];
+				var current = sorted[i];
 				if (current.Ease.Type is RailsEase.EaseType.NoAnimation)
 				{
 					InsertInstantChange(current, sequence, frameTime);
 					continue;
 				}
-				var next = animationKeys[i + 1];
+				var next = sorted[i + 1];
 				InsertTween(current, next, sequence, frameTime);
 			}
-			if (animationKeys[^2].Ease.Type is RailsEase.EaseType.NoAnimation)
+			if (sorted[^2].Ease.Type is RailsEase.EaseType.NoAnimation)
 			{
-				InsertInstantChange(animationKeys[^1], sequence, frameTime);
+				InsertInstantChange(sorted[^1], sequence, frameTime);
 			}
 		}
 
@@ -84,7 +86,7 @@ namespace Rails.Runtime.Tracks
 					inserted = true;
 					break;
 				}
-				else if (Mathf.Approximately(animationKeys[i].TimePosition, key.TimePosition)) //replace the key with the same time position
+				else if (animationKeys[i].TimePosition == key.TimePosition) //replace the key with the same time position
 				{
 					animationKeys[i] = key;
 					inserted = true;

@@ -75,7 +75,7 @@ namespace Rails.Editor.Controls
 			{
 				x.menu.AppendAction("Remove", x =>
 				{
-					RemoveClicked?.Invoke(view.IndexOf(view));
+					RemoveClicked?.Invoke(views.IndexOf(view));
 				}, DropdownMenuAction.Status.Normal);
 			}));
 			view.RegisterCallback<ClickEvent>(x =>

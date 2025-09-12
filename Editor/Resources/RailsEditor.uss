@@ -152,11 +152,13 @@
 .time-scroller * .unity-min-max-slider__min-thumb {
     border-right-width: 0;
     background-color: rgb(90, 158, 222);
+    margin-left: 3px;
 }
 
 .time-scroller * .unity-min-max-slider__max-thumb {
     background-color: rgb(90, 158, 222);
     border-left-width: 0;
+    margin-right: 3px;
 }
 
 .ruler {
@@ -185,4 +187,41 @@
     height: 10px;
     margin-right: 4px;
     background-color: rgb(113, 113, 113);
+}
+
+.move-anchor {
+    -unity-background-image-tint-color: rgb(94, 135, 197);
+}
+
+.fade {
+    -unity-background-image-tint-color: rgb(87, 222, 211);
+}
+
+.track-key {
+    background-image: resource('Icons/gem_fill_small');
+    width: 12px;
+    height: 12px;
+    position: absolute;
+    align-self: center;
+    opacity: 0.75;
+}
+
+.track-key.tack-key--selected {
+    background-image: resource('Icons/gem_fill_small');
+    width: 12px;
+    height: 12px;
+    position: absolute;
+    align-self: center;
+}
+
+.play-head-icon {
+    width: 9px;
+    height: 10px;
+    background-image: resource('Icons/play_head_small');
+    -unity-background-image-tint-color: rgb(255, 44, 128);
+}
+
+.play-head-tail {
+    width: 1px;
+    background-color: rgb(255, 44, 128);
 }

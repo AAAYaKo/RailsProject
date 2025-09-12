@@ -1,16 +1,26 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
     <Style src="project://database/Assets/Rails/Editor/Resources/RailsEditor.uss?fileID=7433441132597879392&amp;guid=a52f72ccd09932d4795d5bf54f12136c&amp;type=3#RailsEditor" />
-    <ui:VisualElement data-source-path="SelectedClip" style="height: 45px; flex-shrink: 0;">
-        <Rails.Editor.Controls.RailsRuler>
+    <ui:VisualElement name="content-layer" picking-mode="Ignore" data-source-path="SelectedClip" style="flex-grow: 1; width: 100%; height: 100%;">
+        <ui:VisualElement name="top-panel" style="height: 45px; flex-shrink: 0;">
+            <Rails.Editor.Controls.RailsRuler>
+                <Bindings>
+                    <ui:DataBinding property="Duration" data-source-path="DurationFrames" binding-mode="ToTarget" />
+                    <ui:DataBinding property="TimeHeadPosition" data-source-path="TimeHeadPositionFrames" binding-mode="ToSource" />
+                </Bindings>
+            </Rails.Editor.Controls.RailsRuler>
+        </ui:VisualElement>
+        <Rails.Editor.Controls.TrackLinesView style="flex-grow: 1; flex-basis: 100%;">
             <Bindings>
                 <ui:DataBinding property="Duration" data-source-path="DurationFrames" binding-mode="ToTarget" />
+                <ui:DataBinding property="Values" data-source-path="Tracks" binding-mode="ToTarget" />
             </Bindings>
-        </Rails.Editor.Controls.RailsRuler>
+        </Rails.Editor.Controls.TrackLinesView>
     </ui:VisualElement>
-    <Rails.Editor.Controls.TrackLinesView data-source-path="SelectedClip" style="flex-grow: 1; flex-basis: 100%;">
-        <Bindings>
-            <ui:DataBinding property="Duration" data-source-path="DurationFrames" binding-mode="ToTarget" />
-            <ui:DataBinding property="Values" data-source-path="Tracks" binding-mode="ToTarget" />
-        </Bindings>
-    </Rails.Editor.Controls.TrackLinesView>
+    <ui:VisualElement name="play-head-layer" picking-mode="Ignore" data-source-path="SelectedClip" style="flex-grow: 1; position: absolute; width: 100%; height: 100%; overflow: hidden;">
+        <Rails.Editor.Controls.RailsPlayHead picking-mode="Ignore" style="padding-bottom: 16px; width: 1px; padding-left: 0; margin-left: -1px;">
+            <Bindings>
+                <ui:DataBinding property="TimeHeadPosition" data-source-path="TimeHeadPositionFrames" binding-mode="ToTarget" />
+            </Bindings>
+        </Rails.Editor.Controls.RailsPlayHead>
+    </ui:VisualElement>
 </ui:UXML>

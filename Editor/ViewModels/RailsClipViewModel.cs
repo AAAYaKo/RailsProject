@@ -63,20 +63,32 @@ namespace Rails.Editor.ViewModel
 				if (durationText == value)
 					return;
 
-				value = value.Replace(" ", "");
+				SetDurationTextWithoutNotify(value, out int frames);
+				if (DurationFrames != frames)
+					EditorContext.Instance.Record("Clip Duration Changed");
+				SetDurationFramesWithoutNotify(frames);
+				TimeHeadPositionFrames = ClampTimeHeadPosition(TimeHeadPositionFrames);
 
-				if (TimeUtils.TryReadValue(value, RailsClip.Fps, out int frames))
-				{
-					if (frames < 1)
-						frames = 1;
-					if (DurationFrames != frames)
-					{
-						EditorContext.Instance.Record("Clip Duration Changed");
-						DurationFrames = frames;
-					}
-					durationText = TimeUtils.FormatTime(frames, RailsClip.Fps);
-				}
 				NotifyPropertyChanged();
+				NotifyPropertyChanged(nameof(DurationFrames));
+				notify?.Invoke();
+			}
+		}
+		[CreateProperty]
+		public string TimeHeadPositionText
+		{
+			get => timeHeadPositionText;
+			set
+			{
+				if (timeHeadPositionText == value)
+					return;
+
+				SetTimeHeadPositionTextWithoutNotify(value, out int frames);
+				SetTimeHeadPositionFramesWithoutNotify(frames);
+
+				NotifyPropertyChanged();
+				NotifyPropertyChanged(nameof(TimeHeadPositionFrames));
+
 				notify?.Invoke();
 			}
 		}
@@ -89,16 +101,37 @@ namespace Rails.Editor.ViewModel
 				if (durationFrames == value)
 					return;
 
-				durationFrames = value;
-				model.Duration = value;
+				SetDurationFramesWithoutNotify(value);
+				SetDurationTextWithoutNotify(EditorUtils.FormatTime(DurationFrames, RailsClip.Fps), out _);
+				TimeHeadPositionFrames = ClampTimeHeadPosition(TimeHeadPositionFrames);
 
 				NotifyPropertyChanged();
+				NotifyPropertyChanged(nameof(DurationText));
+			}
+		}
+		[CreateProperty]
+		public int TimeHeadPositionFrames
+		{
+			get => timeHeadPositionFrames;
+			set
+			{
+				if (timeHeadPositionFrames == value)
+					return;
+
+				SetTimeHeadPositionFramesWithoutNotify(value);
+				SetTimeHeadPositionTextWithoutNotify(EditorUtils.FormatTime(TimeHeadPositionFrames, RailsClip.Fps), out _);
+
+				NotifyPropertyChanged();
+				NotifyPropertyChanged(nameof(TimeHeadPositionText));
+
 				notify?.Invoke();
 			}
 		}
 
 		private string durationText;
 		private int durationFrames;
+		private string timeHeadPositionText;
+		private int timeHeadPositionFrames;
 		private string name;
 		private ObservableList<AnimationTrackViewModel> tracks = new();
 		private bool canEdit = true;
@@ -111,9 +144,8 @@ namespace Rails.Editor.ViewModel
 				return;
 			Name = model.Name;
 			UpdateViewModels(model.Tracks);
+
 			DurationFrames = model.Duration;
-			durationText = TimeUtils.FormatTime(model.Duration, RailsClip.Fps);
-			NotifyPropertyChanged(nameof(DurationText));
 		}
 
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -129,8 +161,6 @@ namespace Rails.Editor.ViewModel
 			if (e.PropertyName == nameof(RailsClip.Duration))
 			{
 				DurationFrames = model.Duration;
-				durationText = TimeUtils.FormatTime(model.Duration, RailsClip.Fps);
-				NotifyPropertyChanged(nameof(DurationText));
 			}
 		}
 
@@ -198,6 +228,57 @@ namespace Rails.Editor.ViewModel
 			foreach (var clip in Tracks)
 				clip.UnbindModel();
 			Tracks.Clear();
+		}
+
+		private int ClampTimeHeadPosition(int value)
+		{
+			if (value < 0)
+				value = 0;
+			else if (value > DurationFrames)
+				value = DurationFrames;
+			return value;
+		}
+
+		private int ClampDuration(int value)
+		{
+			if (value < 1)
+				value = 1;
+			return value;
+		}
+
+		private void SetTimeHeadPositionFramesWithoutNotify(int value)
+		{
+			value = ClampTimeHeadPosition(value);
+			timeHeadPositionFrames = value;
+		}
+
+		private void SetTimeHeadPositionTextWithoutNotify(string value, out int frames)
+		{
+			value = value.Replace(" ", "");
+
+			if (EditorUtils.TryReadTimeValue(value, RailsClip.Fps, out frames))
+			{
+				frames = ClampTimeHeadPosition(frames);
+				timeHeadPositionText = EditorUtils.FormatTime(frames, RailsClip.Fps);
+			}
+		}
+
+		private void SetDurationFramesWithoutNotify(int value)
+		{
+			value = ClampDuration(value);
+			durationFrames = value;
+			model.Duration = value;
+		}
+
+		private void SetDurationTextWithoutNotify(string value, out int frames)
+		{
+			value = value.Replace(" ", "");
+
+			if (EditorUtils.TryReadTimeValue(value, RailsClip.Fps, out frames))
+			{
+				frames = ClampDuration(frames);
+				durationText = EditorUtils.FormatTime(frames, RailsClip.Fps);
+			}
 		}
 	}
 }

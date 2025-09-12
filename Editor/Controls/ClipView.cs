@@ -10,6 +10,7 @@ namespace Rails.Editor.Controls
 		private ClipControl clipControl;
 		private TrackLinesView trackView;
 		private RailsRuler ruler;
+		private RailsPlayHead playHead;
 
 		private static VisualTreeAsset templateLeft;
 		private static VisualTreeAsset templateRight;
@@ -36,10 +37,13 @@ namespace Rails.Editor.Controls
 			tracksListView = split.FirstPanel.Q<TracksListView>();
 			trackView = split.SecondPanel.Q<TrackLinesView>();
 			ruler = split.SecondPanel.Q<RailsRuler>();
+			playHead = split.SecondPanel.Q<RailsPlayHead>();
 			RegisterCallback<WheelEvent>(ScrollHandler, TrickleDown.TrickleDown);
 			trackView.VerticalScroller.valueChanged += OnVerticalScroller;
 			trackView.TimePositionChanged += ruler.OnTimePositionChanged;
 			trackView.FramePixelSizeChanged += ruler.OnFramePixelSizeChanged;
+			trackView.FramePixelSizeChanged += playHead.OnFramePixelSizeChanged;
+			trackView.TimePositionChanged += playHead.OnTimePositionChanged;
 		}
 
 		private void OnVerticalScroller(float value)

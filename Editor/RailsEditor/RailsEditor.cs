@@ -1,7 +1,6 @@
 using Rails.Editor.Controls;
 using Rails.Editor.ViewModel;
 using Rails.Runtime;
-using Unity.Properties;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -11,6 +10,7 @@ namespace Rails.Editor
 	public class RailsEditor : EditorWindow
 	{
 		[SerializeField] private VisualTreeAsset m_VisualTreeAsset = default;
+		[SerializeField] private int selectedClip = 0;
 
 		private TwoPanelsView twoPanels;
 		private RailsAnimatorViewModel viewModel => EditorContext.Instance.ViewModel;
@@ -27,12 +27,21 @@ namespace Rails.Editor
 		private void OnEnable()
 		{
 			EditorContext.Instance.CurrentTargetChanged += TargetChangedHandler;
+			EditorContext.Instance.SelectedClipChanged += SelectedClipChangedHandler;
 			TargetChangedHandler(EditorContext.Instance.CurrentTarget);
 		}
 
 		private void OnDisable()
 		{
 			EditorContext.Instance.CurrentTargetChanged -= TargetChangedHandler;
+			EditorContext.Instance.SelectedClipChanged -= SelectedClipChangedHandler;
+		}
+
+		private void OnValidate()
+		{
+			if (selectedClip != EditorContext.Instance.ViewModel.SelectedClipIndex &&
+				selectedClip < EditorContext.Instance.ViewModel.Clips.Count && selectedClip > 0)
+				EditorContext.Instance.ViewModel.SelectedClipIndex = selectedClip;
 		}
 
 		private void CreateGUI()
@@ -63,7 +72,8 @@ namespace Rails.Editor
 
 		private void TargetChangedHandler(RailsAnimator target)
 		{
-
+			if (selectedClip < EditorContext.Instance.ViewModel.Clips.Count && selectedClip > 0)
+				EditorContext.Instance.ViewModel.SelectedClipIndex = selectedClip;
 		}
 
 		private void RemoveClipClicked(int index)
@@ -76,6 +86,10 @@ namespace Rails.Editor
 			}
 		}
 
-
+		private void SelectedClipChangedHandler(int selected)
+		{
+			EditorContext.Instance.Record(this, "Selected Clip Changed");
+			selectedClip = selected;
+		}
 	}
 }

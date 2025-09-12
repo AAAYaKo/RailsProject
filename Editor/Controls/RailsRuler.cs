@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Rails.Editor.Manipulator;
 using Rails.Editor.ViewModel;
 using Rails.Runtime;
 using Unity.Properties;
@@ -11,17 +12,43 @@ namespace Rails.Editor.Controls
 	[UxmlElement]
 	public partial class RailsRuler : VisualElement
 	{
+		public static readonly BindingId TimePositionProperty = nameof(TimeHeadPosition);
+
 		private const float MinStepSize = 120;
 		private const float MaxStepSize = 240;
 
 		[UxmlAttribute("duration"), CreateProperty]
-		public int Duration { get; private set; }
+		public int Duration 
+		{
+			get => duration;
+			set
+			{
+				if (duration == value)
+					return;
+				duration = value;
+				Repaint();
+			}
+		}
+		[UxmlAttribute("timePosition"), CreateProperty]
+		public int TimeHeadPosition
+		{
+			get => timeHeadPosition;
+			set
+			{
+				if (timeHeadPosition == value)
+					return;
+				timeHeadPosition = value;
+				NotifyPropertyChanged(TimePositionProperty);
+			}
+		}
 
 		private float framePixelSize = 30;
 		private float stepSize => framePixelSize * stepFrames;
 		private int stepFrames = 1;
 		private int fps = RailsClip.Fps;
 		private float timePosition;
+		private int duration;
+		private int timeHeadPosition;
 		private List<RulerStep> stepList = new();
 		private Stack<RulerStep> pool = new();
 
@@ -29,6 +56,12 @@ namespace Rails.Editor.Controls
 		public RailsRuler()
 		{
 			AddToClassList("ruler");
+			this.AddManipulator(new RulerDragManipulator(x =>
+			{
+				float globalPixelsPosition = x - TrackLinesView.StartAdditional + timePosition * framePixelSize;
+				int frames = Mathf.RoundToInt(globalPixelsPosition / framePixelSize);
+				TimeHeadPosition = frames;
+			}));
 		}
 
 		public void OnFramePixelSizeChanged(float framePixelSize)
@@ -58,7 +91,7 @@ namespace Rails.Editor.Controls
 			while (firstFrame + stepSize < timePosition)
 				firstFrame += stepFrames;
 			int currentFrame = firstFrame - stepFrames;
-			float shift = (firstFrame - timePosition) * framePixelSize;
+			float shift = (firstFrame - timePosition) * framePixelSize + TrackLinesView.StartAdditional;
 			float currenShift = shift;
 			int i = 0;
 			bool hasExtra = false;
@@ -90,7 +123,7 @@ namespace Rails.Editor.Controls
 				var step = GetNextStep();
 				InitStep(step);
 				hierarchy.Add(step);
-				
+
 				stepList.Add(step);
 				if (currentFrame == Duration)
 					break;
@@ -127,7 +160,7 @@ namespace Rails.Editor.Controls
 					if (frame == value)
 						return;
 					frame = value;
-					label.text = TimeUtils.FormatTime(frame, fps);
+					label.text = ViewModel.EditorUtils.FormatTime(frame, fps);
 				}
 			}
 			public int Fps
@@ -138,7 +171,7 @@ namespace Rails.Editor.Controls
 					if (fps == value)
 						return;
 					fps = value;
-					label.text = TimeUtils.FormatTime(frame, fps);
+					label.text = ViewModel.EditorUtils.FormatTime(frame, fps);
 				}
 			}
 			private int frame = 1;

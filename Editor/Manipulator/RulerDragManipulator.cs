@@ -5,22 +5,21 @@ using UnityEngine.UIElements;
 
 namespace Rails.Editor.Manipulator
 {
-	public class EaseDragManipulator : MouseManipulator
+	public class RulerDragManipulator : MouseManipulator
 	{
-		private bool _isDragging = false;
-		private Vector2 _startPosition;
-		private Action<Vector2> _updateValue;
+		private bool isDragging = false;
+		private Action<float> updateTime;
 
 
-		public EaseDragManipulator(Action<Vector2> updateValue)
+		public RulerDragManipulator(Action<float> updateTime)
 		{
-			_updateValue = updateValue;
+			this.updateTime = updateTime;
 			activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse });
 		}
 
 		protected override void RegisterCallbacksOnTarget()
 		{
-			if (target is not DragHandler)
+			if (target is not RailsRuler)
 				return;
 			target.RegisterCallback<MouseDownEvent>(OnMouseDown);
 			target.RegisterCallback<MouseMoveEvent>(OnMouseMove);
@@ -29,7 +28,7 @@ namespace Rails.Editor.Manipulator
 
 		protected override void UnregisterCallbacksFromTarget()
 		{
-			if (target is not DragHandler)
+			if (target is not RailsRuler)
 				return;
 			target.UnregisterCallback<MouseDownEvent>(OnMouseDown);
 			target.UnregisterCallback<MouseMoveEvent>(OnMouseMove);
@@ -40,30 +39,26 @@ namespace Rails.Editor.Manipulator
 		{
 			if (!CanStartManipulation(evt))
 				return;
-			_startPosition = evt.localMousePosition;
-			_isDragging = true;
+			isDragging = true;
 			target.CaptureMouse();
 			evt.StopPropagation();
 		}
 
 		private void OnMouseMove(MouseMoveEvent evt)
 		{
-			if (!_isDragging || !target.HasMouseCapture() || !CanStartManipulation(evt))
+			if (!isDragging || !target.HasMouseCapture() || !CanStartManipulation(evt))
 				return;
 
-			Vector2 delta = evt.localMousePosition - _startPosition;
-			Vector2 position = target.layout.position + (Vector2)target.transform.position + delta;
-
-			_updateValue(position);
-			target.MarkDirtyRepaint();
+			updateTime(evt.localMousePosition.x);
 			evt.StopPropagation();
 		}
 
 		private void OnMouseUp(MouseUpEvent evt)
 		{
-			if (!_isDragging || !target.HasMouseCapture() || !CanStartManipulation(evt))
+			if (!isDragging || !target.HasMouseCapture() || !CanStartManipulation(evt))
 				return;
-			_isDragging = false;
+			isDragging = false;
+			updateTime(evt.localMousePosition.x);
 			target.ReleaseMouse();
 			evt.StopPropagation();
 		}

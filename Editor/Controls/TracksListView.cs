@@ -1,6 +1,5 @@
 ﻿using System;
 using Rails.Editor.ViewModel;
-using Rails.Runtime.Tracks;
 using Unity.Properties;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -10,12 +9,6 @@ namespace Rails.Editor.Controls
 	[UxmlElement]
 	public partial class TracksListView : ListObserverElement<AnimationTrackViewModel, AnimationTrackView>
 	{
-		public static readonly Type[] TrackTypes = new[]
-		{
-			typeof(MoveAnchorTrack),
-			typeof(FadeTrack),
-		};
-
 		[UxmlAttribute("can-edit"), CreateProperty]
 		public bool CanEdit
 		{
@@ -50,7 +43,7 @@ namespace Rails.Editor.Controls
 			button.clicked += () =>
 			{
 				GenericDropdownMenu menu = new();
-				foreach (var type in TrackTypes)
+				foreach (var type in AnimationTrackViewModel.TrackTypes.Keys)
 					menu.AddItem(type.Name, false, () => OnAddClicked(type));
 
 				menu.DropDown(button.worldBound, button, true);
@@ -60,9 +53,15 @@ namespace Rails.Editor.Controls
 		protected override AnimationTrackView CreateElement()
 		{
 			var view = new AnimationTrackView();
-			view.SetBinding("ValueType", new DataBinding
+			view.SetBinding(nameof(AnimationTrackView.ValueType), new DataBinding
 			{
 				dataSourcePath = new PropertyPath(nameof(AnimationTrackViewModel.ValueType)),
+				bindingMode = BindingMode.ToTarget,
+				updateTrigger = BindingUpdateTrigger.OnSourceChanged,
+			});
+			view.SetBinding(nameof(AnimationTrackView.TrackClass), new DataBinding
+			{
+				dataSourcePath = new PropertyPath(nameof(AnimationTrackViewModel.TrackClass)),
 				bindingMode = BindingMode.ToTarget,
 				updateTrigger = BindingUpdateTrigger.OnSourceChanged,
 			});
