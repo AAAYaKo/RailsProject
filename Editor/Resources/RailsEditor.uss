@@ -55,13 +55,13 @@
     height: 10px;
 }
 
-.rails_key_toggle > .unity-toggle__input > .unity-toggle__checkmark {
+.rails_key_toggle {
     background-image: resource('Icons/gem_stroke_small');
     width: 10px;
     height: 10px;
 }
 
-.rails_key_toggle:checked > .unity-toggle__input > .unity-toggle__checkmark {
+.rails_key_toggle.key_frame {
     background-image: resource('Icons/gem_fill_small');
     width: 10px;
     height: 10px;
@@ -203,7 +203,7 @@
     height: 12px;
     position: absolute;
     align-self: center;
-    opacity: 0.75;
+    opacity: 0.6;
 }
 
 .track-key.tack-key--selected {
@@ -212,6 +212,7 @@
     height: 12px;
     position: absolute;
     align-self: center;
+    opacity: 1;
 }
 
 .play-head-icon {

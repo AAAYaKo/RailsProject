@@ -19,6 +19,20 @@ namespace Rails.Editor.Controls
 			}
 		}
 
+		[UxmlAttribute("canEdit"), CreateProperty]
+		public bool CanEdit
+		{
+			get => canEdit;
+			private set
+			{
+				if (canEdit == value)
+					return;
+				canEdit = value;
+				style.display = canEdit ? DisplayStyle.Flex : DisplayStyle.None;
+			}
+		}
+
+		private bool canEdit = true;
 		private int timeHeadPosition;
 		private float framePixelSize = 30;
 		private float timePosition;

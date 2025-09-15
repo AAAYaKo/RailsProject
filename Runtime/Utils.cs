@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Rails.Runtime
@@ -8,6 +9,16 @@ namespace Rails.Runtime
 		public static bool Approximately(Vector2 first, Vector2 second)
 		{
 			return Mathf.Approximately(first.x, second.x) && Mathf.Approximately(first.y, second.y);
+		}
+
+		public static bool Approximately(float4 a, float4 b)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				if (!Mathf.Approximately(a[i], b[i]))
+					return false;
+			}
+			return true;
 		}
 
 		public static bool SplineEquals(Vector2[] first, Vector2[] second)

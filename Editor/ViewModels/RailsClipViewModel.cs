@@ -90,6 +90,7 @@ namespace Rails.Editor.ViewModel
 				NotifyPropertyChanged(nameof(TimeHeadPositionFrames));
 
 				notify?.Invoke();
+				timeHeadPositionFramesChanged?.Invoke(frames);
 			}
 		}
 		[CreateProperty]
@@ -125,6 +126,7 @@ namespace Rails.Editor.ViewModel
 				NotifyPropertyChanged(nameof(TimeHeadPositionText));
 
 				notify?.Invoke();
+				timeHeadPositionFramesChanged?.Invoke(timeHeadPositionFrames);
 			}
 		}
 
@@ -136,6 +138,7 @@ namespace Rails.Editor.ViewModel
 		private ObservableList<AnimationTrackViewModel> tracks = new();
 		private bool canEdit = true;
 		private Action notify;
+		private event Action<int> timeHeadPositionFramesChanged;
 
 
 		protected override void OnModelChanged()
@@ -203,13 +206,16 @@ namespace Rails.Editor.ViewModel
 
 			while (Tracks.Count < model.Tracks.Count)
 			{
-				Tracks.AddWithoutNotify(new AnimationTrackViewModel());
+				AnimationTrackViewModel track = new();
+				timeHeadPositionFramesChanged += track.OnTimeHeadPositionChanged;
+				Tracks.AddWithoutNotify(track);
 			}
 			while (Tracks.Count > model.Tracks.Count)
 			{
-				var clip = Tracks[^1];
-				clip.UnbindModel();
-				Tracks.RemoveWithoutNotify(clip);
+				var track = Tracks[^1];
+				track.UnbindModel();
+				timeHeadPositionFramesChanged -= track.OnTimeHeadPositionChanged;
+				Tracks.RemoveWithoutNotify(track);
 			}
 			for (int i = 0; i < model.Tracks.Count; i++)
 			{

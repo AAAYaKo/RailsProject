@@ -10,7 +10,7 @@ namespace Rails.Editor.ViewModel
 {
 	public class EaseViewModel : BaseNotifyPropertyViewModel<RailsEase>
 	{
-		private static DG.Tweening.Ease[] easeVariants;
+		private static readonly DG.Tweening.Ease[] easeVariants;
 
 		[CreateProperty]
 		public Vector2 FirstPoint
@@ -18,17 +18,16 @@ namespace Rails.Editor.ViewModel
 			get => firstPoint;
 			set
 			{
-				if (!Utils.Approximately(value, firstPoint))
-				{
-					EditorContext.Instance.Record("");
-					Vector4 controls = model.Controls;
-					controls.x = Mathf.Clamp(value.x, 0, 1);
-					controls.z = value.y;
-					firstPoint = value;
-					model.Controls = controls;
-					NotifyPropertyChanged();
-					NotifyPropertyChanged(nameof(Spline));
-				}
+				if (Utils.Approximately(value, firstPoint))
+					return;
+				//EditorContext.Instance.Record("");
+				Vector4 controls = model.Controls;
+				controls.x = Mathf.Clamp(value.x, 0, 1);
+				controls.z = value.y;
+				firstPoint = value;
+				model.Controls = controls;
+				NotifyPropertyChanged();
+				NotifyPropertyChanged(nameof(Spline));
 			}
 		}
 
@@ -38,17 +37,16 @@ namespace Rails.Editor.ViewModel
 			get => secondPoint;
 			set
 			{
-				if (!Utils.Approximately(value, secondPoint))
-				{
-					EditorContext.Instance.Record("");
-					Vector4 controls = model.Controls;
-					controls.y = Mathf.Clamp(value.x, 0, 1);
-					controls.w = value.y;
-					secondPoint = value;
-					model.Controls = controls;
-					NotifyPropertyChanged();
-					NotifyPropertyChanged(nameof(Spline));
-				}
+				if (Utils.Approximately(value, secondPoint))
+					return;
+				//EditorContext.Instance.Record("");
+				Vector4 controls = model.Controls;
+				controls.y = Mathf.Clamp(value.x, 0, 1);
+				controls.w = value.y;
+				secondPoint = value;
+				model.Controls = controls;
+				NotifyPropertyChanged();
+				NotifyPropertyChanged(nameof(Spline));
 			}
 		}
 
@@ -58,16 +56,15 @@ namespace Rails.Editor.ViewModel
 			get => easeType;
 			set
 			{
-				if (easeType != value)
-				{
-					EditorContext.Instance.Record("");
-					model.Type = value;
-					easeType = value;
-					NotifyPropertyChanged();
-					NotifyPropertyChanged(nameof(Spline));
-					HasHandles = model.Type is RailsEase.EaseType.EaseCurve;
-					HasFunction = model.Type is RailsEase.EaseType.EaseFunction;
-				}
+				if (easeType == value)
+					return;
+				//EditorContext.Instance.Record("");
+				model.Type = value;
+				easeType = value;
+				NotifyPropertyChanged();
+				NotifyPropertyChanged(nameof(Spline));
+				HasHandles = model.Type is RailsEase.EaseType.EaseCurve;
+				HasFunction = model.Type is RailsEase.EaseType.EaseFunction;
 			}
 		}
 
@@ -149,6 +146,12 @@ namespace Rails.Editor.ViewModel
 				and not DG.Tweening.Ease.InOutFlash)
 				.ToArray();
 		}
+
+		public float EasedValue(float from, float to, float t) => model.EasedValue(from, to, t);
+
+		public Vector2 EasedValue(Vector2 from, Vector2 to, float t) => model.EasedValue(from, to, t);
+
+		public Vector3 EasedValue(Vector3 from, Vector3 to, float t) => model.EasedValue(from, to, t);
 
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{

@@ -13,6 +13,7 @@
             <Bindings>
                 <ui:DataBinding property="Duration" data-source-path="DurationFrames" binding-mode="ToTarget" />
                 <ui:DataBinding property="Values" data-source-path="Tracks" binding-mode="ToTarget" />
+                <ui:DataBinding property="TimeHeadPosition" data-source-path="TimeHeadPositionFrames" binding-mode="TwoWay" />
             </Bindings>
         </Rails.Editor.Controls.TrackLinesView>
     </ui:VisualElement>

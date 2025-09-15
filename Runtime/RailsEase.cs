@@ -439,22 +439,22 @@ namespace Rails.Runtime
 		};
 		#endregion
 
-		[SerializeField] private EaseType _easeType;
-		[SerializeField] private float4 _controls = new(1 / 3f, 1 / 6f, 0, 1);
-		[SerializeField] private Ease _Ease = Ease.Linear;
+		[SerializeField] private EaseType easeType;
+		[SerializeField] private float4 controls = new(1 / 3f, 1 / 6f, 0, 1);
+		[SerializeField] private Ease ease = Ease.Linear;
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
 		public EaseType Type
 		{
-			get => _easeType;
+			get => easeType;
 			set
 			{
-				if (_easeType != value)
-				{
-					_easeType = value;
-					NotifyPropertyChanged();
-				}
+				if (easeType == value)
+					return;
+				easeType = value;
+				CalculatePolynomial();
+				NotifyPropertyChanged();
 			}
 		}
 
@@ -463,58 +463,93 @@ namespace Rails.Runtime
 		/// </summary>
 		public float4 Controls
 		{
-			get => _controls;
+			get => controls;
 			set
 			{
-				if (!Approximately(_controls, value))
-				{
-					_controls = value;
-					NotifyPropertyChanged();
-				}
+				if (Utils.Approximately(controls, value))
+					return;
+				controls = value;
+				CalculatePolynomial();
+				NotifyPropertyChanged();
 			}
 		}
 
 		public Ease EaseFunc
 		{
-			get => _Ease;
+			get => ease;
 			set
 			{
-				if (_Ease != value)
-				{
-					_Ease = value;
-					NotifyPropertyChanged();
-				}
+				if (ease == value)
+					return;
+				ease = value;
+				NotifyPropertyChanged();
 			}
 		}
 
+		private float3x2? polynomial;
 
-		public Vector2[] GetEaseSpline() => _easeType switch
+
+		public Vector2[] GetEaseSpline() => easeType switch
 		{
 			EaseType.NoAnimation => _splineNoAnimation,
-			EaseType.EaseFunction => _easeSplines[_Ease],
+			EaseType.EaseFunction => _easeSplines[ease],
 			EaseType.EaseCurve => new Vector2[]
 			{
 				new(0,0),
-				new(_controls.x, _controls.z),
-				new(_controls.y, _controls.w),
+				new(controls.x, controls.z),
+				new(controls.y, controls.w),
 				new(1,1),
 			},
 			_ => _splineNoAnimation,
 		};
 
-		private void NotifyPropertyChanged([CallerMemberName] string property = "")
+		public float CurveFunction(float time, float duration, float overshootOrAmplitude, float period)
 		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
+			if (polynomial == null)
+				CalculatePolynomial();
+			return BezierUtils.GetBezierYbyX(time / duration, polynomial ?? float3x2.zero);
 		}
 
-		private bool Approximately(float4 a, float4 b)
+		public float EasedValue(float from, float to, float t)
 		{
-			for (int i = 0; i < 4; i++)
+			if (Type is EaseType.NoAnimation)
+				return from;
+			if (Type is EaseType.EaseCurve)
 			{
-				if (!Mathf.Approximately(a[i], b[i]))
-					return false;
+				if (polynomial == null)
+					CalculatePolynomial();
+				float y = BezierUtils.GetBezierYbyX(t, polynomial ?? float3x2.zero);
+				return math.lerp(from, to, y);
 			}
-			return true;
+			return DOVirtual.EasedValue(from, to, t, EaseFunc);
+		}
+
+		public Vector2 EasedValue(Vector2 from, Vector2 to, float t)
+		{
+			if (Type is EaseType.NoAnimation)
+				return from;
+			if (Type is EaseType.EaseCurve)
+			{
+				if (polynomial == null)
+					CalculatePolynomial();
+				float y = BezierUtils.GetBezierYbyX(t, polynomial ?? float3x2.zero);
+				return math.lerp(from, to, y);
+			}
+			return DOVirtual.EasedValue(from, to, t, EaseFunc);
+		}
+
+		public Vector3 EasedValue(Vector3 from, Vector3 to, float t)
+		{
+			if (Type is EaseType.NoAnimation)
+				return from;
+			if (Type is EaseType.EaseCurve)
+			{
+				if (polynomial == null)
+					CalculatePolynomial();
+				float y = BezierUtils.GetBezierYbyX(t, polynomial ?? float3x2.zero);
+				return math.lerp(from, to, y);
+			}
+			return DOVirtual.EasedValue(from, to, t, EaseFunc);
 		}
 
 		public void OnBeforeSerialize()
@@ -528,7 +563,20 @@ namespace Rails.Runtime
 			NotifyPropertyChanged(nameof(EaseFunc));
 		}
 
-		public enum EaseType 
+		private void NotifyPropertyChanged([CallerMemberName] string property = "")
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
+		}
+
+		private void CalculatePolynomial()
+		{
+			if (Type is EaseType.NoAnimation or EaseType.EaseFunction)
+				this.polynomial = null;
+			BezierUtils.CalculatePolynomial(controls, out var polynomial);
+			this.polynomial = polynomial;
+		}
+
+		public enum EaseType
 		{
 			NoAnimation,
 			EaseCurve,

@@ -11,13 +11,12 @@ namespace Rails.Runtime.Tracks
 		public RectTransform Reference => (RectTransform)SceneReference;
 
 
-		protected override void InsertTween(AnimationKey keyStart, AnimationKey keyEnd, Sequence sequence, float frameTime)
+		protected override Tween CreateTween(AnimationKey keyStart, AnimationKey keyEnd, float frameTime)
 		{
 			float duration = (keyEnd.TimePosition - keyStart.TimePosition) * frameTime;
-			var tween = Reference
+			return Reference
 				.DOAnchorPos(keyEnd.Vector2Value, duration)
 				.From(keyStart.Vector2Value);
-			sequence.Insert(keyStart.TimePosition * frameTime, tween);
 		}
 
 		protected override void InstantChange(AnimationKey key)

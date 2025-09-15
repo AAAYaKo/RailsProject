@@ -12,7 +12,7 @@ namespace Rails.Editor.Controls
 	[UxmlElement]
 	public partial class RailsRuler : VisualElement
 	{
-		public static readonly BindingId TimePositionProperty = nameof(TimeHeadPosition);
+		public static readonly BindingId TimeHeadPositionProperty = nameof(TimeHeadPosition);
 
 		private const float MinStepSize = 120;
 		private const float MaxStepSize = 240;
@@ -38,7 +38,7 @@ namespace Rails.Editor.Controls
 				if (timeHeadPosition == value)
 					return;
 				timeHeadPosition = value;
-				NotifyPropertyChanged(TimePositionProperty);
+				NotifyPropertyChanged(TimeHeadPositionProperty);
 			}
 		}
 

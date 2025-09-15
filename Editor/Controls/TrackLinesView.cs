@@ -11,6 +11,8 @@ namespace Rails.Editor.Controls
 	[UxmlElement]
 	public partial class TrackLinesView : ListObserverElement<AnimationTrackViewModel, TrackLineView>
 	{
+		public static readonly BindingId TimeHeadPositionProperty = nameof(TimeHeadPosition);
+
 		public const int EndAdditional = 60;
 		public const int StartAdditional = 10;
 		public static readonly BindingId DurationProperty = nameof(Duration);
@@ -48,7 +50,18 @@ namespace Rails.Editor.Controls
 				NotifyPropertyChanged(DurationProperty);
 			}
 		}
-
+		[UxmlAttribute("timePosition"), CreateProperty]
+		public int TimeHeadPosition
+		{
+			get => timeHeadPosition;
+			set
+			{
+				if (timeHeadPosition == value)
+					return;
+				timeHeadPosition = value;
+				NotifyPropertyChanged(TimeHeadPositionProperty);
+			}
+		}
 		[UxmlAttribute("can-edit"), CreateProperty]
 		public bool CanEdit
 		{
@@ -96,6 +109,7 @@ namespace Rails.Editor.Controls
 		private MinMaxSlider slider;
 		private VisualElement viewport;
 		private int duration = -1;
+		private int timeHeadPosition;
 		private bool? canEdit;
 		private float currentDelta = float.NaN;
 		private float framePixelSize = 30;
@@ -120,12 +134,33 @@ namespace Rails.Editor.Controls
 				AdjustFramePixelSize();
 			});
 			slider.RegisterCallback<ChangeEvent<Vector2>>(SliderChangedHandler);
+
+			RegisterCallback<ClickEvent>(OnMouseClick);
 		}
+
+		public void Scroll(Vector2 delta)
+		{
+			scrollView.scrollOffset += new Vector2(0, delta.y);
+			if (maxOffset <= 0)
+				return;
+
+			float positionDelta = math.remap(
+				0, maxOffset,
+				slider.lowLimit, slider.highLimit - currentDelta,
+				delta.x);
+			if (slider.minValue + positionDelta < slider.lowLimit)
+				positionDelta = slider.lowLimit - slider.minValue;
+			else if (slider.maxValue + positionDelta > slider.highLimit)
+				positionDelta = slider.highLimit - slider.maxValue;
+			if (Mathf.Approximately(0, positionDelta))
+				return;
+			slider.value += new Vector2(positionDelta, positionDelta);
+		}
+
 
 		protected override TrackLineView CreateElement()
 		{
 			TrackLineView line = new();
-			line.OnFramePixelSizeChanged(FramePixelSize);
 			FramePixelSizeChanged += line.OnFramePixelSizeChanged;
 			return line;
 		}
@@ -133,6 +168,12 @@ namespace Rails.Editor.Controls
 		protected override void ResetElement(TrackLineView element)
 		{
 			FramePixelSizeChanged -= element.OnFramePixelSizeChanged;
+		}
+
+		protected override void UpdateList()
+		{
+			base.UpdateList();
+			views.ForEach(x => x.OnFramePixelSizeChanged(FramePixelSize));
 		}
 
 		private void SliderChangedHandler(ChangeEvent<Vector2> evt)
@@ -163,25 +204,6 @@ namespace Rails.Editor.Controls
 				container.style.left = -position;
 		}
 
-		public void Scroll(Vector2 delta)
-		{
-			scrollView.scrollOffset += new Vector2(0, delta.y);
-			if (maxOffset <= 0)
-				return;
-
-			float positionDelta = math.remap(
-				0, maxOffset,
-				slider.lowLimit, slider.highLimit - currentDelta,
-				delta.x);
-			if (slider.minValue + positionDelta < slider.lowLimit)
-				positionDelta = slider.lowLimit - slider.minValue;
-			else if (slider.maxValue + positionDelta > slider.highLimit)
-				positionDelta = slider.highLimit - slider.maxValue;
-			if (Mathf.Approximately(0, positionDelta))
-				return;
-			slider.value += new Vector2(positionDelta, positionDelta);
-		}
-
 		private void AdjustContainer(float frameSize)
 		{
 			containerSize = StartAdditional + duration * frameSize + EndAdditional;
@@ -192,6 +214,17 @@ namespace Rails.Editor.Controls
 		{
 			FramePixelSize = (scrollView.contentViewport.contentRect.width - EndAdditional - StartAdditional) / currentDelta;
 			AdjustContainer(FramePixelSize);
+		}
+
+		private void OnMouseClick(ClickEvent evt)
+		{
+			if (evt.button == 0 && evt.clickCount == 2)
+			{
+				float x = evt.localPosition.x;
+				float globalPixelsPosition = x - TrackLinesView.StartAdditional + slider.value.x * framePixelSize;
+				int frames = Mathf.RoundToInt(globalPixelsPosition / framePixelSize);
+				TimeHeadPosition = frames;
+			}
 		}
 	}
 }

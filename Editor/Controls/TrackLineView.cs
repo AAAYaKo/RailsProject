@@ -1,32 +1,15 @@
-﻿using System.Collections.Generic;
-using Rails.Editor.ViewModel;
+﻿using Rails.Editor.ViewModel;
 using Unity.Properties;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Rails.Editor.Controls
 {
 	[UxmlElement]
-	public partial class TrackLineView : VisualElement
+	public partial class TrackLineView : ListObserverElement<AnimationKeyViewModel, TrackKey>
 	{
 		private const string SelectedClass = "tack-key--selected";
 
-		[CreateProperty]
-		public ObservableList<AnimationKeyViewModel> Values
-		{
-			get => values;
-			set
-			{
-				if (values == value)
-					return;
-
-				if (values != null)
-					values.ListChanged -= UpdateList;
-
-				values = value;
-				values.ListChanged += UpdateList;
-				UpdateList();
-			}
-		}
 		[UxmlAttribute("trackClass"), CreateProperty]
 		public string TrackClass
 		{
@@ -45,9 +28,6 @@ namespace Rails.Editor.Controls
 		[CreateProperty]
 		public ObservableList<int> SelectedIndexes { get; set; }
 
-		private ObservableList<AnimationKeyViewModel> values = new();
-		private List<TrackKey> views = new();
-		private VisualElement keysContainer;
 		private VisualElement moveContainer;
 		private string trackClass;
 		private float framePixelSize = 30;
@@ -55,21 +35,22 @@ namespace Rails.Editor.Controls
 
 		public TrackLineView()
 		{
-			keysContainer = new VisualElement();
+			container = new VisualElement();
 			moveContainer = new VisualElement();
-			keysContainer.style.position = Position.Absolute;
-			keysContainer.style.width = new Length(100, LengthUnit.Percent);
-			keysContainer.style.height = new Length(100, LengthUnit.Percent);
-			keysContainer.style.flexDirection = FlexDirection.Row;
-			keysContainer.style.flexShrink = 0;
-			keysContainer.name = "keys-container";
+			container.style.position = Position.Absolute;
+			container.style.width = new Length(100, LengthUnit.Percent);
+			container.style.height = new Length(100, LengthUnit.Percent);
+			container.style.flexDirection = FlexDirection.Row;
+			container.style.flexShrink = 0;
+			container.name = "keys-container";
 			moveContainer.style.position = Position.Absolute;
 			moveContainer.style.width = new Length(100, LengthUnit.Percent);
 			moveContainer.style.height = new Length(100, LengthUnit.Percent);
 			moveContainer.style.flexDirection = FlexDirection.Row;
 			moveContainer.style.flexShrink = 0;
+			moveContainer.pickingMode = PickingMode.Ignore;
 			moveContainer.name = "move-container";
-			Add(keysContainer);
+			Add(container);
 			Add(moveContainer);
 
 			AddToClassList("track-line");
@@ -91,43 +72,21 @@ namespace Rails.Editor.Controls
 			views.ForEach(x => x.OnFramePixelSizeChanged(framePixelSize));
 		}
 
-		private void UpdateList()
+		protected override void UpdateList()
 		{
-			if (Values.IsNullOrEmpty())
-			{
-				keysContainer.Clear();
-				views.Clear();
-				return;
-			}
-			while (Values.Count > views.Count)
-			{
-				var view = CreateElement();
-				keysContainer.Add(view);
-				views.Add(view);
-			}
-			while (Values.Count < views.Count)
-			{
-				var view = views[^1];
-				ResetElement(view);
-				keysContainer.Remove(view);
-				views.Remove(view);
-			}
-			for (int i = 0; i < views.Count; i++)
-			{
-				views[i].dataSource = Values[i];
-			}
+			base.UpdateList();
+			views.ForEach(x => x.OnFramePixelSizeChanged(framePixelSize));
 		}
 
-		private TrackKey CreateElement()
+		protected override TrackKey CreateElement()
 		{
 			TrackKey key = new();
 			key.AddToClassList(trackClass);
 			return key;
 		}
 
-		private void ResetElement(TrackKey element)
+		protected override void ResetElement(TrackKey element)
 		{
-
 		}
 	}
 
@@ -162,7 +121,15 @@ namespace Rails.Editor.Controls
 				dataSourcePath = new PropertyPath(nameof(AnimationKeyViewModel.TimePosition)),
 				bindingMode = BindingMode.TwoWay,
 			});
-			RegisterCallback<GeometryChangedEvent>(OnGeometryChange);
+			RegisterCallback<GeometryChangedEvent>(x =>
+			{
+				UpdatePosition();
+			});
+			RegisterCallback<ClickEvent>(x =>
+			{
+				Debug.Log("a");
+				AddToClassList("tack-key--selected");
+			});
 		}
 
 		public void OnFramePixelSizeChanged(float framePixelSize)
@@ -174,11 +141,6 @@ namespace Rails.Editor.Controls
 		private void UpdatePosition()
 		{
 			style.left = TrackLinesView.StartAdditional - layout.width / 2 + TimePosition * framePixelSize;
-		}
-
-		private void OnGeometryChange(GeometryChangedEvent evt)
-		{
-			UpdatePosition();
 		}
 	}
 }

@@ -9,7 +9,7 @@ namespace Rails.Runtime.Tracks
 	public class AnimationKey : INotifyPropertyChanged
 	{
 		[SerializeField] private int timePosition;
-		[SerializeField] private RailsEase ease;
+		[SerializeField] private RailsEase ease = new();
 		[SerializeField] private float singleValue;
 		[SerializeField] private Vector3 vector3Value;
 		[SerializeField] private Vector2 vector2Value;

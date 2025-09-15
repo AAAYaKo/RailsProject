@@ -12,13 +12,12 @@ namespace Rails.Runtime.Tracks
 		public CanvasGroup Reference => (CanvasGroup)SceneReference;
 
 
-		protected override void InsertTween(AnimationKey keyStart, AnimationKey keyEnd, Sequence sequence, float frameTime)
+		protected override Tween CreateTween(AnimationKey keyStart, AnimationKey keyEnd, float frameTime)
 		{
 			float duration = (keyEnd.TimePosition - keyStart.TimePosition) * frameTime;
-			Tween tween = Reference
+			return Reference
 				.DOFade(keyEnd.SingleValue, duration)
 				.From(keyStart.SingleValue);
-			sequence.Insert(keyStart.TimePosition * frameTime, tween);
 		}
 
 		protected override void InstantChange(AnimationKey key)

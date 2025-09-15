@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel;
 using Rails.Runtime;
 using Unity.Properties;
-using UnityEngine;
 
 namespace Rails.Editor.ViewModel
 {

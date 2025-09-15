@@ -4,7 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using DG.Tweening;
-using Unity.Properties;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Rails.Runtime.Tracks
@@ -82,7 +82,7 @@ namespace Rails.Runtime.Tracks
 			{
 				if (animationKeys[i].TimePosition > key.TimePosition) //to maintain order
 				{
-					animationKeys.Insert(i + 1, key);
+					animationKeys.Insert(i, key);
 					inserted = true;
 					break;
 				}
@@ -105,6 +105,61 @@ namespace Rails.Runtime.Tracks
 			NotifyPropertyChanged(nameof(AnimationKeys));
 		}
 
+		public void InsertNewKeyAt(int frame)
+		{
+			int previousIndex = animationKeys.FindLastIndex(x =>
+			{
+				return x.TimePosition <= frame;
+			});
+			if (previousIndex == -1)
+			{
+				InsertKey(null, null, frame);
+				return;
+			}
+			int nextIndex = previousIndex + 1;
+			if (nextIndex >= animationKeys.Count)
+			{
+				InsertKey(animationKeys[previousIndex], null, frame);
+				return;
+			}
+			InsertKey(animationKeys[previousIndex], animationKeys[nextIndex], frame);
+		}
+
+		private void InsertKey(AnimationKey previousKey, AnimationKey nextKey, int frame)
+		{
+			if (previousKey == null)
+			{
+				AddKey(new AnimationKey()
+				{
+					TimePosition = frame,
+				});
+				return;
+			}
+			if (nextKey == null)
+			{
+				AddKey(new AnimationKey()
+				{
+					SingleValue = previousKey.SingleValue,
+					Vector2Value = previousKey.Vector2Value,
+					Vector3Value = previousKey.Vector3Value,
+					TimePosition = frame,
+				});
+				return;
+			}
+			AddKey(new AnimationKey()
+			{
+				SingleValue = previousKey.Ease.EasedValue(previousKey.SingleValue, nextKey.SingleValue, T()),
+				Vector2Value = previousKey.Ease.EasedValue(previousKey.Vector2Value, nextKey.Vector2Value, T()),
+				Vector3Value = previousKey.Ease.EasedValue(previousKey.Vector3Value, nextKey.Vector3Value, T()),
+				TimePosition = frame,
+			});
+
+			float T()
+			{
+				return math.remap(previousKey.TimePosition, nextKey.TimePosition, 0f, 1f, frame);
+			}
+		}
+
 		protected void InsertInstantChange(AnimationKey key, Sequence sequence, float frameTime)
 		{
 			sequence.InsertCallback(key.TimePosition * frameTime, () =>
@@ -113,7 +168,22 @@ namespace Rails.Runtime.Tracks
 			});
 		}
 
-		protected abstract void InsertTween(AnimationKey keyStart, AnimationKey keyEnd, Sequence sequence, float frameTime);
+		protected void InsertTween(AnimationKey keyStart, AnimationKey keyEnd, Sequence sequence, float frameTime)
+		{
+			Tween tween = CreateTween(keyStart, keyEnd, frameTime);
+			if (keyStart.Ease.Type is RailsEase.EaseType.EaseFunction)
+			{
+				tween.SetEase(keyStart.Ease.EaseFunc);
+			}
+			else if (keyStart.Ease.Type is RailsEase.EaseType.EaseCurve)
+			{
+				tween.SetEase(keyStart.Ease.CurveFunction);
+			}
+
+			sequence.Insert(keyStart.TimePosition * frameTime, tween);
+		}
+
+		protected abstract Tween CreateTween(AnimationKey keyStart, AnimationKey keyEnd, float frameTime);
 		protected abstract void InstantChange(AnimationKey key);
 
 		protected void NotifyPropertyChanged([CallerMemberName] string property = "")

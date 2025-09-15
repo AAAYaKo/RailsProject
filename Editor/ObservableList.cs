@@ -134,6 +134,31 @@ namespace Rails.Editor.ViewModel
 			list.RemoveRange(index, count);
 		}
 
+		public T Find(Predicate<T> predicate)
+		{
+			return list.Find(predicate);
+		}
+
+		public T FindLast(Predicate<T> predicate)
+		{
+			return list.FindLast(predicate);
+		}
+
+		public int FindIndex(Predicate<T> predicate)
+		{
+			return list.FindIndex(predicate);
+		}
+
+		public int FindLastIndex(Predicate<T> predicate)
+		{
+			return list.FindLastIndex(predicate);
+		}
+
+		public List<T> FindAll(Predicate<T> predicate)
+		{
+			return list.FindAll(predicate);
+		}
+
 		public void NotifyListChanged()
 		{
 			ListChanged?.Invoke();
