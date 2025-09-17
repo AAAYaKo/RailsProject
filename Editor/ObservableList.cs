@@ -81,7 +81,7 @@ namespace Rails.Editor.ViewModel
 		public bool Remove(T item)
 		{
 			bool result = list.Remove(item);
-			ListChanged.Invoke();
+			ListChanged?.Invoke();
 			return result;
 		}
 
@@ -157,6 +157,11 @@ namespace Rails.Editor.ViewModel
 		public List<T> FindAll(Predicate<T> predicate)
 		{
 			return list.FindAll(predicate);
+		}
+
+		public void ForEach(Action<T> action)
+		{
+			list.ForEach(action);
 		}
 
 		public void NotifyListChanged()

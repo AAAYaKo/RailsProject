@@ -67,6 +67,7 @@ namespace Rails.Editor.Controls
 			});
 			view.RemoveClicked += OnRemoveClicked;
 			view.KeyFrameClicked += OnKeyFrameClicked;
+			view.ValueEdited += OnValueEdited;
 			return view;
 		}
 
@@ -74,6 +75,7 @@ namespace Rails.Editor.Controls
 		{
 			element.RemoveClicked -= OnRemoveClicked;
 			element.KeyFrameClicked -= OnKeyFrameClicked;
+			element.ValueEdited -= OnValueEdited;
 		}
 
 		private void OnRemoveClicked(AnimationTrackView view)
@@ -88,6 +90,15 @@ namespace Rails.Editor.Controls
 				return;
 			Values[index].OnKeyFrameClicked();
 		}
+
+		private void OnValueEdited(AnimationTrackView view, ValueEditArgs args)
+		{
+			int index = views.IndexOf(view);
+			if (index < 0)
+				return;
+			Values[index].OnValueEdited(args);
+		}
+
 		private void OnAddClicked(Type type)
 		{
 			EditorContext.Instance.SelectedClip?.AddTrack(type);

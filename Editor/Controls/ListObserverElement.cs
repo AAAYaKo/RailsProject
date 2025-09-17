@@ -37,7 +37,11 @@ namespace Rails.Editor.Controls
 		{
 			if (Values.IsNullOrEmpty())
 			{
-				container.Clear();
+				views.ForEach(x =>
+				{
+					ResetElement(x);
+					container.Remove(x);
+				});
 				views.Clear();
 				return;
 			}

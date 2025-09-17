@@ -124,7 +124,10 @@ namespace Rails.Editor.ViewModel
 				Reference = model.SceneReference;
 
 			if (e.PropertyName == nameof(AnimationTrack.AnimationKeys))
+			{
 				UpdateViewModels(model.AnimationKeys);
+				OnTimeHeadPositionChanged(currentFrame);
+			}
 		}
 
 		public void OnTimeHeadPositionChanged(int frame)
@@ -162,6 +165,23 @@ namespace Rails.Editor.ViewModel
 			{
 				EditorContext.Instance.Record("Key Frame Added");
 				model.InsertNewKeyAt(currentFrame);
+			}
+		}
+
+		public void OnValueEdited(ValueEditArgs args)
+		{
+			int keyIndex = keys.FindIndex(x => x.TimePosition == currentFrame);
+			if (keyIndex >= 0)
+			{
+				EditorContext.Instance.Record("Key Value Changed");
+				model.AnimationKeys[keyIndex].SingleValue = args.SingleValue;
+				model.AnimationKeys[keyIndex].Vector2Value = args.Vector2Value;
+				model.AnimationKeys[keyIndex].Vector3Value = args.Vector3Value;
+			}
+			else
+			{
+				EditorContext.Instance.Record("Key Frame Added");
+				model.InsertNewKeyAt(currentFrame, args.SingleValue, args.Vector2Value, args.Vector3Value);
 			}
 		}
 
@@ -209,7 +229,6 @@ namespace Rails.Editor.ViewModel
 		{
 			OnTimeHeadPositionChanged(currentFrame);
 		}
-
 
 		private void UpdateCurrentValue(AnimationKeyViewModel previousKey, AnimationKeyViewModel nextKey, int frame)
 		{

@@ -1,4 +1,7 @@
-﻿using Rails.Editor.ViewModel;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Rails.Editor.ViewModel;
 using Unity.Properties;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -6,9 +9,10 @@ using UnityEngine.UIElements;
 namespace Rails.Editor.Controls
 {
 	[UxmlElement]
-	public partial class TrackLineView : ListObserverElement<AnimationKeyViewModel, TrackKey>
+	public partial class TrackLineView : ListObserverElement<AnimationKeyViewModel, TrackKeyView>
 	{
-		private const string SelectedClass = "tack-key--selected";
+		private const string SelectedClass = "track-key--selected";
+		public static readonly BindingId SelectedIndexesProperty = nameof(SelectedIndexes);
 
 		[UxmlAttribute("trackClass"), CreateProperty]
 		public string TrackClass
@@ -22,12 +26,31 @@ namespace Rails.Editor.Controls
 					views.ForEach(x => x.RemoveFromClassList(trackClass));
 				trackClass = value;
 				views.ForEach(x => x.AddToClassList(trackClass));
+				tweenLines.ForEach(x => x.TrackClass = trackClass);
 			}
 		}
 
 		[CreateProperty]
-		public ObservableList<int> SelectedIndexes { get; set; }
+		public ObservableList<int> SelectedIndexes 
+		{
+			get => selectedIndexes;
+			set
+			{
+				if (selectedIndexes == value)
+					return;
 
+				if (values != null)
+					selectedIndexes.ListChanged -= OnSelectionChanged;
+
+				selectedIndexes = value;
+				selectedIndexes.ListChanged += OnSelectionChanged;
+				OnSelectionChanged();
+			}
+		}
+
+		private ObservableList<int> selectedIndexes = new();
+		private List<TrackTweenLineView> tweenLines = new();
+		private Dictionary<int, TrackTweenLineView> keyToTweenLines = new();
 		private VisualElement moveContainer;
 		private string trackClass;
 		private float framePixelSize = 30;
@@ -70,77 +93,126 @@ namespace Rails.Editor.Controls
 		{
 			this.framePixelSize = framePixelSize;
 			views.ForEach(x => x.OnFramePixelSizeChanged(framePixelSize));
+			tweenLines.ForEach(x => x.OnFramePixelSizeChanged(framePixelSize));
+			UpdateTweenLines();
+		}
+
+		public void SelectKey(int keyIndex)
+		{
+			SelectedIndexes.Add(keyIndex);
+			views[keyIndex].AddToClassList(SelectedClass);
+			if (keyToTweenLines.ContainsKey(keyIndex))
+				keyToTweenLines[keyIndex].AddToClassList(SelectedClass);
+		}
+
+		public void DeselectKey(int keyIndex)
+		{
+			SelectedIndexes.Remove(keyIndex);
+			views[keyIndex].RemoveFromClassList(SelectedClass);
+			if (keyToTweenLines.ContainsKey(keyIndex))
+				keyToTweenLines[keyIndex].RemoveFromClassList(SelectedClass);
+		}
+
+		public void DeselectKeysAll()
+		{
+			SelectedIndexes.ForEach(x =>
+			{
+				views[x].RemoveFromClassList(SelectedClass);
+				if (keyToTweenLines.ContainsKey(x))
+					keyToTweenLines[x].RemoveFromClassList(SelectedClass);
+			});
+			SelectedIndexes.Clear();
+		}
+
+		private void OnSelectionChanged()
+		{
+			
+		}
+
+		private void UpdateTweenLines()
+		{
+			if (Values.IsNullOrEmpty())
+			{
+				tweenLines.ForEach(x => container.Remove(x));
+				tweenLines.Clear();
+				return;
+			}
+			int count = Values.Take(Values.Count - 1).Count(x => x.Ease.EaseType is not Runtime.RailsEase.EaseType.NoAnimation);
+
+			while (count > tweenLines.Count)
+			{
+				var line = CreateTweenLine();
+				container.Add(line);
+				tweenLines.Add(line);
+			}
+			while (count < tweenLines.Count)
+			{
+				var line = tweenLines[^1];
+				container.Remove(line);
+				tweenLines.Remove(line);
+			}
+
+			int lineI = 0;
+			keyToTweenLines.Clear();
+			for (int i = 0; i < Values.Count - 1; i++)
+			{
+				var previous = Values[i];
+				var next = Values[i + 1];
+
+				if (previous.Ease.EaseType is not Runtime.RailsEase.EaseType.NoAnimation)
+				{
+					TrackTweenLineView line = tweenLines[lineI];
+					keyToTweenLines.Add(Values.IndexOf(previous), line);
+					lineI++;
+					line.StartFrame = previous.TimePosition;
+					line.EndFrame = next.TimePosition;
+				}
+			}
+		}
+
+		private TrackTweenLineView CreateTweenLine()
+		{
+			TrackTweenLineView line = new();
+			if (!TrackClass.IsNullOrEmpty())
+				line.TrackClass = trackClass;
+			line.OnFramePixelSizeChanged(framePixelSize);
+			return line;
 		}
 
 		protected override void UpdateList()
 		{
 			base.UpdateList();
 			views.ForEach(x => x.OnFramePixelSizeChanged(framePixelSize));
+			UpdateTweenLines();
 		}
 
-		protected override TrackKey CreateElement()
+		protected override TrackKeyView CreateElement()
 		{
-			TrackKey key = new();
-			key.AddToClassList(trackClass);
+			TrackKeyView key = new();
+			if (!TrackClass.IsNullOrEmpty())
+				key.AddToClassList(TrackClass);
+			key.OnClick += OnClickKey;
 			return key;
 		}
 
-		protected override void ResetElement(TrackKey element)
+		protected override void ResetElement(TrackKeyView element)
 		{
-		}
-	}
-
-	[UxmlElement]
-	public partial class TrackKey : VisualElement
-	{
-		public static readonly BindingId TimePositionProperty = nameof(TimePosition);
-
-		[UxmlAttribute("timePosition"), CreateProperty]
-		public int TimePosition
-		{
-			get => timePosition;
-			private set
-			{
-				if (timePosition == value)
-					return;
-				timePosition = value;
-				UpdatePosition();
-				NotifyPropertyChanged(TimePositionProperty);
-			}
+			element.OnClick -= OnClickKey;
 		}
 
-		private int timePosition;
-		private float framePixelSize = 30;
-
-
-		public TrackKey()
+		private void OnClickKey(TrackKeyView key, ClickEvent clickEvent)
 		{
-			AddToClassList("track-key");
-			SetBinding(nameof(TimePosition), new DataBinding
-			{
-				dataSourcePath = new PropertyPath(nameof(AnimationKeyViewModel.TimePosition)),
-				bindingMode = BindingMode.TwoWay,
-			});
-			RegisterCallback<GeometryChangedEvent>(x =>
-			{
-				UpdatePosition();
-			});
-			RegisterCallback<ClickEvent>(x =>
-			{
-				Debug.Log("a");
-				AddToClassList("tack-key--selected");
-			});
-		}
+			int index = views.IndexOf(key);
+			if (index < 0)
+				return;
 
-		public void OnFramePixelSizeChanged(float framePixelSize)
-		{
-			this.framePixelSize = framePixelSize;
-			UpdatePosition();
-		}
+			if (!SelectedIndexes.Contains(index) && !clickEvent.actionKey)
+				DeselectKeysAll();
 
-		private void UpdatePosition()
-		{
-			style.left = TrackLinesView.StartAdditional - layout.width / 2 + TimePosition * framePixelSize;
+			if (SelectedIndexes.Contains(index))
+				DeselectKey(index);
+			else
+				SelectKey(index);
 		}
 	}
 }

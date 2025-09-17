@@ -125,6 +125,26 @@ namespace Rails.Runtime.Tracks
 			InsertKey(animationKeys[previousIndex], animationKeys[nextIndex], frame);
 		}
 
+		public void InsertNewKeyAt(int frame, float singleValue, Vector2 vector2Value, Vector3 vector3Value)
+		{
+			int previousIndex = animationKeys.FindLastIndex(x =>
+			{
+				return x.TimePosition <= frame;
+			});
+			if (previousIndex == -1)
+			{
+				InsertKey(null, null, frame, singleValue, vector2Value, vector3Value);
+				return;
+			}
+			int nextIndex = previousIndex + 1;
+			if (nextIndex >= animationKeys.Count)
+			{
+				InsertKey(animationKeys[previousIndex], null, frame, singleValue, vector2Value, vector3Value);
+				return;
+			}
+			InsertKey(animationKeys[previousIndex], animationKeys[nextIndex], frame, singleValue, vector2Value, vector3Value);
+		}
+
 		private void InsertKey(AnimationKey previousKey, AnimationKey nextKey, int frame)
 		{
 			if (previousKey == null)
@@ -158,6 +178,39 @@ namespace Rails.Runtime.Tracks
 			{
 				return math.remap(previousKey.TimePosition, nextKey.TimePosition, 0f, 1f, frame);
 			}
+		}
+
+		private void InsertKey(AnimationKey previousKey, AnimationKey nextKey, int frame, float singleValue, Vector2 vector2Value, Vector3 vector3Value)
+		{
+			if (previousKey == null)
+			{
+				AddKey(new AnimationKey()
+				{
+					SingleValue = singleValue,
+					Vector2Value = vector2Value,
+					Vector3Value = vector3Value,
+					TimePosition = frame,
+				});
+				return;
+			}
+			if (nextKey == null)
+			{
+				AddKey(new AnimationKey()
+				{
+					SingleValue = singleValue,
+					Vector2Value = vector2Value,
+					Vector3Value = vector3Value,
+					TimePosition = frame,
+				});
+				return;
+			}
+			AddKey(new AnimationKey()
+			{
+				SingleValue = singleValue,
+				Vector2Value = vector2Value,
+				Vector3Value = vector3Value,
+				TimePosition = frame,
+			});
 		}
 
 		protected void InsertInstantChange(AnimationKey key, Sequence sequence, float frameTime)
