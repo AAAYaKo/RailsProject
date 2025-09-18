@@ -9,6 +9,7 @@ namespace Rails.Editor
 {
 	public class RailsEditor : EditorWindow
 	{
+		[SerializeField] private StyleSheet darkTheme = default;
 		[SerializeField] private VisualTreeAsset m_VisualTreeAsset = default;
 		[SerializeField] private int selectedClip = 0;
 
@@ -17,10 +18,10 @@ namespace Rails.Editor
 
 
 		[MenuItem("Window/RailsEditor")]
-		public static void ShowExample()
+		public static void OpenWindow()
 		{
 			RailsEditor wnd = GetWindow<RailsEditor>();
-			var logo = Resources.Load<Texture>("Icons/logo_small");
+			var logo = EditorGUIUtility.pixelsPerPoint > 1 ? Resources.Load<Texture>("Icons/logo@2x") : Resources.Load<Texture>("Icons/logo");
 			wnd.titleContent = new GUIContent("RailsEditor", logo);
 		}
 
@@ -51,6 +52,7 @@ namespace Rails.Editor
 
 			// Instantiate UXML
 			VisualElement uxml = m_VisualTreeAsset.Instantiate();
+			uxml.styleSheets.Add(darkTheme);
 			uxml.style.flexBasis = new Length(100, LengthUnit.Percent);
 			root.Add(uxml);
 

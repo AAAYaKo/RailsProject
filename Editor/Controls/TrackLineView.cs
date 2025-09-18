@@ -24,10 +24,9 @@ namespace Rails.Editor.Controls
 				if (trackClass == value)
 					return;
 				if (!trackClass.IsNullOrEmpty())
-					views.ForEach(x => x.RemoveFromClassList(trackClass));
+					RemoveFromClassList(trackClass);
 				trackClass = value;
-				views.ForEach(x => x.AddToClassList(trackClass));
-				tweenLines.ForEach(x => x.TrackClass = trackClass);
+				AddToClassList(trackClass);
 			}
 		}
 
@@ -282,8 +281,6 @@ namespace Rails.Editor.Controls
 		private TrackTweenLineView CreateTweenLine()
 		{
 			TrackTweenLineView line = new();
-			if (!TrackClass.IsNullOrEmpty())
-				line.TrackClass = trackClass;
 			line.OnFramePixelSizeChanged(framePixelSize);
 			return line;
 		}
@@ -310,8 +307,6 @@ namespace Rails.Editor.Controls
 		protected override TrackKeyView CreateElement()
 		{
 			TrackKeyView key = new();
-			if (!TrackClass.IsNullOrEmpty())
-				key.AddToClassList(TrackClass);
 			key.OnClick += OnClickKey;
 			return key;
 		}

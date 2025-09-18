@@ -40,9 +40,9 @@ namespace Rails.Editor.Controls
 				if (trackClass == value)
 					return;
 				if (!trackClass.IsNullOrEmpty())
-					keyToggle.RemoveFromClassList(trackClass);
+					RemoveFromClassList(trackClass);
 				trackClass = value;
-				keyToggle.AddToClassList(trackClass);
+				AddToClassList(trackClass);
 			}
 		}
 		[UxmlAttribute("isKeyFrame"), CreateProperty]
