@@ -88,7 +88,7 @@ namespace Rails.Editor.Controls
 			int index = views.IndexOf(view);
 			if (index < 0)
 				return;
-			Values[index].OnKeyFrameClicked();
+			Values[index].OnKeyFrameButtonClicked();
 		}
 
 		private void OnValueEdited(AnimationTrackView view, ValueEditArgs args)

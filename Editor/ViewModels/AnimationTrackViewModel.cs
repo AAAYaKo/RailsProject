@@ -80,6 +80,13 @@ namespace Rails.Editor.ViewModel
 				NotifyPropertyChanged();
 			}
 		}
+		[CreateProperty]
+		public ObservableList<int> SelectedIndexes
+		{
+			get => selectedIndexes;
+		}
+
+		public event Action SelectionChanged;
 
 		private UnityEngine.Object reference;
 		private TrackData trackData;
@@ -89,10 +96,12 @@ namespace Rails.Editor.ViewModel
 		private Vector3? currentVector3Value;
 		private bool isKeyFrame;
 		private int currentFrame;
+		private ObservableList<int> selectedIndexes = new();
 
 
 		public AnimationTrackViewModel()
 		{
+			SelectedIndexes.ListChanged += OnSelectionChanged;
 		}
 
 		protected override void OnModelChanged()
@@ -108,6 +117,8 @@ namespace Rails.Editor.ViewModel
 			NotifyPropertyChanged(nameof(ValueType));
 			NotifyPropertyChanged(nameof(Keys));
 
+			selectedIndexes.Clear();
+			NotifyPropertyChanged(nameof(model.AnimationKeys));
 			if (model == null)
 			{
 				if (keys.Count > 0)
@@ -153,12 +164,14 @@ namespace Rails.Editor.ViewModel
 			UpdateCurrentValue(keys[previousIndex], keys[nextIndex], frame);
 		}
 
-		public void OnKeyFrameClicked()
+		public void OnKeyFrameButtonClicked()
 		{
 			int keyIndex = keys.FindIndex(x => x.TimePosition == currentFrame);
 			if (keyIndex >= 0)
 			{
 				EditorContext.Instance.Record("Key Frame Removed");
+				if (SelectedIndexes.Contains(keyIndex))
+					SelectedIndexes.Remove(keyIndex);
 				model.RemoveKey(model.AnimationKeys[keyIndex]);
 			}
 			else
@@ -183,6 +196,17 @@ namespace Rails.Editor.ViewModel
 				EditorContext.Instance.Record("Key Frame Added");
 				model.InsertNewKeyAt(currentFrame, args.SingleValue, args.Vector2Value, args.Vector3Value);
 			}
+		}
+
+		public void DeselectAll()
+		{
+			SelectedIndexes.Clear();
+		}
+
+		public void MoveAnimationKeys(Dictionary<int, int> keysFramesPositions)
+		{
+			EditorContext.Instance.Record("Animation Keys Moved");
+			model.MoveMultipleKeys(keysFramesPositions);
 		}
 
 		private void UpdateViewModels(List<AnimationKey> models)
@@ -284,6 +308,11 @@ namespace Rails.Editor.ViewModel
 			{
 				return math.remap(previousKey.TimePosition, nextKey.TimePosition, 0f, 1f, frame);
 			}
+		}
+
+		private void OnSelectionChanged()
+		{
+			SelectionChanged?.Invoke();
 		}
 
 		public static readonly Dictionary<Type, TrackData> TrackTypes = new()

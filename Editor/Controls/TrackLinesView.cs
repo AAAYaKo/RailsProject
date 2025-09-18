@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using Rails.Editor.Manipulator;
 using Rails.Editor.ViewModel;
 using Rails.Runtime;
 using Unity.Mathematics;
@@ -107,7 +109,11 @@ namespace Rails.Editor.Controls
 		private ScrollView scrollView;
 		private Scroller verticalScroller;
 		private MinMaxSlider slider;
+		private new VisualElement contentContainer;
 		private VisualElement viewport;
+		private VisualElement selectionBoxContainer;
+		private VisualElement selectionBoxManipulatorLayer;
+		private SelectionBoxDragManipulator selectionBoxManipulator;
 		private int duration = -1;
 		private int timeHeadPosition;
 		private bool? canEdit;
@@ -126,7 +132,10 @@ namespace Rails.Editor.Controls
 			verticalScroller = scrollView.verticalScroller;
 			slider = this.Q<MinMaxSlider>();
 			slider.lowLimit = 0;
+			contentContainer = scrollView.Q<VisualElement>("content-container");
 			container = scrollView.Q<VisualElement>("tracks-container");
+			selectionBoxContainer = scrollView.Q<VisualElement>("selection-box-container");
+			selectionBoxManipulatorLayer = scrollView.Q<VisualElement>("selection-box-manipulator");
 
 			viewport = scrollView.contentViewport;
 			viewport.RegisterCallback<GeometryChangedEvent>(x =>
@@ -135,7 +144,12 @@ namespace Rails.Editor.Controls
 			});
 			slider.RegisterCallback<ChangeEvent<Vector2>>(SliderChangedHandler);
 
-			RegisterCallback<ClickEvent>(OnMouseClick);
+			selectionBoxManipulator = new SelectionBoxDragManipulator(selectionBoxContainer);
+			selectionBoxManipulator.SelectionBegin += OnSelectionBegin;
+			selectionBoxManipulator.SelectionChanged += OnSelectionChanged;
+			selectionBoxManipulator.SelectionComplete += OnSelectionComplete;
+			selectionBoxManipulatorLayer.RegisterCallback<ClickEvent>(OnMouseClick);
+			selectionBoxManipulatorLayer.AddManipulator(selectionBoxManipulator);
 		}
 
 		public void Scroll(Vector2 delta)
@@ -157,16 +171,21 @@ namespace Rails.Editor.Controls
 			slider.value += new Vector2(positionDelta, positionDelta);
 		}
 
-
 		protected override TrackLineView CreateElement()
 		{
 			TrackLineView line = new();
+			line.DeselectAllPerformed += OnDeselectAllPerformed;
+			line.KeyDragged += OnKeyDragged;
+			line.KeyDragComplete += OnKeyDragComplete;
 			FramePixelSizeChanged += line.OnFramePixelSizeChanged;
 			return line;
 		}
 
 		protected override void ResetElement(TrackLineView element)
 		{
+			element.DeselectAllPerformed -= OnDeselectAllPerformed;
+			element.KeyDragged -= OnKeyDragged;
+			element.KeyDragComplete -= OnKeyDragComplete;
 			FramePixelSizeChanged -= element.OnFramePixelSizeChanged;
 		}
 
@@ -200,14 +219,14 @@ namespace Rails.Editor.Controls
 				slider.lowLimit, slider.highLimit - delta,
 				0, maxOffset,
 				value.x);
-			if (!Mathf.Approximately(container.layout.position.x, position))
-				container.style.left = -position;
+			if (!Mathf.Approximately(contentContainer.layout.position.x, position))
+				contentContainer.style.left = -position;
 		}
 
 		private void AdjustContainer(float frameSize)
 		{
 			containerSize = StartAdditional + duration * frameSize + EndAdditional;
-			container.style.width = containerSize;
+			contentContainer.style.width = containerSize;
 		}
 
 		private void AdjustFramePixelSize()
@@ -224,6 +243,88 @@ namespace Rails.Editor.Controls
 				float globalPixelsPosition = x - TrackLinesView.StartAdditional + slider.value.x * framePixelSize;
 				int frames = Mathf.RoundToInt(globalPixelsPosition / framePixelSize);
 				TimeHeadPosition = frames;
+			}
+		}
+
+		private void OnDeselectAllPerformed(TrackLineView line)
+		{
+			int index = views.IndexOf(line);
+			if (index < 0)
+				return;
+
+			for (int i = 0; i < Values.Count; i++)
+			{
+				if (i == index)
+					continue;
+				Values[i].DeselectAll();
+			}
+		}
+
+		private void OnSelectionBegin(Rect selectionRect, MouseDownEvent evt)
+		{
+			foreach (var line in views)
+				line.OnSelectionBoxBegin(evt);
+		}
+
+		private void OnSelectionChanged(Rect selectionRect, MouseMoveEvent evt)
+		{
+			Rect selectionWorldRect = selectionBoxContainer.LocalToWorld(selectionRect);
+			foreach (var line in views)
+			{
+				if (line.layout.Overlaps(selectionRect))
+				{
+					line.OnSelectionBoxChanged(selectionWorldRect, evt);
+				}
+			}
+
+			Vector2 mousePosition = viewport.WorldToLocal(evt.mousePosition);
+			if (!viewport.ContainsPoint(mousePosition))
+			{
+				Vector2 delta = mousePosition - viewport.layout.size;
+				Scroll(delta);
+			}
+		}
+
+		private void OnSelectionComplete(Rect selectionRect, MouseUpEvent evt)
+		{
+			foreach (var line in views)
+			{
+				if (line.layout.Overlaps(selectionRect))
+				{
+					line.OnSelectionBoxComplete();
+				}
+			}
+		}
+
+		private void OnKeyDragged(int deltaFrames)
+		{
+			foreach (var line in views)
+			{
+				if (line.SelectedKeysFrames.IsNullOrEmpty())
+					continue;
+				if (line.FirstSelectedKeyFrame + deltaFrames < 0 
+					|| line.LastSelectedKeyFrame + deltaFrames > Duration)
+					return;
+			}
+
+			foreach (var line in views)
+				line.MoveSelectedKeys(deltaFrames);
+		}
+
+		private void OnKeyDragComplete()
+		{
+			for (int i = 0; i < Values.Count; i++)
+			{
+				var trackView = views[i];
+				if (trackView.SelectedIndexes.IsNullOrEmpty())
+					continue;
+				trackView.UpdateSelectedKeyFrames();
+				var trackViewModel = Values[i];
+				var keysMoveMap = trackView.SelectedIndexes
+					.Zip(trackView.SelectedKeysFrames, (x, y) => new { x, y })
+					.ToDictionary(x => x.x, x => x.y);
+
+				trackViewModel.MoveAnimationKeys(keysMoveMap);
 			}
 		}
 	}

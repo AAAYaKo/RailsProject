@@ -14,10 +14,12 @@ namespace Rails.Editor.ViewModel
 
 		public void BindModel(TModel model)
 		{
+			bool modelChanged = !this.model?.Equals(model) ?? true;
 			this.model = model;
 			if (model != null)
 				this.model.PropertyChanged += OnModelPropertyChanged;
-			OnModelChanged();
+			if (modelChanged)
+				OnModelChanged();
 		}
 
 		public void UnbindModel()

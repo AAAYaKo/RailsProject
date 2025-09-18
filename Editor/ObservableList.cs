@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Rails.Editor.ViewModel
+namespace Rails.Editor
 {
 	[Serializable]
 	public class ObservableList<T> : IList<T>
@@ -174,7 +174,10 @@ namespace Rails.Editor.ViewModel
 			return GetEnumerator();
 		}
 	}
+}
 
+namespace Rails.Editor.ViewModel
+{
 	public static class ListExtension
 	{
 		public static bool IsNullOrEmpty<T>(this IList<T> list)

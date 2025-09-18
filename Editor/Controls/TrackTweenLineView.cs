@@ -1,65 +1,8 @@
-﻿using System;
-using Rails.Editor.ViewModel;
-using Unity.Properties;
+﻿using Rails.Editor.ViewModel;
 using UnityEngine.UIElements;
 
 namespace Rails.Editor.Controls
 {
-	[UxmlElement]
-	public partial class TrackKeyView : VisualElement
-	{
-		public static readonly BindingId TimePositionProperty = nameof(TimePosition);
-
-		[UxmlAttribute("timePosition"), CreateProperty]
-		public int TimePosition
-		{
-			get => timePosition ?? 0;
-			private set
-			{
-				if (timePosition == value)
-					return;
-				timePosition = value;
-				UpdatePosition();
-				NotifyPropertyChanged(TimePositionProperty);
-			}
-		}
-
-		public event Action<TrackKeyView, ClickEvent> OnClick;
-
-		private int? timePosition;
-		private float framePixelSize = 30;
-
-
-		public TrackKeyView()
-		{
-			AddToClassList("track-key");
-			SetBinding(nameof(TimePosition), new DataBinding
-			{
-				dataSourcePath = new PropertyPath(nameof(AnimationKeyViewModel.TimePosition)),
-				bindingMode = BindingMode.TwoWay,
-			});
-			RegisterCallback<GeometryChangedEvent>(x =>
-			{
-				UpdatePosition();
-			});
-			RegisterCallback<ClickEvent>(x =>
-			{
-				OnClick?.Invoke(this, x);
-			});
-		}
-
-		public void OnFramePixelSizeChanged(float framePixelSize)
-		{
-			this.framePixelSize = framePixelSize;
-			UpdatePosition();
-		}
-
-		private void UpdatePosition()
-		{
-			style.left = TrackLinesView.StartAdditional - layout.width / 2 + TimePosition * framePixelSize;
-		}
-	}
-
 	[UxmlElement]
 	public partial class TrackTweenLineView : VisualElement
 	{
@@ -74,6 +17,7 @@ namespace Rails.Editor.Controls
 					return;
 				startFrame = value;
 				UpdateStartPosition();
+				UpdateEndPosition();
 			}
 		}
 
@@ -85,6 +29,7 @@ namespace Rails.Editor.Controls
 				if (endFrame == value)
 					return;
 				endFrame = value;
+				UpdateStartPosition();
 				UpdateEndPosition();
 			}
 		}

@@ -258,3 +258,20 @@
     align-self: center;
     width: 100%;
 }
+
+.selection-box {
+    position: absolute;
+    background-color: rgba(71, 158, 255, 0.15);
+    border-left-color: rgba(71, 158, 255, 0.5);
+    border-right-color: rgba(71, 158, 255, 0.5);
+    border-top-color: rgba(71, 158, 255, 0.5);
+    border-bottom-color: rgba(71, 158, 255, 0.5);
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-left-radius: 1px;
+    border-top-right-radius: 1px;
+    border-bottom-right-radius: 1px;
+    border-bottom-left-radius: 1px;
+}

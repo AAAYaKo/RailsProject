@@ -130,6 +130,8 @@ namespace Rails.Editor.ViewModel
 			}
 		}
 
+		public event Action SelectionChanged;
+
 		private string durationText;
 		private int durationFrames;
 		private string timeHeadPositionText;

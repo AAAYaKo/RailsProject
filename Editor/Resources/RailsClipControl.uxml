@@ -4,7 +4,7 @@
             <ui:VisualElement style="flex-grow: 1;" />
             <ui:Button text="00:00" icon-image="project://database/Assets/Rails/Editor/Resources/Icons/drop_down_arrow.svg?fileID=7388822144124034973&amp;guid=907da6502db47fc4bac2bb00fb5984c4&amp;type=3#drop_down_arrow" name="time" class="time-drop-down">
                 <Bindings>
-                    <ui:DataBinding property="text" data-source-path="DurationText" binding-mode="ToTarget" />
+                    <ui:DataBinding property="text" data-source-path="TimeHeadPositionText" binding-mode="ToTarget" />
                 </Bindings>
             </ui:Button>
         </ui:VisualElement>

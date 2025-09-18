@@ -22,9 +22,7 @@ namespace Rails.Runtime.Tracks
 			get => timePosition;
 			set
 			{
-				if (timePosition == value)
-					return;
-				timePosition = value;
+				SetTimePositionWithoutNotify(value);
 				NotifyPropertyChanged();
 			}
 		}
@@ -75,6 +73,12 @@ namespace Rails.Runtime.Tracks
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
+		public void SetTimePositionWithoutNotify(int value)
+		{
+			if (timePosition == value)
+				return;
+			timePosition = value;
+		}
 
 		protected void NotifyPropertyChanged([CallerMemberName] string property = "")
 		{

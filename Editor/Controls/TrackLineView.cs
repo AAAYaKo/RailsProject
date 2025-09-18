@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Rails.Editor.ViewModel;
+using Unity.Mathematics;
 using Unity.Properties;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -31,7 +32,7 @@ namespace Rails.Editor.Controls
 		}
 
 		[CreateProperty]
-		public ObservableList<int> SelectedIndexes 
+		public ObservableList<int> SelectedIndexes
 		{
 			get => selectedIndexes;
 			set
@@ -39,7 +40,7 @@ namespace Rails.Editor.Controls
 				if (selectedIndexes == value)
 					return;
 
-				if (values != null)
+				if (selectedIndexes != null)
 					selectedIndexes.ListChanged -= OnSelectionChanged;
 
 				selectedIndexes = value;
@@ -47,8 +48,15 @@ namespace Rails.Editor.Controls
 				OnSelectionChanged();
 			}
 		}
+		public List<int> SelectedKeysFrames { get; } = new();
+		public int FirstSelectedKeyFrame { get; private set; }
+		public int LastSelectedKeyFrame { get; private set; }
+		public event Action<TrackLineView> DeselectAllPerformed;
+		public event Action<int> KeyDragged;
+		public event Action KeyDragComplete;
 
-		private ObservableList<int> selectedIndexes = new();
+		private ObservableList<int> selectedIndexes;
+		private List<int> selectedViewKeys = new();
 		private List<TrackTweenLineView> tweenLines = new();
 		private Dictionary<int, TrackTweenLineView> keyToTweenLines = new();
 		private VisualElement moveContainer;
@@ -65,6 +73,7 @@ namespace Rails.Editor.Controls
 			container.style.height = new Length(100, LengthUnit.Percent);
 			container.style.flexDirection = FlexDirection.Row;
 			container.style.flexShrink = 0;
+			container.pickingMode = PickingMode.Ignore;
 			container.name = "keys-container";
 			moveContainer.style.position = Position.Absolute;
 			moveContainer.style.width = new Length(100, LengthUnit.Percent);
@@ -76,6 +85,7 @@ namespace Rails.Editor.Controls
 			Add(container);
 			Add(moveContainer);
 
+			pickingMode = PickingMode.Ignore;
 			AddToClassList("track-line");
 			SetBinding(nameof(Values), new DataBinding
 			{
@@ -85,6 +95,11 @@ namespace Rails.Editor.Controls
 			SetBinding(nameof(TrackClass), new DataBinding
 			{
 				dataSourcePath = new PropertyPath(nameof(AnimationTrackViewModel.TrackClass)),
+				bindingMode = BindingMode.ToTarget,
+			});
+			SetBinding(nameof(SelectedIndexes), new DataBinding
+			{
+				dataSourcePath = new PropertyPath(nameof(AnimationTrackViewModel.SelectedIndexes)),
 				bindingMode = BindingMode.ToTarget,
 			});
 		}
@@ -97,36 +112,132 @@ namespace Rails.Editor.Controls
 			UpdateTweenLines();
 		}
 
+		public void OnSelectionBoxBegin(MouseDownEvent evt)
+		{
+			if (!evt.actionKey)
+			{
+				DeselectAllKeys();
+				PopulateSelectedIndexes();
+			}
+		}
+
+		public void OnSelectionBoxChanged(Rect selectionWorldRect, MouseMoveEvent evt)
+		{
+			Rect selectionRect = this.WorldToLocal(selectionWorldRect);
+			for (int i = 0; i < views.Count; i++)
+			{
+				var view = views[i];
+				if (view.layout.Overlaps(selectionRect))
+					SelectKey(i);
+				else if (!SelectedIndexes.Contains(i))
+					DeselectKey(i);
+			}
+		}
+
+		public void OnSelectionBoxComplete()
+		{
+			PopulateSelectedIndexes();
+		}
+
 		public void SelectKey(int keyIndex)
 		{
-			SelectedIndexes.Add(keyIndex);
-			views[keyIndex].AddToClassList(SelectedClass);
+			if (selectedViewKeys.Contains(keyIndex))
+				return;
+			selectedViewKeys.Add(keyIndex);
+			var key = views[keyIndex];
+			container.Remove(key);
+			moveContainer.Add(key);
+			key.AddToClassList(SelectedClass);
+			key.KeyDragged += OnKeyDragged;
+			key.KeyDragComplete += OnKeyDragComplete;
 			if (keyToTweenLines.ContainsKey(keyIndex))
 				keyToTweenLines[keyIndex].AddToClassList(SelectedClass);
 		}
 
 		public void DeselectKey(int keyIndex)
 		{
-			SelectedIndexes.Remove(keyIndex);
-			views[keyIndex].RemoveFromClassList(SelectedClass);
+			if (!selectedViewKeys.Contains(keyIndex))
+				return;
+			selectedViewKeys.Remove(keyIndex);
+			var key = views[keyIndex];
+			moveContainer.Remove(key);
+			container.Add(key);
+			key.RemoveFromClassList(SelectedClass);
+			key.KeyDragged -= OnKeyDragged;
+			key.KeyDragComplete -= OnKeyDragComplete;
 			if (keyToTweenLines.ContainsKey(keyIndex))
 				keyToTweenLines[keyIndex].RemoveFromClassList(SelectedClass);
 		}
 
-		public void DeselectKeysAll()
+		public void DeselectAllKeys(TrackKeyView keyIgnore = null)
 		{
-			SelectedIndexes.ForEach(x =>
+			bool wasSelected = false;
+			selectedViewKeys.ForEach(x =>
 			{
-				views[x].RemoveFromClassList(SelectedClass);
+				var key = views[x];
+				if (keyIgnore == key)
+				{
+					wasSelected = true;
+					return;
+				}
+				moveContainer.Remove(key);
+				container.Add(key);
+				key.RemoveFromClassList(SelectedClass);
+				key.KeyDragged -= OnKeyDragged;
+				key.KeyDragComplete -= OnKeyDragComplete;
 				if (keyToTweenLines.ContainsKey(x))
 					keyToTweenLines[x].RemoveFromClassList(SelectedClass);
 			});
-			SelectedIndexes.Clear();
+			selectedViewKeys.Clear();
+			if (wasSelected)
+			{
+				int keyIgnoreIndex = views.IndexOf(keyIgnore);
+				if (keyIgnoreIndex >= 0)
+					selectedViewKeys.Add(keyIgnoreIndex);
+			}
+		}
+
+		public void MoveSelectedKeys(int deltaFrames)
+		{
+			if (SelectedIndexes.IsNullOrEmpty())
+				return;
+			foreach (var key in SelectedIndexes)
+			{
+				views[key].TimePosition = Values[key].TimePosition + deltaFrames;
+			}
+
+			UpdateTweenLines();
+		}
+
+		public void UpdateSelectedKeyFrames()
+		{
+			SelectedKeysFrames.Clear();
+			FirstSelectedKeyFrame = int.MaxValue;
+			LastSelectedKeyFrame = int.MinValue;
+			foreach (int key in SelectedIndexes)
+			{
+				int frame = views[key].TimePosition;
+				FirstSelectedKeyFrame = math.min(frame, FirstSelectedKeyFrame);
+				LastSelectedKeyFrame = math.max(frame, LastSelectedKeyFrame);
+				SelectedKeysFrames.Add(frame);
+			}
 		}
 
 		private void OnSelectionChanged()
 		{
-			
+			List<int> toRemove = selectedViewKeys.FindAll(x => !SelectedIndexes.Contains(x));
+			foreach (int key in toRemove)
+			{
+				DeselectKey(key);
+			}
+
+			foreach (int key in SelectedIndexes)
+			{
+				if (!selectedViewKeys.Contains(key))
+					SelectKey(key);
+			}
+
+			UpdateSelectedKeyFrames();
 		}
 
 		private void UpdateTweenLines()
@@ -157,15 +268,13 @@ namespace Rails.Editor.Controls
 			for (int i = 0; i < Values.Count - 1; i++)
 			{
 				var previous = Values[i];
-				var next = Values[i + 1];
-
 				if (previous.Ease.EaseType is not Runtime.RailsEase.EaseType.NoAnimation)
 				{
 					TrackTweenLineView line = tweenLines[lineI];
-					keyToTweenLines.Add(Values.IndexOf(previous), line);
+					keyToTweenLines.Add(i, line);
 					lineI++;
-					line.StartFrame = previous.TimePosition;
-					line.EndFrame = next.TimePosition;
+					line.StartFrame = views[i].TimePosition;
+					line.EndFrame = views[i + 1].TimePosition;
 				}
 			}
 		}
@@ -181,8 +290,20 @@ namespace Rails.Editor.Controls
 
 		protected override void UpdateList()
 		{
+			DeselectAllKeys();
 			base.UpdateList();
-			views.ForEach(x => x.OnFramePixelSizeChanged(framePixelSize));
+			for (int i = 0; i < views.Count; i++)
+			{
+				var keyView = views[i];
+				var keyViewModel = Values[i];
+				keyView.SetTimePositionWithoutUpdate(keyViewModel.TimePosition);
+				keyView.OnFramePixelSizeChanged(framePixelSize);
+			}
+			if (!SelectedIndexes.IsNullOrEmpty())
+			{
+				foreach (int key in SelectedIndexes)
+					SelectKey(key);
+			}
 			UpdateTweenLines();
 		}
 
@@ -200,19 +321,47 @@ namespace Rails.Editor.Controls
 			element.OnClick -= OnClickKey;
 		}
 
-		private void OnClickKey(TrackKeyView key, ClickEvent clickEvent)
+		private void OnKeyDragged(int deltaFrames)
+		{
+			KeyDragged?.Invoke(deltaFrames);
+		}
+
+		private void OnKeyDragComplete(TrackKeyView view)
+		{
+			KeyDragComplete?.Invoke();
+		}
+
+		private void OnClickKey(TrackKeyView key, bool actionKey)
 		{
 			int index = views.IndexOf(key);
 			if (index < 0)
 				return;
 
-			if (!SelectedIndexes.Contains(index) && !clickEvent.actionKey)
-				DeselectKeysAll();
+			if (!actionKey && !selectedViewKeys.Contains(index))
+			{
+				DeselectAllKeys(key);
+				DeselectAllPerformed?.Invoke(this);
+			}
 
-			if (SelectedIndexes.Contains(index))
-				DeselectKey(index);
-			else
+			if (!selectedViewKeys.Contains(index))
+			{
 				SelectKey(index);
+			}
+
+			PopulateSelectedIndexes();
+		}
+
+		private void PopulateSelectedIndexes()
+		{
+			List<int> toRemove = SelectedIndexes.FindAll(x => !selectedViewKeys.Contains(x));
+			List<int> toAdd = selectedViewKeys.FindAll(x => !SelectedIndexes.Contains(x));
+			foreach (int keyIndex in toRemove)
+				SelectedIndexes.RemoveWithoutNotify(keyIndex);
+
+			foreach (int keyIndex in toAdd)
+				SelectedIndexes.AddWithoutNotify(keyIndex);
+
+			SelectedIndexes.NotifyListChanged();
 		}
 	}
 }

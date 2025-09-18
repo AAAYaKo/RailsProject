@@ -77,6 +77,65 @@ namespace Rails.Runtime.Tracks
 
 		public void AddKey(AnimationKey key)
 		{
+			AddKeyWithoutNotify(key);
+			NotifyPropertyChanged(nameof(AnimationKeys));
+		}
+
+		public void RemoveKey(AnimationKey key)
+		{
+			RemoveKeyWithoutNotify(key);
+			NotifyPropertyChanged(nameof(AnimationKeys));
+		}
+
+		public void MoveMultipleKeys(Dictionary<int, int> keysFramePositions)
+		{
+			foreach (var request in keysFramePositions)
+				MoveKeyWithoutNotify(animationKeys[request.Key], request.Value, keysFramePositions.Keys.ToArray());
+			NotifyPropertyChanged(nameof(AnimationKeys));
+		}
+
+		public void InsertNewKeyAt(int frame)
+		{
+			int previousIndex = animationKeys.FindLastIndex(x =>
+			{
+				return x.TimePosition <= frame;
+			});
+			if (previousIndex == -1)
+			{
+				InsertNewKey(null, null, frame);
+				return;
+			}
+			int nextIndex = previousIndex + 1;
+			if (nextIndex >= animationKeys.Count)
+			{
+				InsertNewKey(animationKeys[previousIndex], null, frame);
+				return;
+			}
+			InsertNewKey(animationKeys[previousIndex], animationKeys[nextIndex], frame);
+		}
+
+		public void InsertNewKeyAt(int frame, float singleValue, Vector2 vector2Value, Vector3 vector3Value)
+		{
+			int previousIndex = animationKeys.FindLastIndex(x =>
+			{
+				return x.TimePosition <= frame;
+			});
+			if (previousIndex == -1)
+			{
+				InsertNewKey(null, null, frame, singleValue, vector2Value, vector3Value);
+				return;
+			}
+			int nextIndex = previousIndex + 1;
+			if (nextIndex >= animationKeys.Count)
+			{
+				InsertNewKey(animationKeys[previousIndex], null, frame, singleValue, vector2Value, vector3Value);
+				return;
+			}
+			InsertNewKey(animationKeys[previousIndex], animationKeys[nextIndex], frame, singleValue, vector2Value, vector3Value);
+		}
+
+		private void AddKeyWithoutNotify(AnimationKey key)
+		{
 			bool inserted = false;
 			for (int i = 0; i < animationKeys.Count; i++)
 			{
@@ -95,57 +154,24 @@ namespace Rails.Runtime.Tracks
 			}
 			if (!inserted) //add to the end if the key is not already in the list
 				animationKeys.Add(key);
-
-			NotifyPropertyChanged(nameof(AnimationKeys));
 		}
 
-		public void RemoveKey(AnimationKey key)
+		private void RemoveKeyWithoutNotify(AnimationKey key)
 		{
 			animationKeys.Remove(key);
-			NotifyPropertyChanged(nameof(AnimationKeys));
 		}
 
-		public void InsertNewKeyAt(int frame)
+		private void MoveKeyWithoutNotify(AnimationKey key, int targetPosition, int[] otherSelectedKeys)
 		{
-			int previousIndex = animationKeys.FindLastIndex(x =>
-			{
-				return x.TimePosition <= frame;
-			});
-			if (previousIndex == -1)
-			{
-				InsertKey(null, null, frame);
-				return;
-			}
-			int nextIndex = previousIndex + 1;
-			if (nextIndex >= animationKeys.Count)
-			{
-				InsertKey(animationKeys[previousIndex], null, frame);
-				return;
-			}
-			InsertKey(animationKeys[previousIndex], animationKeys[nextIndex], frame);
+			var otherKey = animationKeys.Find(x => x.TimePosition == targetPosition);
+			if (otherKey != null && !otherSelectedKeys.Contains(animationKeys.IndexOf(otherKey)))
+				RemoveKeyWithoutNotify(otherKey);
+			RemoveKeyWithoutNotify(key);
+			key.SetTimePositionWithoutNotify(targetPosition);
+			AddKeyWithoutNotify(key);
 		}
 
-		public void InsertNewKeyAt(int frame, float singleValue, Vector2 vector2Value, Vector3 vector3Value)
-		{
-			int previousIndex = animationKeys.FindLastIndex(x =>
-			{
-				return x.TimePosition <= frame;
-			});
-			if (previousIndex == -1)
-			{
-				InsertKey(null, null, frame, singleValue, vector2Value, vector3Value);
-				return;
-			}
-			int nextIndex = previousIndex + 1;
-			if (nextIndex >= animationKeys.Count)
-			{
-				InsertKey(animationKeys[previousIndex], null, frame, singleValue, vector2Value, vector3Value);
-				return;
-			}
-			InsertKey(animationKeys[previousIndex], animationKeys[nextIndex], frame, singleValue, vector2Value, vector3Value);
-		}
-
-		private void InsertKey(AnimationKey previousKey, AnimationKey nextKey, int frame)
+		private void InsertNewKey(AnimationKey previousKey, AnimationKey nextKey, int frame)
 		{
 			if (previousKey == null)
 			{
@@ -180,7 +206,7 @@ namespace Rails.Runtime.Tracks
 			}
 		}
 
-		private void InsertKey(AnimationKey previousKey, AnimationKey nextKey, int frame, float singleValue, Vector2 vector2Value, Vector3 vector3Value)
+		private void InsertNewKey(AnimationKey previousKey, AnimationKey nextKey, int frame, float singleValue, Vector2 vector2Value, Vector3 vector3Value)
 		{
 			if (previousKey == null)
 			{

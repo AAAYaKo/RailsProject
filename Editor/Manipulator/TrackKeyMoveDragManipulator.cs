@@ -1,27 +1,33 @@
 using System;
-using Rails.Editor.Controls;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Rails.Editor.Manipulator
 {
-	public class EaseDragManipulator : MouseManipulator
+	public class TrackKeyMoveDragManipulator : MouseManipulator
 	{
+		public Action<bool> KeyDragBegin;
+		public Action<int, bool> KeyDragChanged;
+		public Action<int, bool> KeyDragComplete;
+
 		private bool isDragging = false;
+		private bool isDragBegan = false;
 		private Vector2 startPosition;
-		private Action<Vector2> updateValue;
+		private float framePixelSize = 30;
 
 
-		public EaseDragManipulator(Action<Vector2> updateValue)
+		public TrackKeyMoveDragManipulator()
 		{
-			this.updateValue = updateValue;
 			activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse });
+		}
+
+		public void OnFramePixelSizeChanged(float framePixels)
+		{
+			framePixelSize = framePixels;
 		}
 
 		protected override void RegisterCallbacksOnTarget()
 		{
-			if (target is not DragHandler)
-				return;
 			target.RegisterCallback<MouseDownEvent>(OnMouseDown);
 			target.RegisterCallback<MouseMoveEvent>(OnMouseMove);
 			target.RegisterCallback<MouseUpEvent>(OnMouseUp);
@@ -29,8 +35,6 @@ namespace Rails.Editor.Manipulator
 
 		protected override void UnregisterCallbacksFromTarget()
 		{
-			if (target is not DragHandler)
-				return;
 			target.UnregisterCallback<MouseDownEvent>(OnMouseDown);
 			target.UnregisterCallback<MouseMoveEvent>(OnMouseMove);
 			target.UnregisterCallback<MouseUpEvent>(OnMouseUp);
@@ -40,8 +44,9 @@ namespace Rails.Editor.Manipulator
 		{
 			if (!CanStartManipulation(evt))
 				return;
-			startPosition = evt.localMousePosition;
+			startPosition = evt.mousePosition;
 			isDragging = true;
+			isDragBegan = false;
 			target.CaptureMouse();
 			evt.StopPropagation();
 		}
@@ -51,11 +56,22 @@ namespace Rails.Editor.Manipulator
 			if (!isDragging || !target.HasMouseCapture() || !CanStartManipulation(evt))
 				return;
 
-			Vector2 delta = evt.localMousePosition - startPosition;
-			Vector2 position = target.layout.position + (Vector2)target.transform.position + delta;
+			float delta = evt.mousePosition.x - startPosition.x;
 
-			updateValue(position);
-			target.MarkDirtyRepaint();
+			if (!isDragBegan && Mathf.Abs(delta) > 0.01f)
+			{
+				KeyDragBegin?.Invoke(evt.actionKey);
+				target.CaptureMouse();
+				isDragBegan = true;
+			}
+
+			int deltaFrames = Mathf.RoundToInt(Mathf.Abs(delta / framePixelSize));
+			if (delta < 0)
+				deltaFrames = -deltaFrames;
+			if (deltaFrames != 0)
+			{
+				KeyDragChanged?.Invoke(deltaFrames, evt.actionKey);
+			}
 			evt.StopPropagation();
 		}
 
@@ -63,6 +79,17 @@ namespace Rails.Editor.Manipulator
 		{
 			if (!isDragging || !target.HasMouseCapture() || !CanStartManipulation(evt))
 				return;
+
+			float delta = evt.mousePosition.x - startPosition.x;
+			int deltaFrames = Mathf.RoundToInt(Mathf.Abs(delta / framePixelSize));
+			if (delta < 0)
+				deltaFrames = -deltaFrames;
+			if (deltaFrames != 0)
+			{
+				KeyDragComplete?.Invoke(deltaFrames, evt.actionKey);
+			}
+
+			isDragBegan = false;
 			isDragging = false;
 			target.ReleaseMouse();
 			evt.StopPropagation();
