@@ -113,7 +113,7 @@ namespace Rails.Editor.ViewModel
 		[CreateProperty]
 		public int TimeHeadPositionFrames
 		{
-			get => timeHeadPositionFrames;
+			get => timeHeadPositionFrames ?? 0;
 			set
 			{
 				if (timeHeadPositionFrames == value)
@@ -126,7 +126,7 @@ namespace Rails.Editor.ViewModel
 				NotifyPropertyChanged(nameof(TimeHeadPositionText));
 
 				notify?.Invoke();
-				timeHeadPositionFramesChanged?.Invoke(timeHeadPositionFrames);
+				timeHeadPositionFramesChanged?.Invoke(value);
 			}
 		}
 
@@ -135,7 +135,7 @@ namespace Rails.Editor.ViewModel
 		private string durationText;
 		private int durationFrames;
 		private string timeHeadPositionText;
-		private int timeHeadPositionFrames;
+		private int? timeHeadPositionFrames;
 		private string name;
 		private ObservableList<AnimationTrackViewModel> tracks = new();
 		private bool canEdit = true;
@@ -151,6 +151,8 @@ namespace Rails.Editor.ViewModel
 			UpdateViewModels(model.Tracks);
 
 			DurationFrames = model.Duration;
+
+			TimeHeadPositionFrames = 0;
 		}
 
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)

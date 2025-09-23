@@ -2,11 +2,14 @@
     <ui:VisualElement name="clip-controls" style="flex-grow: 0; flex-basis: 45px; border-left-color: rgb(34, 34, 34); border-right-color: rgb(34, 34, 34); border-top-color: rgb(34, 34, 34); border-bottom-color: rgb(34, 34, 34); border-bottom-width: 1px; flex-direction: row; align-items: center;">
         <ui:VisualElement name="controls" style="flex-grow: 1; flex-direction: row; padding-top: 10px; padding-right: 16px; padding-bottom: 10px; padding-left: 16px; width: 100%; height: 100%;">
             <ui:VisualElement style="flex-grow: 1;" />
-            <ui:Button text="00:00" icon-image="project://database/Assets/Rails/Editor/Resources/Icons/drop_down_arrow.svg?fileID=7388822144124034973&amp;guid=907da6502db47fc4bac2bb00fb5984c4&amp;type=3#drop_down_arrow" name="time" class="time-drop-down">
-                <Bindings>
-                    <ui:DataBinding property="text" data-source-path="TimeHeadPositionText" binding-mode="ToTarget" />
-                </Bindings>
-            </ui:Button>
+            <ui:VisualElement name="time" class="time-drop-down" style="flex-direction: row; align-self: center;">
+                <ui:Label text="00:00" name="time-text" style="font-size: 14px;">
+                    <Bindings>
+                        <ui:DataBinding property="text" data-source-path="TimeHeadPositionText" binding-mode="ToTarget" />
+                    </Bindings>
+                </ui:Label>
+                <ui:VisualElement name="drop-down-icon" class="drop-down-icon" style="-unity-background-scale-mode: scale-and-crop;" />
+            </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

@@ -1,0 +1,37 @@
+:root{
+	--rails-icon-gem-fill: resource('Icons/gem_fill');
+	--rails-icon-gem-stroke: resource('Icons/gem_stroke');
+	--rails-icon-play-head: resource('Icons/play_head');
+	--rails-icon-drag-handler: resource('Icons/drag_handler');
+	--rails-icon-drop-down: resource('Icons/drop_down_icon');
+	--rails-ruler-background-color: #303030;
+	--rails-ruler-stroke-color: #717171;
+	--rails-ruler-text-color: #BEBEBE;
+	--rails-time-drop-down-color: #585858;
+	--rails-play-head-color: #FF2C80;
+	--rails-drop-down-color: #C4C4C4;
+	--rails-drag-handler-color: #6E6E6E;
+	--rails-track-control-background-color: #303030;
+	--rails-track-control-stroke-color: #202020;
+	--rails-track-background-color: #282828;
+	--rails-track-separator-color: #4F4F4F;
+	--rails-clip-selected-background-color: #4C4C4C;
+	--rails-clip-selected-text-color: #FFFFFF;
+	--rails-clip-hover-outline-color: #4C4C4C;
+	--rails-time-scroller-thumb-color: #5A9EDE;
+	--rails-time-scroller-dragger-color: #5F5F5F;
+	--rails-time-scroller-background-color: #353535;
+	--rails-time-scroller-stroke-color: #242424;
+	--rails-selection-box-background-color: rgba(71, 158, 255, 0.15);
+	--rails-selection-box-stroke-color: rgba(71, 158, 255, 0.5);
+}
+
+.move-anchor{
+	--color-active: #508CEB;
+	--color-not-active: #55709B;
+}
+
+.fade{
+	--color-active: #57DED3;
+	--color-not-active: #618986;
+}

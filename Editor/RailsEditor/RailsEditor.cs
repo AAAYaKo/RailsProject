@@ -10,6 +10,7 @@ namespace Rails.Editor
 	public class RailsEditor : EditorWindow
 	{
 		[SerializeField] private StyleSheet darkTheme = default;
+		[SerializeField] private StyleSheet lightTheme = default;
 		[SerializeField] private VisualTreeAsset m_VisualTreeAsset = default;
 		[SerializeField] private int selectedClip = 0;
 
@@ -52,7 +53,7 @@ namespace Rails.Editor
 
 			// Instantiate UXML
 			VisualElement uxml = m_VisualTreeAsset.Instantiate();
-			uxml.styleSheets.Add(darkTheme);
+			uxml.styleSheets.Add(EditorGUIUtility.isProSkin ? darkTheme : lightTheme);
 			uxml.style.flexBasis = new Length(100, LengthUnit.Percent);
 			root.Add(uxml);
 

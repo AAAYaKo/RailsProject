@@ -1,7 +1,7 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
     <Style src="project://database/Assets/Rails/Editor/Resources/RailsEditor.uss?fileID=7433441132597879392&amp;guid=a52f72ccd09932d4795d5bf54f12136c&amp;type=3#RailsEditor" />
-    <ui:VisualElement name="track" style="height: 40px; border-left-color: rgb(32, 32, 32); border-right-color: rgb(32, 32, 32); border-top-color: rgb(32, 32, 32); border-bottom-color: rgb(32, 32, 32); border-top-width: 1px; border-right-width: 0; border-bottom-width: 1px; border-left-width: 1px; border-top-left-radius: 5px; border-bottom-left-radius: 5px; background-color: rgb(48, 48, 48); padding-left: 3px; padding-right: 5px; padding-top: 10px; padding-bottom: 10px; align-self: center; flex-direction: row; flex-grow: 1; width: 100%; margin-top: -1px;">
-        <ui:VisualElement style="flex-grow: 0; background-image: resource(&apos;Icons/drag_handler&apos;); flex-shrink: 0; width: 16px; height: 16px; margin-right: 3px;" />
+    <ui:VisualElement name="track" class="track-control" style="height: 40px; padding-left: 3px; padding-right: 5px; padding-top: 10px; padding-bottom: 10px; align-self: center; flex-direction: row; flex-grow: 1; width: 100%;">
+        <ui:VisualElement class="drag_handler" style="flex-grow: 0; flex-shrink: 0; width: 16px; height: 16px; margin-right: 3px;" />
         <uie:ObjectField name="animated-component" style="margin-left: 0; margin-right: 5px; flex-grow: 1; flex-shrink: 6; flex-basis: 140px;">
             <Bindings>
                 <ui:DataBinding property="value" data-source-path="Reference" binding-mode="TwoWay" />

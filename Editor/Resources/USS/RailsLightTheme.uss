@@ -1,0 +1,37 @@
+:root{
+	--rails-icon-gem-fill: resource('Icons/gem_fill');
+	--rails-icon-gem-stroke: resource('Icons/gem_stroke');
+	--rails-icon-play-head: resource('Icons/play_head');
+	--rails-icon-drag-handler: resource('Icons/drag_handler');
+	--rails-icon-drop-down: resource('Icons/drop_down_icon');
+	--rails-ruler-background-color: #C8C8C8;
+	--rails-ruler-stroke-color: #717171;
+	--rails-ruler-text-color: #4C4C4C;
+	--rails-time-drop-down-color: #E3E3E3;
+	--rails-play-head-color: #D51260;
+	--rails-drop-down-color: #555555;
+	--rails-drag-handler-color: #8B8B8B;
+	--rails-track-control-background-color: #D4D4D4;
+	--rails-track-control-stroke-color: #B0B0B0;
+	--rails-track-background-color: #DFDFDF;
+	--rails-track-separator-color: #757575;
+	--rails-clip-selected-background-color: #999999;
+	--rails-clip-selected-text-color: #000000;
+	--rails-clip-hover-outline-color: #999999;
+	--rails-time-scroller-thumb-color: #2B82D4;
+	--rails-time-scroller-dragger-color: #9A9A9A;
+	--rails-time-scroller-background-color: #BEBEBE;
+	--rails-time-scroller-stroke-color: #AAAAAA;
+	--rails-selection-box-background-color: rgba(6, 96, 195, 0.15);
+	--rails-selection-box-stroke-color: rgba(6, 96, 195, 0.5);
+}
+
+.move-anchor{
+	--color-active: #2465CB;
+	--color-not-active: #89A3CD;
+}
+
+.fade{
+	--color-active: #1B958B;
+	--color-not-active: #5FB9B2;
+}

@@ -32,15 +32,18 @@ namespace Rails.Editor.Controls
 
 			templateMain.CloneTree(this);
 			controls = this.Q<VisualElement>("controls");
-			
-			Button button = controls.Q<Button>("time");
+
+			VisualElement time = controls.Q<VisualElement>("time");
 			RailsClipPopupContent windowContent = new();
 
-			button.clicked += () =>
+			time.RegisterCallback<ClickEvent>(x =>
 			{
-				windowContent.DataSource = EditorContext.Instance.SelectedClip;
-				UnityEditor.PopupWindow.Show(button.worldBound, windowContent);
-			};
+				if (x.clickCount == 1 && x.button == 0)
+				{
+					windowContent.DataSource = EditorContext.Instance.SelectedClip;
+					UnityEditor.PopupWindow.Show(time.worldBound, windowContent);
+				}
+			});
 		}
 	}
 }
