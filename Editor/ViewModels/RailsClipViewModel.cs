@@ -129,6 +129,32 @@ namespace Rails.Editor.ViewModel
 				timeHeadPositionFramesChanged?.Invoke(value);
 			}
 		}
+		[CreateProperty]
+		public ICommand<Type> AddTrackCommand
+		{
+			get => addTrackCommand;
+			set
+			{
+				if (addTrackCommand == value) 
+					return;
+				addTrackCommand = value;
+
+				NotifyPropertyChanged();
+			}
+		}
+		[CreateProperty]
+		public ICommand RemoveCommand
+		{
+			get => removeCommand;
+			set
+			{
+				if (removeCommand == value)
+					return;
+				removeCommand = value;
+
+				NotifyPropertyChanged();
+			}
+		}
 
 		public event Action SelectionChanged;
 
@@ -141,14 +167,32 @@ namespace Rails.Editor.ViewModel
 		private bool canEdit = true;
 		private Action notify;
 		private event Action<int> timeHeadPositionFramesChanged;
+		private ICommand<Type> addTrackCommand;
+		private ICommand removeCommand;
 
+
+		public RailsClipViewModel()
+		{
+			AddTrackCommand = new RelayCommand<Type>(trackType =>
+			{
+				EditorContext.Instance.Record($"Added {trackType.Name} to {name}");
+				if (trackType == typeof(MoveAnchorTrack))
+				{
+					model.AddTrack(new MoveAnchorTrack());
+				}
+				else if (trackType == typeof(FadeTrack))
+				{
+					model.AddTrack(new FadeTrack());
+				}
+			});
+		}
 
 		protected override void OnModelChanged()
 		{
 			if (model == null)
 				return;
 			Name = model.Name;
-			UpdateViewModels(model.Tracks);
+			UpdateTracks();
 
 			DurationFrames = model.Duration;
 
@@ -163,31 +207,12 @@ namespace Rails.Editor.ViewModel
 			}
 			if (e.PropertyName == nameof(RailsClip.Tracks))
 			{
-				UpdateViewModels(model.Tracks);
+				UpdateTracks();
 			}
 			if (e.PropertyName == nameof(RailsClip.Duration))
 			{
 				DurationFrames = model.Duration;
 			}
-		}
-
-		public void AddTrack(Type trackType)
-		{
-			EditorContext.Instance.Record($"Added {trackType.Name} to {name}");
-			if (trackType == typeof(MoveAnchorTrack))
-			{
-				model.AddTrack(new MoveAnchorTrack());
-			}
-			else if (trackType == typeof(FadeTrack))
-			{
-				model.AddTrack(new FadeTrack());
-			}
-		}
-
-		public void RemoveTrack(int index)
-		{
-			EditorContext.Instance.Record($"Removed {model.Tracks[index].GetType().Name} from {name}");
-			model.RemoveTrack(model.Tracks[index]);
 		}
 
 		public void Select(Action notify)
@@ -200,44 +225,28 @@ namespace Rails.Editor.ViewModel
 			notify = null;
 		}
 
-		private void UpdateViewModels(List<AnimationTrack> models)
+		private void UpdateTracks()
 		{
-			if (models == null)
-			{
-				ClearViewModels();
-				return;
-			}
-
-			while (Tracks.Count < model.Tracks.Count)
-			{
-				AnimationTrackViewModel track = new();
-				timeHeadPositionFramesChanged += track.OnTimeHeadPositionChanged;
-				Tracks.AddWithoutNotify(track);
-			}
-			while (Tracks.Count > model.Tracks.Count)
-			{
-				var track = Tracks[^1];
-				track.UnbindModel();
-				timeHeadPositionFramesChanged -= track.OnTimeHeadPositionChanged;
-				Tracks.RemoveWithoutNotify(track);
-			}
-			for (int i = 0; i < model.Tracks.Count; i++)
-			{
-				var clip = model.Tracks[i];
-				var viewModel = Tracks[i];
-
-				viewModel.UnbindModel();
-				viewModel.BindModel(clip);
-			}
-
-			Tracks.NotifyListChanged();
-		}
-
-		private void ClearViewModels()
-		{
-			foreach (var clip in Tracks)
-				clip.UnbindModel();
-			Tracks.Clear();
+			UpdateVieModels(Tracks, model.Tracks,
+				createViewModel: () =>
+				{
+					AnimationTrackViewModel track = new();
+					timeHeadPositionFramesChanged += track.OnTimeHeadPositionChanged;
+					return track;
+				},
+				resetViewModel: vm =>
+				{
+					timeHeadPositionFramesChanged -= vm.OnTimeHeadPositionChanged;
+				},
+				viewModelBindCallback: (vm, m) =>
+				{
+					vm.RemoveCommand = new RelayCommand(() =>
+					{
+						EditorContext.Instance.Record($"Removed {m.GetType().Name} from {name}");
+						model.RemoveTrack(m);
+					});
+				}
+			);
 		}
 
 		private int ClampTimeHeadPosition(int value)

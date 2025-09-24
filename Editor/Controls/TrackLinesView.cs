@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using Rails.Editor.Manipulator;
 using Rails.Editor.ViewModel;
 using Rails.Runtime;
@@ -84,7 +83,8 @@ namespace Rails.Editor.Controls
 				if (framePixelSize == value)
 					return;
 				framePixelSize = value;
-				FramePixelSizeChanged?.Invoke(framePixelSize);
+
+				EventBus.Publish(new FramePixelSizeChangedEvent(framePixelSize));
 			}
 		}
 		public float CurrentDelta
@@ -102,8 +102,6 @@ namespace Rails.Editor.Controls
 		public ScrollView ScrollView => scrollView;
 		public Scroller VerticalScroller => verticalScroller;
 		public MinMaxSlider Slider => slider;
-		public event Action<float> FramePixelSizeChanged;
-		public event Action<float> TimePositionChanged;
 
 		private static VisualTreeAsset templateMain;
 		private ScrollView scrollView;
@@ -111,6 +109,7 @@ namespace Rails.Editor.Controls
 		private MinMaxSlider slider;
 		private new VisualElement contentContainer;
 		private VisualElement viewport;
+		private VisualElement tracksBackgroundContainer;
 		private VisualElement selectionBoxContainer;
 		private VisualElement selectionBoxManipulatorLayer;
 		private SelectionBoxDragManipulator selectionBoxManipulator;
@@ -132,24 +131,42 @@ namespace Rails.Editor.Controls
 			verticalScroller = scrollView.verticalScroller;
 			slider = this.Q<MinMaxSlider>();
 			slider.lowLimit = 0;
+			tracksBackgroundContainer = scrollView.Q<VisualElement>("tracks-back");
 			contentContainer = scrollView.Q<VisualElement>("content-container");
 			container = scrollView.Q<VisualElement>("tracks-container");
 			selectionBoxContainer = scrollView.Q<VisualElement>("selection-box-container");
 			selectionBoxManipulatorLayer = scrollView.Q<VisualElement>("selection-box-manipulator");
 
 			viewport = scrollView.contentViewport;
-			viewport.RegisterCallback<GeometryChangedEvent>(x =>
-			{
-				AdjustFramePixelSize();
-			});
-			slider.RegisterCallback<ChangeEvent<Vector2>>(SliderChangedHandler);
 
 			selectionBoxManipulator = new SelectionBoxDragManipulator(selectionBoxContainer);
+			selectionBoxManipulatorLayer.AddManipulator(selectionBoxManipulator);
+		}
+
+		protected override void OnAttach(AttachToPanelEvent evt)
+		{
+			base.OnAttach(evt);
+			viewport.RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
+			slider.RegisterCallback<ChangeEvent<Vector2>>(SliderChangedHandler);
+			selectionBoxManipulatorLayer.RegisterCallback<ClickEvent>(OnMouseClick);
 			selectionBoxManipulator.SelectionBegin += OnSelectionBegin;
 			selectionBoxManipulator.SelectionChanged += OnSelectionChanged;
 			selectionBoxManipulator.SelectionComplete += OnSelectionComplete;
-			selectionBoxManipulatorLayer.RegisterCallback<ClickEvent>(OnMouseClick);
-			selectionBoxManipulatorLayer.AddManipulator(selectionBoxManipulator);
+			EventBus.Subscribe<KeyDragEvent>(OnKeyDragged);
+			EventBus.Subscribe<KeyDragCompleteEvent>(OnKeyDragComplete);
+		}
+
+		protected override void OnDetach(DetachFromPanelEvent evt)
+		{
+			base.OnDetach(evt);
+			viewport.UnregisterCallback<GeometryChangedEvent>(OnGeometryChanged);
+			slider.UnregisterCallback<ChangeEvent<Vector2>>(SliderChangedHandler);
+			selectionBoxManipulatorLayer.UnregisterCallback<ClickEvent>(OnMouseClick);
+			selectionBoxManipulator.SelectionBegin -= OnSelectionBegin;
+			selectionBoxManipulator.SelectionChanged -= OnSelectionChanged;
+			selectionBoxManipulator.SelectionComplete -= OnSelectionComplete;
+			EventBus.Unsubscribe<KeyDragEvent>(OnKeyDragged);
+			EventBus.Unsubscribe<KeyDragCompleteEvent>(OnKeyDragComplete);
 		}
 
 		public void Scroll(Vector2 delta)
@@ -175,24 +192,16 @@ namespace Rails.Editor.Controls
 		{
 			TrackLineView line = new();
 			line.DeselectAllPerformed += OnDeselectAllPerformed;
-			line.KeyDragged += OnKeyDragged;
-			line.KeyDragComplete += OnKeyDragComplete;
-			FramePixelSizeChanged += line.OnFramePixelSizeChanged;
+			VisualElement trackBack = new();
+			trackBack.AddToClassList("track-line-background");
+			tracksBackgroundContainer.Add(trackBack);
 			return line;
 		}
 
 		protected override void ResetElement(TrackLineView element)
 		{
 			element.DeselectAllPerformed -= OnDeselectAllPerformed;
-			element.KeyDragged -= OnKeyDragged;
-			element.KeyDragComplete -= OnKeyDragComplete;
-			FramePixelSizeChanged -= element.OnFramePixelSizeChanged;
-		}
-
-		protected override void UpdateList()
-		{
-			base.UpdateList();
-			views.ForEach(x => x.OnFramePixelSizeChanged(FramePixelSize));
+			tracksBackgroundContainer.RemoveAt(0);
 		}
 
 		private void SliderChangedHandler(ChangeEvent<Vector2> evt)
@@ -213,7 +222,7 @@ namespace Rails.Editor.Controls
 				CurrentDelta = delta;
 
 			if (evt.previousValue.x != value.x)
-				TimePositionChanged?.Invoke(value.x);
+				EventBus.Publish(new TimePositionChangedEvent(value.x));
 
 			float position = math.remap(
 				slider.lowLimit, slider.highLimit - delta,
@@ -221,6 +230,11 @@ namespace Rails.Editor.Controls
 				value.x);
 			if (!Mathf.Approximately(contentContainer.layout.position.x, position))
 				contentContainer.style.left = -position;
+		}
+
+		private void OnGeometryChanged(GeometryChangedEvent evt)
+		{
+			AdjustFramePixelSize();
 		}
 
 		private void AdjustContainer(float frameSize)
@@ -296,22 +310,22 @@ namespace Rails.Editor.Controls
 			}
 		}
 
-		private void OnKeyDragged(int deltaFrames)
+		private void OnKeyDragged(KeyDragEvent evt)
 		{
+			int deltaFrames = evt.DragFrames;
 			foreach (var line in views)
 			{
 				if (line.SelectedKeysFrames.IsNullOrEmpty())
 					continue;
-				if (line.FirstSelectedKeyFrame + deltaFrames < 0 
+				if (line.FirstSelectedKeyFrame + deltaFrames < 0
 					|| line.LastSelectedKeyFrame + deltaFrames > Duration)
 					return;
 			}
 
-			foreach (var line in views)
-				line.MoveSelectedKeys(deltaFrames);
+			EventBus.Publish(new KeyMoveEvent(deltaFrames));
 		}
 
-		private void OnKeyDragComplete()
+		private void OnKeyDragComplete(KeyDragCompleteEvent evt)
 		{
 			for (int i = 0; i < Values.Count; i++)
 			{

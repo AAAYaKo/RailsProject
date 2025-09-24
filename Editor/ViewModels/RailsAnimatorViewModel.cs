@@ -59,18 +59,40 @@ namespace Rails.Editor.ViewModel
 				NotifyPropertyChanged();
 			}
 		}
+		[CreateProperty]
+		public ICommand ClipAddCommand
+		{
+			get => clipAddCommand;
+			set
+			{
+				if (clipAddCommand == value)
+					return;
+				clipAddCommand = value;
+				NotifyPropertyChanged();
+			}
+		}
 
 		private ObservableList<RailsClipViewModel> clips = new();
 		private RailsClipViewModel selectedClip = RailsClipViewModel.Empty;
 		private int selectedClipIndex = 0;
 		private bool canAddClip;
+		private ICommand clipAddCommand;
 
+
+		public RailsAnimatorViewModel()
+		{
+			ClipAddCommand = new RelayCommand(() =>
+			{
+				EditorContext.Instance.Record("Clip Added");
+				model.AddClip();
+			});
+		}
 
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(RailsAnimator.Clips))
 			{
-				UpdateViewModels(model.Clips);
+				UpdateClips();
 			}
 		}
 
@@ -80,12 +102,12 @@ namespace Rails.Editor.ViewModel
 			if (model == null)
 			{
 				if (clips.Count > 0)
-					ClearViewModels();
+					ClearViewModels<RailsClipViewModel, RailsClip>(Clips);
 				SelectedClip = RailsClipViewModel.Empty;
 				return;
 			}
 
-			UpdateViewModels(model.Clips);
+			UpdateClips();
 
 			if (SelectedClipIndex >= Clips.Count)
 			{
@@ -95,53 +117,17 @@ namespace Rails.Editor.ViewModel
 			SelectedClip = Clips.Count > 0 ? Clips[SelectedClipIndex] : RailsClipViewModel.Empty;
 		}
 
-		public void AddClip()
+		private void UpdateClips()
 		{
-			EditorContext.Instance.Record("Clip Added");
-			model.AddClip();
-		}
-
-		public void RemoveClip(int index)
-		{
-			EditorContext.Instance.Record("Clip Removed");
-			model.RemoveClip(model.Clips[index]);
-		}
-
-		private void UpdateViewModels(List<RailsClip> models)
-		{
-			if (models == null)
-			{
-				ClearViewModels();
-				return;
-			}
-
-			while (Clips.Count < model.Clips.Count)
-			{
-				Clips.AddWithoutNotify(new RailsClipViewModel());
-			}
-			while (Clips.Count > model.Clips.Count)
-			{
-				var clip = Clips[^1];
-				clip.UnbindModel();
-				Clips.RemoveWithoutNotify(clip);
-			}
-			for (int i = 0; i < model.Clips.Count; i++)
-			{
-				var clip = model.Clips[i];
-				var viewModel = Clips[i];
-
-				viewModel.UnbindModel();
-				viewModel.BindModel(clip);
-			}
-
-			Clips.NotifyListChanged();
-		}
-
-		private void ClearViewModels()
-		{
-			foreach (var clip in Clips)
-				clip.UnbindModel();
-			Clips.Clear();
+			UpdateVieModels(Clips, model.Clips,
+				createViewModel: () => new RailsClipViewModel(),
+				viewModelBindCallback: (vm, m) =>
+				{
+					vm.RemoveCommand = new RelayCommand(() =>
+					{
+						model.RemoveClip(m);
+					});
+				});
 		}
 	}
 }

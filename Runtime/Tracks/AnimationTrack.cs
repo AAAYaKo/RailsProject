@@ -90,7 +90,19 @@ namespace Rails.Runtime.Tracks
 		public void MoveMultipleKeys(Dictionary<int, int> keysFramePositions)
 		{
 			foreach (var request in keysFramePositions)
-				MoveKeyWithoutNotify(animationKeys[request.Key], request.Value, keysFramePositions.Keys.ToArray());
+				animationKeys[request.Key].SetTimePositionWithoutNotify(request.Value);
+
+			List<AnimationKey> keysToRemove = new();
+			foreach (var request in keysFramePositions)
+			{
+				var otherKey = animationKeys.Find(x => x != animationKeys[request.Key] && x.TimePosition == request.Value);
+				if (otherKey != null)
+					keysToRemove.Add(otherKey);
+			}	
+			keysToRemove.ForEach(x => RemoveKeyWithoutNotify(x));
+
+			animationKeys.Sort((x, y) => x.TimePosition.CompareTo(y.TimePosition));
+
 			NotifyPropertyChanged(nameof(AnimationKeys));
 		}
 

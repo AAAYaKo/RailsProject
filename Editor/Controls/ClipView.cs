@@ -40,10 +40,6 @@ namespace Rails.Editor.Controls
 			playHead = split.SecondPanel.Q<RailsPlayHead>();
 			RegisterCallback<WheelEvent>(ScrollHandler, TrickleDown.TrickleDown);
 			trackView.VerticalScroller.valueChanged += OnVerticalScroller;
-			trackView.TimePositionChanged += ruler.OnTimePositionChanged;
-			trackView.FramePixelSizeChanged += ruler.OnFramePixelSizeChanged;
-			trackView.FramePixelSizeChanged += playHead.OnFramePixelSizeChanged;
-			trackView.TimePositionChanged += playHead.OnTimePositionChanged;
 		}
 
 		private void OnVerticalScroller(float value)

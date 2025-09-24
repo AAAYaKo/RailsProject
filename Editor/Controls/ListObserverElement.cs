@@ -5,7 +5,7 @@ using UnityEngine.UIElements;
 
 namespace Rails.Editor.Controls
 {
-	public abstract class ListObserverElement<TElementModel, TElementView> : VisualElement where TElementView : VisualElement
+	public abstract class ListObserverElement<TElementModel, TElementView> : BaseView where TElementView : VisualElement
 	{
 		[CreateProperty]
 		public ObservableList<TElementModel> Values
@@ -31,7 +31,7 @@ namespace Rails.Editor.Controls
 
 
 		protected abstract TElementView CreateElement();
-		protected abstract void ResetElement(TElementView element);
+		protected virtual void ResetElement(TElementView element) { }
 
 		protected virtual void UpdateList()
 		{

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 namespace Rails.Editor
@@ -172,17 +173,6 @@ namespace Rails.Editor
 		IEnumerator IEnumerable.GetEnumerator()
 		{
 			return GetEnumerator();
-		}
-	}
-}
-
-namespace Rails.Editor.ViewModel
-{
-	public static class ListExtension
-	{
-		public static bool IsNullOrEmpty<T>(this IList<T> list)
-		{
-			return list == null || list.Count == 0;
 		}
 	}
 }

@@ -13,6 +13,7 @@ namespace Rails.Editor.Controls
 	{
 		public static readonly BindingId SelectedIndexProperty = nameof(SelectedIndex);
 		public static readonly BindingId CanAddProperty = nameof(CanAdd);
+		public static readonly BindingId ClipAddCommandProperty = nameof(ClipAddCommand);
 		private const string SelectedClass = "rails-clip-view--selected";
 
 
@@ -44,54 +45,56 @@ namespace Rails.Editor.Controls
 				NotifyPropertyChanged(CanAddProperty);
 			}
 		}
+		[CreateProperty]
+		public ICommand ClipAddCommand { get; set; }
+		[CreateProperty]
+		public ICommand ClipRemoveCommand { get; set; }
 
-		private static VisualTreeAsset templateMain;
-		private static VisualTreeAsset templateItem;
+		private static VisualTreeAsset template;
 		private VisualElement buttonContainer;
 		private VisualElement selected;
 		private int? selectedIndex;
 		private bool? canAdd;
 
-		public event Action AddClicked;
-		public event Action<int> RemoveClicked;
+
+		static ClipsListView()
+		{
+			template = Resources.Load<VisualTreeAsset>("RailsClipsView");
+		}
 
 		public ClipsListView()
 		{
-			if (templateMain == null)
-				templateMain = Resources.Load<VisualTreeAsset>("RailsClipsView");
-			if (templateItem == null)
-				templateItem = Resources.Load<VisualTreeAsset>("RailsClip");
-			templateMain.CloneTree(this);
+			template.CloneTree(this);
 
 			container = this.Q<VisualElement>("clips-container");
 			buttonContainer = this.Q<VisualElement>("button-container");
-			buttonContainer.Q<Button>("add-button").clicked += () => AddClicked?.Invoke();
+			buttonContainer.Q<Button>("add-button").clicked += () => ClipAddCommand.Execute();
+			SetBinding(ClipAddCommandProperty, new CommandBinding(nameof(RailsAnimatorViewModel.ClipAddCommand)));
+		}
+
+		protected override void OnAttach(AttachToPanelEvent evt)
+		{
+			base.OnAttach(evt);
+			EventBus.Subscribe<ClipClickEvent>(OnClipClick);
+		}
+
+		protected override void OnDetach(DetachFromPanelEvent evt)
+		{
+			base.OnDetach(evt);
+			EventBus.Unsubscribe<ClipClickEvent>(OnClipClick);
 		}
 
 		protected override VisualElement CreateElement()
 		{
-			var view = templateItem.Instantiate();
-			view.AddManipulator(new ContextualMenuManipulator(x =>
+			ClipItemView view = new();
+			view.SetBinding(ClipItemView.NameProperty, new DataBinding
 			{
-				x.menu.AppendAction("Remove", x =>
-				{
-					RemoveClicked?.Invoke(views.IndexOf(view));
-				}, DropdownMenuAction.Status.Normal);
-			}));
-			view.RegisterCallback<ClickEvent>(x =>
-			{
-				if (x.button == 0)
-				{
-					int index = views.IndexOf(view);
-					SelectedIndex = index;
-				}
+				dataSourcePath = new PropertyPath(nameof(RailsClip.Name)),
+				bindingMode = BindingMode.ToTarget,
 			});
-			return view;
-		}
 
-		protected override void ResetElement(VisualElement element)
-		{
-			
+			view.SetBinding(ClipItemView.RemoveCommandProperty, new CommandBinding(nameof(RailsClipViewModel.RemoveCommand)));
+			return view;
 		}
 
 		protected override void UpdateList()
@@ -100,6 +103,12 @@ namespace Rails.Editor.Controls
 			if (SelectedIndex >= (Values?.Count ?? 0))
 				SelectedIndex = 0;
 			ChangeSelection(SelectedIndex);
+		}
+
+		private void OnClipClick(ClipClickEvent evt)
+		{
+			int index = views.IndexOf(evt.Clip);
+			SelectedIndex = index;
 		}
 
 		private void ChangeSelection(int index)

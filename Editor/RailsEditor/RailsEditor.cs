@@ -61,8 +61,6 @@ namespace Rails.Editor
 
 			Resources.Load<VisualTreeAsset>("RailsFirstPage").CloneTree(twoPanels.FirstPanel);
 			var clips = twoPanels.FirstPanel.Q<ClipsListView>("clips-view");
-			clips.AddClicked += viewModel.AddClip;
-			clips.RemoveClicked += RemoveClipClicked;
 
 			ClipView clipView = new();
 			clipView.style.width = new Length(100, LengthUnit.Percent);
@@ -77,16 +75,6 @@ namespace Rails.Editor
 		{
 			if (selectedClip < EditorContext.Instance.ViewModel.Clips.Count && selectedClip > 0)
 				EditorContext.Instance.ViewModel.SelectedClipIndex = selectedClip;
-		}
-
-		private void RemoveClipClicked(int index)
-		{
-			bool choice = EditorUtility.DisplayDialog("Remove this Clip?",
-				$"Are you sure you want to delete {viewModel.Clips[index].Name}", "Delete", "Cancel");
-			if (choice)
-			{
-				viewModel.RemoveClip(index);
-			}
 		}
 
 		private void SelectedClipChangedHandler(int selected)

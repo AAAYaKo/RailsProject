@@ -12,8 +12,11 @@ namespace Rails.Editor
 		public static EditorContext Instance => _instance ??= new();
 		public RailsAnimator CurrentTarget { get; private set; }
 		public RailsAnimatorViewModel ViewModel { get; private set; } = new();
+		public float FramePixelSize { get; internal set; }
+		public float TimePosition { get; internal set; }
 
 		private static EditorContext _instance;
+
 		public event Action<RailsAnimator> CurrentTargetChanged;
 		public event Action<int> SelectedClipChanged;
 
@@ -25,6 +28,8 @@ namespace Rails.Editor
 			RailsAnimatorEditor.AnimatorDestroyed += AnimatorDestroyed;
 			RailsAnimator.AnimatorReset += AnimatorReset;
 			TargetChangedHandler();
+			EventBus.Subscribe<FramePixelSizeChangedEvent>(OnFramePixelSizeChanged);
+			EventBus.Subscribe<TimePositionChangedEvent>(OnTimePositionChanged);
 		}
 
 		public void Record(string undoRecordName)
@@ -93,6 +98,16 @@ namespace Rails.Editor
 			ViewModel.UnbindModel();
 			ViewModel.BindModel(CurrentTarget);
 			CurrentTargetChanged?.Invoke(CurrentTarget);
+		}
+
+		private void OnFramePixelSizeChanged(FramePixelSizeChangedEvent evt)
+		{
+			FramePixelSize = evt.FramePixelSize;
+		}
+
+		private void OnTimePositionChanged(TimePositionChangedEvent evt)
+		{
+			TimePosition = evt.TimePosition;
 		}
 	}
 }

@@ -10,7 +10,7 @@ using UnityEngine.UIElements;
 namespace Rails.Editor.Controls
 {
 	[UxmlElement]
-	public partial class RailsRuler : VisualElement
+	public partial class RailsRuler : BaseView
 	{
 		public static readonly BindingId TimeHeadPositionProperty = nameof(TimeHeadPosition);
 
@@ -64,7 +64,28 @@ namespace Rails.Editor.Controls
 			}));
 		}
 
-		public void OnFramePixelSizeChanged(float framePixelSize)
+		protected override void OnAttach(AttachToPanelEvent evt)
+		{
+			base.OnAttach(evt);
+			EventBus.Subscribe<FramePixelSizeChangedEvent>(OnFramePixelSizeChanged);
+			EventBus.Subscribe<TimePositionChangedEvent>(OnTimePositionChanged);
+			OnFramePixelSizeChanged(EditorContext.Instance.FramePixelSize);
+			OnTimePositionChanged(EditorContext.Instance.TimePosition);
+		}
+
+		protected override void OnDetach(DetachFromPanelEvent evt)
+		{
+			base.OnDetach(evt);
+			EventBus.Unsubscribe<FramePixelSizeChangedEvent>(OnFramePixelSizeChanged);
+			EventBus.Unsubscribe<TimePositionChangedEvent>(OnTimePositionChanged);
+		}
+
+		private void OnFramePixelSizeChanged(FramePixelSizeChangedEvent evt)
+		{
+			OnFramePixelSizeChanged(evt.FramePixelSize);
+		}
+
+		private void OnFramePixelSizeChanged(float framePixelSize)
 		{
 			float length = layout.width;
 			this.framePixelSize = framePixelSize;
@@ -76,7 +97,12 @@ namespace Rails.Editor.Controls
 			Repaint();
 		}
 
-		public void OnTimePositionChanged(float timePosition)
+		private void OnTimePositionChanged(TimePositionChangedEvent evt)
+		{
+			OnTimePositionChanged(evt.TimePosition);
+		}
+
+		private void OnTimePositionChanged(float timePosition)
 		{
 			this.timePosition = timePosition;
 			Repaint();

@@ -3,7 +3,7 @@
 namespace Rails.Editor.Controls
 {
 	[UxmlElement]
-	public partial class TrackTweenLineView : VisualElement
+	public partial class TrackTweenLineView : BaseView
 	{
 		public int StartFrame
 		{
@@ -47,7 +47,25 @@ namespace Rails.Editor.Controls
 			line.pickingMode = PickingMode.Ignore;
 		}
 
-		public void OnFramePixelSizeChanged(float framePixelSize)
+		protected override void OnAttach(AttachToPanelEvent evt)
+		{
+			base.OnAttach(evt);
+			EventBus.Subscribe<FramePixelSizeChangedEvent>(OnFramePixelSizeChanged);
+			OnFramePixelSizeChanged(EditorContext.Instance.FramePixelSize);
+		}
+
+		protected override void OnDetach(DetachFromPanelEvent evt)
+		{
+			base.OnDetach(evt);
+			EventBus.Unsubscribe<FramePixelSizeChangedEvent>(OnFramePixelSizeChanged);
+		}
+
+		private void OnFramePixelSizeChanged(FramePixelSizeChangedEvent evt)
+		{
+			OnFramePixelSizeChanged(evt.FramePixelSize);
+		}
+
+		private void OnFramePixelSizeChanged(float framePixelSize)
 		{
 			this.framePixelSize = framePixelSize;
 			UpdateStartPosition();

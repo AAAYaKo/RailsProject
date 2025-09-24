@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Rails.Editor.ViewModel;
+using Rails.Runtime;
 using Rails.Runtime.Tracks;
 using Unity.Properties;
 using UnityEngine;
@@ -9,13 +10,16 @@ using UnityEngine.UIElements;
 namespace Rails.Editor.Controls
 {
 	[UxmlElement]
-	public partial class AnimationTrackView : VisualElement
+	public partial class AnimationTrackView : BaseView
 	{
 		public const string KeyFrameClass = "key_frame";
 		public static readonly BindingId IsKeyFrameProperty = nameof(IsKeyFrame);
 		public static readonly BindingId FloatValueProperty = nameof(FloatValue);
 		public static readonly BindingId Vector2ValueProperty = nameof(Vector2Value);
 		public static readonly BindingId Vector3ValueProperty = nameof(Vector3Value);
+		public static readonly BindingId RemoveCommandProperty = nameof(RemoveCommand);
+		public static readonly BindingId KeyFrameAddCommandProperty = nameof(KeyFrameAddCommand);
+		public static readonly BindingId KeyFrameRemoveCommandProperty = nameof(KeyFrameRemoveCommand);
 
 		[UxmlAttribute("type"), CreateProperty]
 		public AnimationTrack.ValueType ValueType
@@ -100,9 +104,13 @@ namespace Rails.Editor.Controls
 				NotifyPropertyChanged(Vector3ValueProperty);
 			}
 		}
+		[CreateProperty]
+		public ICommand RemoveCommand { get; set; }
+		[CreateProperty]
+		public ICommand KeyFrameAddCommand { get; set; }
+		[CreateProperty]
+		public ICommand KeyFrameRemoveCommand { get; set; }
 
-		public event Action<AnimationTrackView> RemoveClicked;
-		public event Action<AnimationTrackView> KeyFrameClicked;
 		public event Action<AnimationTrackView, ValueEditArgs> ValueEdited;
 
 		private static VisualTreeAsset templateMain;
@@ -157,19 +165,17 @@ namespace Rails.Editor.Controls
 				dataSourcePath = new PropertyPath(nameof(AnimationTrackViewModel.CurrentVector3Value)),
 				bindingMode = BindingMode.ToTarget,
 			});
+			SetBinding(RemoveCommandProperty, new CommandBinding(nameof(AnimationTrackViewModel.RemoveCommand)));
+			SetBinding(KeyFrameAddCommandProperty, new CommandBinding(nameof(AnimationTrackViewModel.KeyFrameAddCommand)));
+			SetBinding(KeyFrameRemoveCommandProperty, new CommandBinding(nameof(AnimationTrackViewModel.KeyFrameRemoveCommand)));
 
 			this.AddManipulator(new ContextualMenuManipulator(x =>
 			{
 				x.menu.AppendAction("Remove", x =>
 				{
-					RemoveClicked?.Invoke(this);
+					RemoveCommand.Execute();
 				}, DropdownMenuAction.Status.Normal);
 			}));
-			keyToggle.RegisterCallback<ClickEvent>(x =>
-			{
-				if (x.button == 0 && x.clickCount == 1)
-					KeyFrameClicked?.Invoke(this);
-			});
 
 			floatField.RegisterValueChangedCallback(x =>
 			{
@@ -183,6 +189,29 @@ namespace Rails.Editor.Controls
 			{
 				ValueEdited.Invoke(this, new ValueEditArgs(x.newValue));
 			});
+		}
+
+		protected override void OnAttach(AttachToPanelEvent evt)
+		{
+			base.OnAttach(evt);
+			keyToggle.RegisterCallback<ClickEvent>(OnKeyClicked);
+		}
+
+		protected override void OnDetach(DetachFromPanelEvent evt)
+		{
+			base.OnDetach(evt);
+			keyToggle.UnregisterCallback<ClickEvent>(OnKeyClicked);
+		}
+
+		private void OnKeyClicked(ClickEvent evt)
+		{
+			if (evt.button == 0 && evt.clickCount == 1)
+			{
+				if (IsKeyFrame)
+					KeyFrameRemoveCommand.Execute();
+				else
+					KeyFrameAddCommand.Execute();
+			}
 		}
 	}
 }

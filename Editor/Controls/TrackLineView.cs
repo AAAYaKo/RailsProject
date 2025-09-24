@@ -51,8 +51,6 @@ namespace Rails.Editor.Controls
 		public int FirstSelectedKeyFrame { get; private set; }
 		public int LastSelectedKeyFrame { get; private set; }
 		public event Action<TrackLineView> DeselectAllPerformed;
-		public event Action<int> KeyDragged;
-		public event Action KeyDragComplete;
 
 		private ObservableList<int> selectedIndexes;
 		private List<int> selectedViewKeys = new();
@@ -60,7 +58,6 @@ namespace Rails.Editor.Controls
 		private Dictionary<int, TrackTweenLineView> keyToTweenLines = new();
 		private VisualElement moveContainer;
 		private string trackClass;
-		private float framePixelSize = 30;
 
 
 		public TrackLineView()
@@ -103,13 +100,20 @@ namespace Rails.Editor.Controls
 			});
 		}
 
-		public void OnFramePixelSizeChanged(float framePixelSize)
+		protected override void OnAttach(AttachToPanelEvent evt)
 		{
-			this.framePixelSize = framePixelSize;
-			views.ForEach(x => x.OnFramePixelSizeChanged(framePixelSize));
-			tweenLines.ForEach(x => x.OnFramePixelSizeChanged(framePixelSize));
-			UpdateTweenLines();
+			base.OnAttach(evt);
+			EventBus.Subscribe<KeyClickEvent>(OnClickKey);
+			EventBus.Subscribe<KeyMoveEvent>(OnMoveKey);
 		}
+
+		protected override void OnDetach(DetachFromPanelEvent evt)
+		{
+			base.OnDetach(evt);
+			EventBus.Unsubscribe<KeyClickEvent>(OnClickKey);
+			EventBus.Unsubscribe<KeyMoveEvent>(OnMoveKey);
+		}
+
 
 		public void OnSelectionBoxBegin(MouseDownEvent evt)
 		{
@@ -147,8 +151,6 @@ namespace Rails.Editor.Controls
 			container.Remove(key);
 			moveContainer.Add(key);
 			key.AddToClassList(SelectedClass);
-			key.KeyDragged += OnKeyDragged;
-			key.KeyDragComplete += OnKeyDragComplete;
 			if (keyToTweenLines.ContainsKey(keyIndex))
 				keyToTweenLines[keyIndex].AddToClassList(SelectedClass);
 		}
@@ -162,8 +164,6 @@ namespace Rails.Editor.Controls
 			moveContainer.Remove(key);
 			container.Add(key);
 			key.RemoveFromClassList(SelectedClass);
-			key.KeyDragged -= OnKeyDragged;
-			key.KeyDragComplete -= OnKeyDragComplete;
 			if (keyToTweenLines.ContainsKey(keyIndex))
 				keyToTweenLines[keyIndex].RemoveFromClassList(SelectedClass);
 		}
@@ -182,8 +182,6 @@ namespace Rails.Editor.Controls
 				moveContainer.Remove(key);
 				container.Add(key);
 				key.RemoveFromClassList(SelectedClass);
-				key.KeyDragged -= OnKeyDragged;
-				key.KeyDragComplete -= OnKeyDragComplete;
 				if (keyToTweenLines.ContainsKey(x))
 					keyToTweenLines[x].RemoveFromClassList(SelectedClass);
 			});
@@ -194,18 +192,6 @@ namespace Rails.Editor.Controls
 				if (keyIgnoreIndex >= 0)
 					selectedViewKeys.Add(keyIgnoreIndex);
 			}
-		}
-
-		public void MoveSelectedKeys(int deltaFrames)
-		{
-			if (SelectedIndexes.IsNullOrEmpty())
-				return;
-			foreach (var key in SelectedIndexes)
-			{
-				views[key].TimePosition = Values[key].TimePosition + deltaFrames;
-			}
-
-			UpdateTweenLines();
 		}
 
 		public void UpdateSelectedKeyFrames()
@@ -281,7 +267,6 @@ namespace Rails.Editor.Controls
 		private TrackTweenLineView CreateTweenLine()
 		{
 			TrackTweenLineView line = new();
-			line.OnFramePixelSizeChanged(framePixelSize);
 			return line;
 		}
 
@@ -294,7 +279,6 @@ namespace Rails.Editor.Controls
 				var keyView = views[i];
 				var keyViewModel = Values[i];
 				keyView.SetTimePositionWithoutUpdate(keyViewModel.TimePosition);
-				keyView.OnFramePixelSizeChanged(framePixelSize);
 			}
 			if (!SelectedIndexes.IsNullOrEmpty())
 			{
@@ -307,27 +291,23 @@ namespace Rails.Editor.Controls
 		protected override TrackKeyView CreateElement()
 		{
 			TrackKeyView key = new();
-			key.OnClick += OnClickKey;
 			return key;
 		}
 
-		protected override void ResetElement(TrackKeyView element)
+		private void OnMoveKey(KeyMoveEvent evt)
 		{
-			element.OnClick -= OnClickKey;
+			if (SelectedIndexes.IsNullOrEmpty())
+				return;
+			foreach (var key in SelectedIndexes)
+				views[key].TimePosition = Values[key].TimePosition + evt.DeltaFrames;
+
+			UpdateTweenLines();
 		}
 
-		private void OnKeyDragged(int deltaFrames)
+		private void OnClickKey(KeyClickEvent evt)
 		{
-			KeyDragged?.Invoke(deltaFrames);
-		}
-
-		private void OnKeyDragComplete(TrackKeyView view)
-		{
-			KeyDragComplete?.Invoke();
-		}
-
-		private void OnClickKey(TrackKeyView key, bool actionKey)
-		{
+			TrackKeyView key = evt.Key;
+			bool actionKey = evt.ActionKey;
 			int index = views.IndexOf(key);
 			if (index < 0)
 				return;

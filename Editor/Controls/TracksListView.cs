@@ -9,6 +9,8 @@ namespace Rails.Editor.Controls
 	[UxmlElement]
 	public partial class TracksListView : ListObserverElement<AnimationTrackViewModel, AnimationTrackView>
 	{
+		public static readonly BindingId AddTrackCommandProperty = nameof(AddTrackCommand);
+
 		[UxmlAttribute("can-edit"), CreateProperty]
 		public bool CanEdit
 		{
@@ -21,6 +23,8 @@ namespace Rails.Editor.Controls
 				buttonContainer.style.display = CanEdit ? DisplayStyle.Flex : DisplayStyle.None;
 			}
 		}
+		[CreateProperty]
+		public ICommand<Type> AddTrackCommand;
 
 		public ScrollView Scroll => scrollView;
 
@@ -48,6 +52,7 @@ namespace Rails.Editor.Controls
 
 				menu.DropDown(button.worldBound, button, true);
 			};
+			SetBinding(AddTrackCommandProperty, new CommandBinding(nameof(RailsClipViewModel.AddTrackCommand)));
 		}
 
 		protected override AnimationTrackView CreateElement()
@@ -65,30 +70,13 @@ namespace Rails.Editor.Controls
 				bindingMode = BindingMode.ToTarget,
 				updateTrigger = BindingUpdateTrigger.OnSourceChanged,
 			});
-			view.RemoveClicked += OnRemoveClicked;
-			view.KeyFrameClicked += OnKeyFrameClicked;
 			view.ValueEdited += OnValueEdited;
 			return view;
 		}
 
 		protected override void ResetElement(AnimationTrackView element)
 		{
-			element.RemoveClicked -= OnRemoveClicked;
-			element.KeyFrameClicked -= OnKeyFrameClicked;
 			element.ValueEdited -= OnValueEdited;
-		}
-
-		private void OnRemoveClicked(AnimationTrackView view)
-		{
-			EditorContext.Instance.SelectedClip?.RemoveTrack(views.IndexOf(view));
-		}
-
-		private void OnKeyFrameClicked(AnimationTrackView view)
-		{
-			int index = views.IndexOf(view);
-			if (index < 0)
-				return;
-			Values[index].OnKeyFrameButtonClicked();
 		}
 
 		private void OnValueEdited(AnimationTrackView view, ValueEditArgs args)
@@ -101,7 +89,7 @@ namespace Rails.Editor.Controls
 
 		private void OnAddClicked(Type type)
 		{
-			EditorContext.Instance.SelectedClip?.AddTrack(type);
+			AddTrackCommand.Execute(type);
 		}
 	}
 }

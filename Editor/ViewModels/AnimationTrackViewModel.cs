@@ -85,6 +85,43 @@ namespace Rails.Editor.ViewModel
 		{
 			get => selectedIndexes;
 		}
+		[CreateProperty]
+		public ICommand RemoveCommand
+		{
+			get => removeCommand;
+			set
+			{
+				if (removeCommand == value)
+					return;
+				removeCommand = value;
+				NotifyPropertyChanged();
+			}
+		}
+		[CreateProperty]
+		public ICommand KeyFrameAddCommand
+		{
+			get => keyFrameAddCommand;
+			set
+			{
+				if (keyFrameAddCommand == value)
+					return;
+				keyFrameAddCommand = value;
+				NotifyPropertyChanged();
+			}
+		}
+		[CreateProperty]
+		public ICommand KeyFrameRemoveCommand
+		{
+			get => keyFrameRemoveCommand;
+			set
+			{
+				if (keyFrameRemoveCommand == value)
+					return;
+				keyFrameRemoveCommand = value;
+				NotifyPropertyChanged();
+			}
+		}
+
 
 		public event Action SelectionChanged;
 
@@ -97,11 +134,34 @@ namespace Rails.Editor.ViewModel
 		private bool isKeyFrame;
 		private int currentFrame;
 		private ObservableList<int> selectedIndexes = new();
+		private ICommand removeCommand;
+		private ICommand keyFrameAddCommand;
+		private ICommand keyFrameRemoveCommand;
 
 
 		public AnimationTrackViewModel()
 		{
 			SelectedIndexes.ListChanged += OnSelectionChanged;
+
+			KeyFrameRemoveCommand = new RelayCommand(() =>
+			{
+				int keyIndex = keys.FindIndex(x => x.TimePosition == currentFrame);
+				if (keyIndex < 0)
+					return;
+				EditorContext.Instance.Record("Key Frame Removed");
+				if (SelectedIndexes.Contains(keyIndex))
+					SelectedIndexes.Remove(keyIndex);
+				model.RemoveKey(model.AnimationKeys[keyIndex]);
+			});
+
+			KeyFrameAddCommand = new RelayCommand(() =>
+			{
+				int keyIndex = keys.FindIndex(x => x.TimePosition == currentFrame);
+				if (keyIndex >= 0)
+					return;
+				EditorContext.Instance.Record("Key Frame Added");
+				model.InsertNewKeyAt(currentFrame);
+			});
 		}
 
 		protected override void OnModelChanged()
@@ -111,22 +171,23 @@ namespace Rails.Editor.ViewModel
 
 			Reference = model.SceneReference;
 			trackData = TrackTypes[model.GetType()];
-			UpdateViewModels(model.AnimationKeys);
-
-			NotifyPropertyChanged(nameof(Type));
-			NotifyPropertyChanged(nameof(ValueType));
-			NotifyPropertyChanged(nameof(Keys));
 
 			selectedIndexes.Clear();
-			NotifyPropertyChanged(nameof(model.AnimationKeys));
 			if (model == null)
 			{
 				if (keys.Count > 0)
-					ClearViewModels();
+					ClearViewModels<AnimationKeyViewModel, AnimationKey>(Keys, vm =>
+					{
+						vm.propertyChanged -= OnKeyPropertyChanged;
+					});
 				return;
 			}
 
-			UpdateViewModels(model.AnimationKeys);
+			UpdateKeys();
+			NotifyPropertyChanged(nameof(Type));
+			NotifyPropertyChanged(nameof(ValueType));
+			NotifyPropertyChanged(nameof(Keys));
+			NotifyPropertyChanged(nameof(model.AnimationKeys));
 		}
 
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -136,7 +197,7 @@ namespace Rails.Editor.ViewModel
 
 			if (e.PropertyName == nameof(AnimationTrack.AnimationKeys))
 			{
-				UpdateViewModels(model.AnimationKeys);
+				UpdateKeys();
 				OnTimeHeadPositionChanged(currentFrame);
 			}
 		}
@@ -162,23 +223,6 @@ namespace Rails.Editor.ViewModel
 				return;
 			}
 			UpdateCurrentValue(keys[previousIndex], keys[nextIndex], frame);
-		}
-
-		public void OnKeyFrameButtonClicked()
-		{
-			int keyIndex = keys.FindIndex(x => x.TimePosition == currentFrame);
-			if (keyIndex >= 0)
-			{
-				EditorContext.Instance.Record("Key Frame Removed");
-				if (SelectedIndexes.Contains(keyIndex))
-					SelectedIndexes.Remove(keyIndex);
-				model.RemoveKey(model.AnimationKeys[keyIndex]);
-			}
-			else
-			{
-				EditorContext.Instance.Record("Key Frame Added");
-				model.InsertNewKeyAt(currentFrame);
-			}
 		}
 
 		public void OnValueEdited(ValueEditArgs args)
@@ -209,44 +253,20 @@ namespace Rails.Editor.ViewModel
 			model.MoveMultipleKeys(keysFramesPositions);
 		}
 
-		private void UpdateViewModels(List<AnimationKey> models)
+		private void UpdateKeys()
 		{
-			if (models == null)
-			{
-				ClearViewModels();
-				return;
-			}
-
-			while (Keys.Count < models.Count)
-			{
-				AnimationKeyViewModel key = new();
-				key.propertyChanged += OnKeyPropertyChanged;
-				Keys.AddWithoutNotify(key);
-			}
-			while (Keys.Count > models.Count)
-			{
-				var key = Keys[^1];
-				key.propertyChanged -= OnKeyPropertyChanged;
-				key.UnbindModel();
-				Keys.RemoveWithoutNotify(key);
-			}
-			for (int i = 0; i < models.Count; i++)
-			{
-				var key = models[i];
-				var viewModel = Keys[i];
-
-				viewModel.UnbindModel();
-				viewModel.BindModel(key);
-			}
-
-			Keys.NotifyListChanged();
-		}
-
-		private void ClearViewModels()
-		{
-			foreach (var clip in Keys)
-				clip.UnbindModel();
-			Keys.Clear();
+			UpdateVieModels(Keys, model.AnimationKeys,
+				createViewModel: () =>
+				{
+					AnimationKeyViewModel key = new();
+					key.propertyChanged += OnKeyPropertyChanged;
+					return key;
+				},
+				resetViewModel: vm =>
+				{
+					vm.propertyChanged -= OnKeyPropertyChanged;
+				}
+			);
 		}
 
 		private void OnKeyPropertyChanged(object sender, BindablePropertyChangedEventArgs e)
