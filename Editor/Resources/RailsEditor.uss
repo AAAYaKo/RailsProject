@@ -255,7 +255,7 @@
     border-top-color: var(--rails-track-control-stroke-color);
     border-bottom-color: var(--rails-track-control-stroke-color);
     border-top-width: 1px;
-    border-right-width: 1px;
+    border-right-width: 0;
     border-bottom-width: 1px;
     border-left-width: 1px;
     border-top-left-radius: 5px;
@@ -263,4 +263,31 @@
     border-bottom-right-radius: 0;
     border-bottom-left-radius: 5px;
     margin-top: -1px;
+}
+
+.clip-controls {
+    flex-grow: 0;
+    flex-basis: 45px;
+    border-left-color: var(--rails-toolbar-stroke-color);
+    border-right-color: var(--rails-toolbar-stroke-color);
+    border-top-color: var(--rails-toolbar-stroke-color);
+    border-bottom-color: var(--rails-toolbar-stroke-color);
+    border-bottom-width: 1px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.clips-title-block {
+    flex-grow: 0;
+    height: 45px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 16px;
+    padding-right: 16px;
+    justify-content: center;
+    border-left-color: var(--rails-toolbar-stroke-color);
+    border-right-color: var(--rails-toolbar-stroke-color);
+    border-top-color: var(--rails-toolbar-stroke-color);
+    border-bottom-color: var(--rails-toolbar-stroke-color);
+    border-bottom-width: 1px;
 }

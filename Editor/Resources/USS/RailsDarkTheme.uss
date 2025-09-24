@@ -11,6 +11,7 @@
 	--rails-play-head-color: #FF2C80;
 	--rails-drop-down-color: #C4C4C4;
 	--rails-drag-handler-color: #6E6E6E;
+	--rails-toolbar-stroke-color: #222222;
 	--rails-track-control-background-color: #303030;
 	--rails-track-control-stroke-color: #202020;
 	--rails-track-background-color: #282828;
