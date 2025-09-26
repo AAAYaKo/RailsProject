@@ -14,6 +14,7 @@ namespace Rails.Editor.Controls
 		public static readonly BindingId SelectedIndexProperty = nameof(SelectedIndex);
 		public static readonly BindingId CanAddProperty = nameof(CanAdd);
 		public static readonly BindingId ClipAddCommandProperty = nameof(ClipAddCommand);
+		public static readonly BindingId ClipSelectCommandProperty = nameof(ClipSelectCommand);
 		private const string SelectedClass = "rails-clip-view--selected";
 
 
@@ -49,6 +50,18 @@ namespace Rails.Editor.Controls
 		public ICommand ClipAddCommand { get; set; }
 		[CreateProperty]
 		public ICommand ClipRemoveCommand { get; set; }
+		[CreateProperty]
+		public ICommand<int> ClipSelectCommand
+		{
+			get => clipSelectCommand;
+			set
+			{
+				clipSelectCommand = value;
+			}
+		}
+
+		[CreateProperty]
+		private ICommand<int> clipSelectCommand;
 
 		private static VisualTreeAsset template;
 		private VisualElement buttonContainer;
@@ -70,6 +83,7 @@ namespace Rails.Editor.Controls
 			buttonContainer = this.Q<VisualElement>("button-container");
 			buttonContainer.Q<Button>("add-button").clicked += () => ClipAddCommand.Execute();
 			SetBinding(ClipAddCommandProperty, new CommandBinding(nameof(RailsAnimatorViewModel.ClipAddCommand)));
+			SetBinding(ClipSelectCommandProperty, new CommandBinding(nameof(RailsAnimatorViewModel.ClipSelectCommand)));
 		}
 
 		protected override void OnAttach(AttachToPanelEvent evt)
@@ -108,7 +122,7 @@ namespace Rails.Editor.Controls
 		private void OnClipClick(ClipClickEvent evt)
 		{
 			int index = views.IndexOf(evt.Clip);
-			SelectedIndex = index;
+			ClipSelectCommand.Execute(index);
 		}
 
 		private void ChangeSelection(int index)
@@ -118,7 +132,7 @@ namespace Rails.Editor.Controls
 			{
 				selected?.RemoveFromClassList(SelectedClass);
 				selected = views[index];
-				selected?.AddToClassList(SelectedClass);
+				selected.AddToClassList(SelectedClass);
 			}
 		}
 	}

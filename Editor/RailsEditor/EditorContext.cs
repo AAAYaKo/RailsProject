@@ -10,15 +10,27 @@ namespace Rails.Editor
 	{
 		public RailsClipViewModel SelectedClip => ViewModel.SelectedClip;
 		public static EditorContext Instance => _instance ??= new();
-		public RailsAnimator CurrentTarget { get; private set; }
-		public RailsAnimatorViewModel ViewModel { get; private set; } = new();
+		public RailsAnimator CurrentTarget
+		{
+			get => currentTarget;
+			internal set
+			{
+				if (currentTarget == value)
+					return;
+				currentTarget = value;
+				CurrentTargetChanged?.Invoke(value);
+			}
+		}
+		public RailsAnimatorViewModel ViewModel { get; internal set; }
 		public float FramePixelSize { get; internal set; }
 		public float TimePosition { get; internal set; }
+		public DataStorage DataStorage { get; internal set; }
+		public RailsEditor EditorWindow { get; internal set; }
 
 		private static EditorContext _instance;
+		private RailsAnimator currentTarget;
 
 		public event Action<RailsAnimator> CurrentTargetChanged;
-		public event Action<int> SelectedClipChanged;
 
 
 		private EditorContext()
@@ -58,11 +70,6 @@ namespace Rails.Editor
 			TargetChangedHandler();
 		}
 
-		public void NotifySelectedClipChanged(int selected)
-		{
-			SelectedClipChanged?.Invoke(selected);
-		}
-
 		private void RegisterConverters()
 		{
 			ConverterGroups.RegisterGlobalConverter((ref ToggleButtonGroupState x) =>
@@ -82,6 +89,10 @@ namespace Rails.Editor
 				result[(int)x] = true;
 				return result;
 			});
+			ConverterGroups.RegisterGlobalConverter((ref bool x) =>
+			{
+				return x ? DisplayStyle.None : DisplayStyle.Flex;
+			});
 		}
 
 		private void TargetChangedHandler()
@@ -91,13 +102,7 @@ namespace Rails.Editor
 			if (!Selection.activeGameObject.TryGetComponent<RailsAnimator>(out var next))
 				return;
 
-			if (CurrentTarget == next)
-				return;
-
 			CurrentTarget = next;
-			ViewModel.UnbindModel();
-			ViewModel.BindModel(CurrentTarget);
-			CurrentTargetChanged?.Invoke(CurrentTarget);
 		}
 
 		private void OnFramePixelSizeChanged(FramePixelSizeChangedEvent evt)

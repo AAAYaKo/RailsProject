@@ -25,11 +25,13 @@ namespace Rails.Editor.Controls
 		private bool? canEdit;
 
 
+		static ClipControl()
+		{
+			templateMain = Resources.Load<VisualTreeAsset>("RailsClipControl");
+		}
+
 		public ClipControl()
 		{
-			if (templateMain == null)
-				templateMain = Resources.Load<VisualTreeAsset>("RailsClipControl");
-
 			templateMain.CloneTree(this);
 			controls = this.Q<VisualElement>("controls");
 

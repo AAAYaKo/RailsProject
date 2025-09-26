@@ -2,7 +2,7 @@
 
 namespace Rails.Editor
 {
-	public class KeyClickEvent
+	public struct KeyClickEvent
 	{
 		public TrackKeyView Key { get; }
 		public bool ActionKey { get; }
@@ -12,16 +12,6 @@ namespace Rails.Editor
 		{
 			Key = key;
 			ActionKey = actionKey;
-		}
-	}
-
-	public class ClipClickEvent
-	{
-		public ClipItemView Clip { get; }
-
-		public ClipClickEvent(ClipItemView clip)
-		{
-			Clip = clip;
 		}
 	}
 }

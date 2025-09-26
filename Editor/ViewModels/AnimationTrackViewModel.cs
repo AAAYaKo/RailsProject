@@ -202,6 +202,16 @@ namespace Rails.Editor.ViewModel
 			}
 		}
 
+		protected override void OnUnbind()
+		{
+			base.OnUnbind();
+			ClearViewModels<AnimationKeyViewModel, AnimationKey>(Keys,
+				resetViewModel: vm =>
+				{
+					vm.propertyChanged -= OnKeyPropertyChanged;
+				});
+		}
+
 		public void OnTimeHeadPositionChanged(int frame)
 		{
 			currentFrame = frame;

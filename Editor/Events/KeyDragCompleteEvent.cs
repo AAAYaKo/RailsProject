@@ -1,6 +1,6 @@
 ﻿namespace Rails.Editor
 {
-	public class KeyDragCompleteEvent
+	public struct KeyDragCompleteEvent
 	{
 
 	}

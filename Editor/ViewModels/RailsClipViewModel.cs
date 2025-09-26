@@ -25,7 +25,6 @@ namespace Rails.Editor.ViewModel
 					return;
 				name = value;
 				NotifyPropertyChanged();
-				notify?.Invoke();
 			}
 		}
 		[CreateProperty]
@@ -38,7 +37,6 @@ namespace Rails.Editor.ViewModel
 					return;
 				tracks = value;
 				NotifyPropertyChanged();
-				notify?.Invoke();
 			}
 		}
 		[CreateProperty]
@@ -51,7 +49,6 @@ namespace Rails.Editor.ViewModel
 					return;
 				canEdit = value;
 				NotifyPropertyChanged();
-				notify?.Invoke();
 			}
 		}
 		[CreateProperty]
@@ -71,7 +68,6 @@ namespace Rails.Editor.ViewModel
 
 				NotifyPropertyChanged();
 				NotifyPropertyChanged(nameof(DurationFrames));
-				notify?.Invoke();
 			}
 		}
 		[CreateProperty]
@@ -89,8 +85,7 @@ namespace Rails.Editor.ViewModel
 				NotifyPropertyChanged();
 				NotifyPropertyChanged(nameof(TimeHeadPositionFrames));
 
-				notify?.Invoke();
-				timeHeadPositionFramesChanged?.Invoke(frames);
+				Tracks.ForEach(x => x.OnTimeHeadPositionChanged(frames));
 			}
 		}
 		[CreateProperty]
@@ -125,8 +120,7 @@ namespace Rails.Editor.ViewModel
 				NotifyPropertyChanged();
 				NotifyPropertyChanged(nameof(TimeHeadPositionText));
 
-				notify?.Invoke();
-				timeHeadPositionFramesChanged?.Invoke(value);
+				Tracks.ForEach(x => x.OnTimeHeadPositionChanged(value));
 			}
 		}
 		[CreateProperty]
@@ -156,8 +150,6 @@ namespace Rails.Editor.ViewModel
 			}
 		}
 
-		public event Action SelectionChanged;
-
 		private string durationText;
 		private int durationFrames;
 		private string timeHeadPositionText;
@@ -165,8 +157,6 @@ namespace Rails.Editor.ViewModel
 		private string name;
 		private ObservableList<AnimationTrackViewModel> tracks = new();
 		private bool canEdit = true;
-		private Action notify;
-		private event Action<int> timeHeadPositionFramesChanged;
 		private ICommand<Type> addTrackCommand;
 		private ICommand removeCommand;
 
@@ -215,14 +205,10 @@ namespace Rails.Editor.ViewModel
 			}
 		}
 
-		public void Select(Action notify)
+		protected override void OnUnbind()
 		{
-			this.notify = notify;
-		}
-
-		public void Deselect()
-		{
-			notify = null;
+			base.OnUnbind();
+			ClearViewModels<AnimationTrackViewModel, AnimationTrack>(Tracks);
 		}
 
 		private void UpdateTracks()
@@ -231,12 +217,7 @@ namespace Rails.Editor.ViewModel
 				createViewModel: () =>
 				{
 					AnimationTrackViewModel track = new();
-					timeHeadPositionFramesChanged += track.OnTimeHeadPositionChanged;
 					return track;
-				},
-				resetViewModel: vm =>
-				{
-					timeHeadPositionFramesChanged -= vm.OnTimeHeadPositionChanged;
 				},
 				viewModelBindCallback: (vm, m) =>
 				{

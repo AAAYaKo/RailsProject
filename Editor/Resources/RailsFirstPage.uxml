@@ -6,7 +6,7 @@
     <Rails.Editor.Controls.ClipsListView name="clips-view" style="flex-basis: 100%; flex-grow: 1;">
         <Bindings>
             <ui:DataBinding property="CanAdd" data-source-path="CanAddClip" binding-mode="ToTarget" />
-            <ui:DataBinding property="SelectedIndex" data-source-path="SelectedClipIndex" binding-mode="TwoWay" />
+            <ui:DataBinding property="SelectedIndex" data-source-path="SelectedClipIndex" binding-mode="ToTarget" />
             <ui:DataBinding property="Values" data-source-path="Clips" binding-mode="ToTarget" />
         </Bindings>
     </Rails.Editor.Controls.ClipsListView>

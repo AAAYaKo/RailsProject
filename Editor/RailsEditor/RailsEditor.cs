@@ -12,10 +12,10 @@ namespace Rails.Editor
 		[SerializeField] private StyleSheet darkTheme = default;
 		[SerializeField] private StyleSheet lightTheme = default;
 		[SerializeField] private VisualTreeAsset m_VisualTreeAsset = default;
-		[SerializeField] private int selectedClip = 0;
+		[SerializeField] private DataStorage dataStorage = new();
+		[SerializeField] private RailsAnimator currentTarget;
 
 		private TwoPanelsView twoPanels;
-		private RailsAnimatorViewModel viewModel => EditorContext.Instance.ViewModel;
 
 
 		[MenuItem("Window/RailsEditor")]
@@ -29,21 +29,21 @@ namespace Rails.Editor
 		private void OnEnable()
 		{
 			EditorContext.Instance.CurrentTargetChanged += TargetChangedHandler;
-			EditorContext.Instance.SelectedClipChanged += SelectedClipChangedHandler;
+			EditorContext.Instance.DataStorage = dataStorage;
+			EditorContext.Instance.EditorWindow = this;
+			EditorContext.Instance.ViewModel = new();
+			if (currentTarget != null && EditorContext.Instance.CurrentTarget == null)
+				EditorContext.Instance.CurrentTarget = currentTarget;
 			TargetChangedHandler(EditorContext.Instance.CurrentTarget);
 		}
 
 		private void OnDisable()
 		{
 			EditorContext.Instance.CurrentTargetChanged -= TargetChangedHandler;
-			EditorContext.Instance.SelectedClipChanged -= SelectedClipChangedHandler;
-		}
-
-		private void OnValidate()
-		{
-			if (selectedClip != EditorContext.Instance.ViewModel.SelectedClipIndex &&
-				selectedClip < EditorContext.Instance.ViewModel.Clips.Count && selectedClip > 0)
-				EditorContext.Instance.ViewModel.SelectedClipIndex = selectedClip;
+			EditorContext.Instance.DataStorage = null;
+			EditorContext.Instance.EditorWindow = null;
+			EditorContext.Instance.ViewModel.UnbindModel();
+			EditorContext.Instance.ViewModel = null;
 		}
 
 		private void CreateGUI()
@@ -68,19 +68,14 @@ namespace Rails.Editor
 			clipView.style.flexGrow = 1;
 			twoPanels.SecondPanel.Add(clipView);
 
-			root.dataSource = viewModel;
+			root.dataSource = EditorContext.Instance.ViewModel;
 		}
 
 		private void TargetChangedHandler(RailsAnimator target)
 		{
-			if (selectedClip < EditorContext.Instance.ViewModel.Clips.Count && selectedClip > 0)
-				EditorContext.Instance.ViewModel.SelectedClipIndex = selectedClip;
-		}
-
-		private void SelectedClipChangedHandler(int selected)
-		{
-			EditorContext.Instance.Record(this, "Selected Clip Changed");
-			selectedClip = selected;
+			EditorContext.Instance.ViewModel.UnbindModel();
+			EditorContext.Instance.ViewModel.BindModel(target);
+			this.currentTarget = target;
 		}
 	}
 }

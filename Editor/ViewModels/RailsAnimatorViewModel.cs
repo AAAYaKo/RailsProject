@@ -1,12 +1,14 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using Rails.Runtime;
 using Unity.Properties;
+using UnityEngine.UIElements;
 
 namespace Rails.Editor.ViewModel
 {
 	public class RailsAnimatorViewModel : BaseNotifyPropertyViewModel<RailsAnimator>
 	{
+		public const string SelectedClipKey = "selectedClip";
+
 		[CreateProperty]
 		public ObservableList<RailsClipViewModel> Clips
 		{
@@ -41,7 +43,6 @@ namespace Rails.Editor.ViewModel
 					return;
 				selectedClipIndex = value;
 				NotifyPropertyChanged();
-				EditorContext.Instance.NotifySelectedClipChanged(selectedClipIndex);
 				SelectedClip = Clips[SelectedClipIndex];
 			}
 		}
@@ -53,12 +54,14 @@ namespace Rails.Editor.ViewModel
 			{
 				if (selectedClip == value)
 					return;
-				selectedClip?.Deselect();
+				if (selectedClip != null)
+					selectedClip.propertyChanged -= NotifySelectedClipChanged;
 				selectedClip = value;
-				selectedClip.Select(() => NotifyPropertyChanged(nameof(SelectedClip)));
+				selectedClip.propertyChanged += NotifySelectedClipChanged;
 				NotifyPropertyChanged();
 			}
 		}
+
 		[CreateProperty]
 		public ICommand ClipAddCommand
 		{
@@ -72,11 +75,25 @@ namespace Rails.Editor.ViewModel
 			}
 		}
 
+		[CreateProperty]
+		public ICommand<int> ClipSelectCommand
+		{
+			get => clipSelectCommand;
+			set
+			{
+				if (clipSelectCommand == value)
+					return;
+				clipSelectCommand = value;
+				NotifyPropertyChanged();
+			}
+		}
+
 		private ObservableList<RailsClipViewModel> clips = new();
 		private RailsClipViewModel selectedClip = RailsClipViewModel.Empty;
 		private int selectedClipIndex = 0;
 		private bool canAddClip;
 		private ICommand clipAddCommand;
+		private ICommand<int> clipSelectCommand;
 
 
 		public RailsAnimatorViewModel()
@@ -85,6 +102,11 @@ namespace Rails.Editor.ViewModel
 			{
 				EditorContext.Instance.Record("Clip Added");
 				model.AddClip();
+			});
+			ClipSelectCommand = new RelayCommand<int>(x =>
+			{
+				EditorContext.Instance.Record(EditorContext.Instance.EditorWindow, $"Select Clip: {Clips[x]}");
+				EditorContext.Instance.DataStorage.SetInt(SelectedClipKey, x);
 			});
 		}
 
@@ -109,12 +131,29 @@ namespace Rails.Editor.ViewModel
 
 			UpdateClips();
 
+			selectedClipIndex = EditorContext.Instance.DataStorage.GetInt(SelectedClipKey, 0);
+			bool mustResetSelected = false;
 			if (SelectedClipIndex >= Clips.Count)
 			{
 				selectedClipIndex = 0;
-				NotifyPropertyChanged(nameof(SelectedClipIndex));
+				mustResetSelected = true;
 			}
+			NotifyPropertyChanged(nameof(SelectedClipIndex));
 			SelectedClip = Clips.Count > 0 ? Clips[SelectedClipIndex] : RailsClipViewModel.Empty;
+			if (mustResetSelected)
+				EditorContext.Instance.DataStorage.SetInt(SelectedClipKey, 0);
+		}
+
+		protected override void OnUnbind()
+		{
+			base.OnUnbind();
+			ClearViewModels<RailsClipViewModel, RailsClip>(Clips);
+		}
+
+		protected override void OnRecordChanged(RecordIntChangedEvent evt)
+		{
+			if (evt.Key == SelectedClipKey)
+				SelectedClipIndex = evt.NextValue;
 		}
 
 		private void UpdateClips()
@@ -128,6 +167,11 @@ namespace Rails.Editor.ViewModel
 						model.RemoveClip(m);
 					});
 				});
+		}
+
+		private void NotifySelectedClipChanged(object sender, BindablePropertyChangedEventArgs e)
+		{
+			NotifyPropertyChanged(nameof(SelectedClip));
 		}
 	}
 }

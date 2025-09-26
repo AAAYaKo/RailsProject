@@ -21,6 +21,7 @@ namespace Rails.Editor.ViewModel
 				this.model.PropertyChanged += OnModelPropertyChanged;
 			if (modelChanged)
 				OnModelChanged();
+			OnBind();
 		}
 
 		public void UnbindModel()
@@ -29,6 +30,7 @@ namespace Rails.Editor.ViewModel
 				return;
 			model.PropertyChanged -= OnModelPropertyChanged;
 			model = default;
+			OnUnbind();
 		}
 
 		protected void NotifyPropertyChanged([CallerMemberName] string property = "")
@@ -38,6 +40,21 @@ namespace Rails.Editor.ViewModel
 
 		protected abstract void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e);
 		protected abstract void OnModelChanged();
+
+		protected virtual void OnBind()
+		{
+			EventBus.Subscribe<RecordIntChangedEvent>(OnRecordChanged);
+		}
+
+		protected virtual void OnUnbind()
+		{
+			EventBus.Unsubscribe<RecordIntChangedEvent>(OnRecordChanged);
+		}
+
+		protected virtual void OnRecordChanged(RecordIntChangedEvent evt)
+		{
+
+		}
 
 		protected void UpdateVieModels<VM, M>(ObservableList<VM> viewModels, List<M> models, Func<VM> createViewModel, Action<VM> resetViewModel = null, Action<VM, M> viewModelBindCallback = null)
 			where VM : BaseNotifyPropertyViewModel<M>

@@ -86,7 +86,6 @@ namespace Rails.Editor.ViewModel
 			Vector3Value = model.Vector3Value;
 			if (Ease == null)
 				SetEaseWithoutNotify(new EaseViewModel());
-			Ease.UnbindModel();
 			Ease.BindModel(model.Ease);
 		}
 
@@ -100,6 +99,12 @@ namespace Rails.Editor.ViewModel
 				Vector2Value = model.Vector2Value;
 			if (e.PropertyName == nameof(AnimationKey.Vector3Value))
 				Vector3Value = model.Vector3Value;
+		}
+
+		protected override void OnUnbind()
+		{
+			base.OnUnbind();
+			Ease.UnbindModel();
 		}
 
 		private void OnEasePropertyChanged(object sender, BindablePropertyChangedEventArgs e)

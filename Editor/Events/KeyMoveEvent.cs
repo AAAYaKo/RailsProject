@@ -1,6 +1,6 @@
 ﻿namespace Rails.Editor
 {
-	public class KeyMoveEvent
+	public struct KeyMoveEvent
 	{
 		public int DeltaFrames { get; }
 
