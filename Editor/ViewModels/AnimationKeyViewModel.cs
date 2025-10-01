@@ -12,61 +12,31 @@ namespace Rails.Editor.ViewModel
 		public int TimePosition
 		{
 			get => timePosition ?? 0;
-			set
-			{
-				if (timePosition == value)
-					return;
-				timePosition = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref timePosition, value);
 		}
 		[CreateProperty]
 		public float SingleValue
 		{
 			get => singleValue ?? 0;
-			set
-			{
-				if (singleValue == value)
-					return;
-				singleValue = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref singleValue, value);
 		}
 		[CreateProperty]
 		public Vector2 Vector2Value
 		{
 			get => vector2Value ?? Vector2.zero;
-			set
-			{
-				if (vector2Value == value)
-					return;
-				vector2Value = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref vector2Value, value);
 		}
 		[CreateProperty]
 		public Vector3 Vector3Value
 		{
 			get => vector3Value ?? Vector3.zero;
-			set
-			{
-				if (vector3Value == value)
-					return;
-				vector3Value = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref vector3Value, value);
 		}
 		[CreateProperty]
 		public EaseViewModel Ease
 		{
 			get => ease;
-			set
-			{
-				if (ease == value)
-					return;
-				SetEaseWithoutNotify(value);
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ease, value, SetEaseWithoutNotify);
 		}
 
 		private int? timePosition;

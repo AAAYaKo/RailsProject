@@ -19,9 +19,9 @@ namespace Rails.Editor.ViewModel
 			this.model = model;
 			if (model != null)
 				this.model.PropertyChanged += OnModelPropertyChanged;
+			OnBind();
 			if (modelChanged)
 				OnModelChanged();
-			OnBind();
 		}
 
 		public void UnbindModel()
@@ -43,17 +43,10 @@ namespace Rails.Editor.ViewModel
 
 		protected virtual void OnBind()
 		{
-			EventBus.Subscribe<RecordIntChangedEvent>(OnRecordChanged);
 		}
 
 		protected virtual void OnUnbind()
 		{
-			EventBus.Unsubscribe<RecordIntChangedEvent>(OnRecordChanged);
-		}
-
-		protected virtual void OnRecordChanged(RecordIntChangedEvent evt)
-		{
-
 		}
 
 		protected void UpdateVieModels<VM, M>(ObservableList<VM> viewModels, List<M> models, Func<VM> createViewModel, Action<VM> resetViewModel = null, Action<VM, M> viewModelBindCallback = null)
@@ -103,5 +96,39 @@ namespace Rails.Editor.ViewModel
 			}
 			viewModels.Clear();
 		}
+
+#nullable enable
+		protected bool SetProperty<T>(T oldValue, T newValue, IEqualityComparer<T> comparer, Action<T> setter, [CallerMemberName] string? propertyName = "")
+		{
+			comparer ??= EqualityComparer<T>.Default;
+			if (comparer.Equals(oldValue, newValue))
+				return false;
+			setter.Invoke(newValue);
+			if (!propertyName.IsNullOrEmpty())
+				NotifyPropertyChanged(propertyName);
+			return true;
+		}
+
+		protected bool SetProperty<T>(T oldValue, T newValue, Action<T> setter, [CallerMemberName] string? propertyName = "")
+		{
+			return SetProperty<T>(oldValue, newValue, EqualityComparer<T>.Default, setter, propertyName);
+		}
+
+		protected bool SetProperty<T>(ref T field, T value, IEqualityComparer<T> comparer, [CallerMemberName] string? propertyName = "")
+		{
+			comparer ??= EqualityComparer<T>.Default;
+			if (comparer.Equals(field, value))
+				return false;
+			field = value;
+			if (!propertyName.IsNullOrEmpty())
+				NotifyPropertyChanged(propertyName);
+			return true;
+		}
+
+		protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = "")
+		{
+			return SetProperty(ref field, value, EqualityComparer<T>.Default, propertyName);
+		}
+#nullable disable
 	}
 }

@@ -16,13 +16,14 @@ namespace Rails.Editor.Controls
 		private static VisualTreeAsset templateRight;
 
 
+		static ClipView()
+		{
+			templateLeft = Resources.Load<VisualTreeAsset>("RailsSecondPage");
+			templateRight = Resources.Load<VisualTreeAsset>("RailsThirdPage");
+		}
+
 		public ClipView()
 		{
-			if (templateLeft == null)
-				templateLeft = Resources.Load<VisualTreeAsset>("RailsSecondPage");
-			if (templateRight == null)
-				templateRight = Resources.Load<VisualTreeAsset>("RailsThirdPage");
-
 			TwoPanelsView split = new();
 			split.style.width = new Length(100, LengthUnit.Percent);
 			split.style.height = new Length(100, LengthUnit.Percent);

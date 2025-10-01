@@ -70,21 +70,11 @@ namespace Rails.Editor.Controls
 				bindingMode = BindingMode.ToTarget,
 				updateTrigger = BindingUpdateTrigger.OnSourceChanged,
 			});
-			view.ValueEdited += OnValueEdited;
 			return view;
 		}
 
 		protected override void ResetElement(AnimationTrackView element)
 		{
-			element.ValueEdited -= OnValueEdited;
-		}
-
-		private void OnValueEdited(AnimationTrackView view, ValueEditArgs args)
-		{
-			int index = views.IndexOf(view);
-			if (index < 0)
-				return;
-			Values[index].OnValueEdited(args);
 		}
 
 		private void OnAddClicked(Type type)

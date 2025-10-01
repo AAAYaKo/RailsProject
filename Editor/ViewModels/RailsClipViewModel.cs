@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using Rails.Runtime;
 using Rails.Runtime.Tracks;
@@ -14,42 +13,25 @@ namespace Rails.Editor.ViewModel
 			CanEdit = false,
 			durationText = "--:--",
 		};
+		private static readonly CollectionComparer<AnimationTrackViewModel> tracksComparer = new();
 
 		[CreateProperty]
 		public string Name
 		{
 			get => name;
-			set
-			{
-				if (Name == value)
-					return;
-				name = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref name, value);
 		}
 		[CreateProperty]
 		public ObservableList<AnimationTrackViewModel> Tracks
 		{
 			get => tracks;
-			set
-			{
-				if (tracks == value)
-					return;
-				tracks = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref tracks, value, tracksComparer);
 		}
 		[CreateProperty]
 		public bool CanEdit
 		{
 			get => canEdit;
-			private set
-			{
-				if (canEdit == value)
-					return;
-				canEdit = value;
-				NotifyPropertyChanged();
-			}
+			private set => SetProperty(ref canEdit, value);
 		}
 		[CreateProperty]
 		public string DurationText
@@ -127,27 +109,13 @@ namespace Rails.Editor.ViewModel
 		public ICommand<Type> AddTrackCommand
 		{
 			get => addTrackCommand;
-			set
-			{
-				if (addTrackCommand == value) 
-					return;
-				addTrackCommand = value;
-
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref addTrackCommand, value);
 		}
 		[CreateProperty]
 		public ICommand RemoveCommand
 		{
 			get => removeCommand;
-			set
-			{
-				if (removeCommand == value)
-					return;
-				removeCommand = value;
-
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref removeCommand, value);
 		}
 
 		private string durationText;

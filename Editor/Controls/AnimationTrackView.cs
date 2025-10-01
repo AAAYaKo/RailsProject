@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Rails.Editor.ViewModel;
-using Rails.Runtime;
 using Rails.Runtime.Tracks;
 using Unity.Properties;
 using UnityEngine;
@@ -20,6 +18,7 @@ namespace Rails.Editor.Controls
 		public static readonly BindingId RemoveCommandProperty = nameof(RemoveCommand);
 		public static readonly BindingId KeyFrameAddCommandProperty = nameof(KeyFrameAddCommand);
 		public static readonly BindingId KeyFrameRemoveCommandProperty = nameof(KeyFrameRemoveCommand);
+		public static readonly BindingId ValueEditCommandProperty = nameof(ValueEditCommand);
 
 		[UxmlAttribute("type"), CreateProperty]
 		public AnimationTrack.ValueType ValueType
@@ -110,8 +109,8 @@ namespace Rails.Editor.Controls
 		public ICommand KeyFrameAddCommand { get; set; }
 		[CreateProperty]
 		public ICommand KeyFrameRemoveCommand { get; set; }
-
-		public event Action<AnimationTrackView, ValueEditArgs> ValueEdited;
+		[CreateProperty]
+		public ICommand<ValueEditArgs> ValueEditCommand { get; set; }
 
 		private static VisualTreeAsset templateMain;
 		private AnimationTrack.ValueType? type;
@@ -127,10 +126,13 @@ namespace Rails.Editor.Controls
 		private Vector3? vector3Value;
 
 
+		static AnimationTrackView()
+		{
+			templateMain = Resources.Load<VisualTreeAsset>("RailsTrack");
+		}
+
 		public AnimationTrackView()
 		{
-			if (templateMain == null)
-				templateMain = Resources.Load<VisualTreeAsset>("RailsTrack");
 			templateMain.CloneTree(this);
 
 			floatField = this.Q<FloatField>("float-value");
@@ -168,6 +170,7 @@ namespace Rails.Editor.Controls
 			SetBinding(RemoveCommandProperty, new CommandBinding(nameof(AnimationTrackViewModel.RemoveCommand)));
 			SetBinding(KeyFrameAddCommandProperty, new CommandBinding(nameof(AnimationTrackViewModel.KeyFrameAddCommand)));
 			SetBinding(KeyFrameRemoveCommandProperty, new CommandBinding(nameof(AnimationTrackViewModel.KeyFrameRemoveCommand)));
+			SetBinding(ValueEditCommandProperty, new CommandBinding(nameof(AnimationTrackViewModel.ValueEditCommand)));
 
 			this.AddManipulator(new ContextualMenuManipulator(x =>
 			{
@@ -176,31 +179,24 @@ namespace Rails.Editor.Controls
 					RemoveCommand.Execute();
 				}, DropdownMenuAction.Status.Normal);
 			}));
-
-			floatField.RegisterValueChangedCallback(x =>
-			{
-				ValueEdited?.Invoke(this, new ValueEditArgs(x.newValue));
-			});
-			vector2Field.RegisterValueChangedCallback(x =>
-			{
-				ValueEdited?.Invoke(this, new ValueEditArgs(x.newValue));
-			});
-			vector3Field.RegisterValueChangedCallback(x =>
-			{
-				ValueEdited.Invoke(this, new ValueEditArgs(x.newValue));
-			});
 		}
 
 		protected override void OnAttach(AttachToPanelEvent evt)
 		{
 			base.OnAttach(evt);
 			keyToggle.RegisterCallback<ClickEvent>(OnKeyClicked);
+			floatField.RegisterValueChangedCallback(OnValueChanged);
+			vector2Field.RegisterValueChangedCallback(OnValueChanged);
+			vector3Field.RegisterValueChangedCallback(OnValueChanged);
 		}
 
 		protected override void OnDetach(DetachFromPanelEvent evt)
 		{
 			base.OnDetach(evt);
 			keyToggle.UnregisterCallback<ClickEvent>(OnKeyClicked);
+			floatField.UnregisterValueChangedCallback(OnValueChanged);
+			vector2Field.UnregisterValueChangedCallback(OnValueChanged);
+			vector3Field.UnregisterValueChangedCallback(OnValueChanged);
 		}
 
 		private void OnKeyClicked(ClickEvent evt)
@@ -212,6 +208,21 @@ namespace Rails.Editor.Controls
 				else
 					KeyFrameAddCommand.Execute();
 			}
+		}
+
+		private void OnValueChanged(ChangeEvent<float> evt)
+		{
+			ValueEditCommand.Execute(new ValueEditArgs(evt.newValue));
+		}
+
+		private void OnValueChanged(ChangeEvent<Vector2> evt)
+		{
+			ValueEditCommand.Execute(new ValueEditArgs(evt.newValue));
+		}
+
+		private void OnValueChanged(ChangeEvent<Vector3> evt)
+		{
+			ValueEditCommand.Execute(new ValueEditArgs(evt.newValue));
 		}
 	}
 }

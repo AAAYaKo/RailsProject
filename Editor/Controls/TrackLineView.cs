@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Rails.Editor.ViewModel;
@@ -50,7 +50,6 @@ namespace Rails.Editor.Controls
 		public List<int> SelectedKeysFrames { get; } = new();
 		public int FirstSelectedKeyFrame { get; private set; }
 		public int LastSelectedKeyFrame { get; private set; }
-		public event Action<TrackLineView> DeselectAllPerformed;
 
 		private ObservableList<int> selectedIndexes;
 		private List<int> selectedViewKeys = new();
@@ -145,6 +144,8 @@ namespace Rails.Editor.Controls
 		public void SelectKey(int keyIndex)
 		{
 			if (selectedViewKeys.Contains(keyIndex))
+				return;
+			if (keyIndex < 0 || keyIndex >= views.Count)
 				return;
 			selectedViewKeys.Add(keyIndex);
 			var key = views[keyIndex];
@@ -309,14 +310,12 @@ namespace Rails.Editor.Controls
 			TrackKeyView key = evt.Key;
 			bool actionKey = evt.ActionKey;
 			int index = views.IndexOf(key);
+
 			if (index < 0)
 				return;
 
 			if (!actionKey && !selectedViewKeys.Contains(index))
-			{
 				DeselectAllKeys(key);
-				DeselectAllPerformed?.Invoke(this);
-			}
 
 			if (!selectedViewKeys.Contains(index))
 			{

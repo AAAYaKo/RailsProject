@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using Rails.Editor.Manipulator;
 using Rails.Editor.ViewModel;
 using Rails.Runtime;
@@ -191,7 +191,6 @@ namespace Rails.Editor.Controls
 		protected override TrackLineView CreateElement()
 		{
 			TrackLineView line = new();
-			line.DeselectAllPerformed += OnDeselectAllPerformed;
 			VisualElement trackBack = new();
 			trackBack.AddToClassList("track-line-background");
 			tracksBackgroundContainer.Add(trackBack);
@@ -200,7 +199,6 @@ namespace Rails.Editor.Controls
 
 		protected override void ResetElement(TrackLineView element)
 		{
-			element.DeselectAllPerformed -= OnDeselectAllPerformed;
 			tracksBackgroundContainer.RemoveAt(0);
 		}
 
@@ -257,20 +255,6 @@ namespace Rails.Editor.Controls
 				float globalPixelsPosition = x - TrackLinesView.StartAdditional + slider.value.x * framePixelSize;
 				int frames = Mathf.RoundToInt(globalPixelsPosition / framePixelSize);
 				TimeHeadPosition = frames;
-			}
-		}
-
-		private void OnDeselectAllPerformed(TrackLineView line)
-		{
-			int index = views.IndexOf(line);
-			if (index < 0)
-				return;
-
-			for (int i = 0; i < Values.Count; i++)
-			{
-				if (i == index)
-					continue;
-				Values[i].DeselectAll();
 			}
 		}
 

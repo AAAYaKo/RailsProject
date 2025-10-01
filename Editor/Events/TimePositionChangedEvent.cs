@@ -1,4 +1,6 @@
-﻿namespace Rails.Editor
+﻿using UnityEngine;
+
+namespace Rails.Editor
 {
 	public struct TimePositionChangedEvent
 	{
@@ -11,18 +13,42 @@
 		}
 	}
 
-	public struct RecordIntChangedEvent
+	public struct SelectionBoxBeginEvent
 	{
-		public int PreviousValue { get; }
-		public int NextValue { get; }
-		public string Key { get; }
+		public Rect SelectionWorldRect { get; }
+		public bool ActionKey { get; }
 
 
-		public RecordIntChangedEvent(string key, int previousValue, int nextValue)
+		public SelectionBoxBeginEvent(Rect selectionWorldRect, bool actionKey)
 		{
-			PreviousValue = previousValue;
-			NextValue = nextValue;
-			Key = key;
+			SelectionWorldRect = selectionWorldRect;
+			ActionKey = actionKey;
+		}
+	}
+
+	public struct SelectionBoxChangeEvent
+	{
+		public Rect SelectionWorldRect { get; }
+		public bool ActionKey { get; }
+
+
+		public SelectionBoxChangeEvent(Rect selectionWorldRect, bool actionKey)
+		{
+			SelectionWorldRect = selectionWorldRect;
+			ActionKey = actionKey;
+		}
+	}
+
+	public struct SelectionBoxCompleteEvent
+	{
+		public Rect SelectionWorldRect { get; }
+		public bool ActionKey { get; }
+
+
+		public SelectionBoxCompleteEvent(Rect selectionWorldRect, bool actionKey)
+		{
+			SelectionWorldRect = selectionWorldRect;
+			ActionKey = actionKey;
 		}
 	}
 }

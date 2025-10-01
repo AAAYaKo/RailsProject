@@ -17,11 +17,8 @@ namespace Rails.Editor.ViewModel
 			get => reference;
 			set
 			{
-				if (reference == value)
-					return;
-				reference = value;
-				NotifyPropertyChanged();
-				model.SceneReference = reference;
+				if (SetProperty(ref reference, value))
+					model.SceneReference = reference;
 			}
 		}
 		[CreateProperty]
@@ -36,92 +33,52 @@ namespace Rails.Editor.ViewModel
 		public float CurrentSingleValue
 		{
 			get => currentSingleValue ?? 0;
-			set
-			{
-				if (currentSingleValue == value)
-					return;
-				currentSingleValue = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref currentSingleValue, value);
 		}
 		[CreateProperty]
 		public Vector2 CurrentVector2Value
 		{
 			get => currentVector2Value ?? Vector2.zero;
-			set
-			{
-				if (currentVector2Value == value)
-					return;
-				currentVector2Value = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref currentVector2Value, value);
 		}
 		[CreateProperty]
 		public Vector3 CurrentVector3Value
 		{
 			get => currentVector3Value ?? Vector3.zero;
-			set
-			{
-				if (currentVector3Value == value)
-					return;
-				currentVector3Value = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref currentVector3Value, value);
 		}
 		[CreateProperty]
 		public bool IsKeyFrame
 		{
 			get => isKeyFrame;
-			set
-			{
-				if (isKeyFrame == value)
-					return;
-				isKeyFrame = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref isKeyFrame, value);
 		}
 		[CreateProperty]
-		public ObservableList<int> SelectedIndexes
-		{
-			get => selectedIndexes;
-		}
+		public ObservableList<int> SelectedIndexes => selectedIndexes;
 		[CreateProperty]
 		public ICommand RemoveCommand
 		{
 			get => removeCommand;
-			set
-			{
-				if (removeCommand == value)
-					return;
-				removeCommand = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref removeCommand, value);
 		}
 		[CreateProperty]
 		public ICommand KeyFrameAddCommand
 		{
 			get => keyFrameAddCommand;
-			set
-			{
-				if (keyFrameAddCommand == value)
-					return;
-				keyFrameAddCommand = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref keyFrameAddCommand, value);
 		}
 		[CreateProperty]
 		public ICommand KeyFrameRemoveCommand
 		{
 			get => keyFrameRemoveCommand;
-			set
-			{
-				if (keyFrameRemoveCommand == value)
-					return;
-				keyFrameRemoveCommand = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref keyFrameRemoveCommand, value);
 		}
-
+		[CreateProperty]
+		public ICommand<ValueEditArgs> ValueEditCommand
+		{
+			get => valueEditCommand;
+			set => SetProperty(ref valueEditCommand, value);
+		}
 
 		public event Action SelectionChanged;
 
@@ -137,6 +94,7 @@ namespace Rails.Editor.ViewModel
 		private ICommand removeCommand;
 		private ICommand keyFrameAddCommand;
 		private ICommand keyFrameRemoveCommand;
+		private ICommand<ValueEditArgs> valueEditCommand;
 
 
 		public AnimationTrackViewModel()
@@ -161,6 +119,22 @@ namespace Rails.Editor.ViewModel
 					return;
 				EditorContext.Instance.Record("Key Frame Added");
 				model.InsertNewKeyAt(currentFrame);
+			});
+			ValueEditCommand = new RelayCommand<ValueEditArgs>(args =>
+			{
+				int keyIndex = keys.FindIndex(x => x.TimePosition == currentFrame);
+				if (keyIndex >= 0)
+				{
+					EditorContext.Instance.Record("Key Value Changed");
+					model.AnimationKeys[keyIndex].SingleValue = args.SingleValue;
+					model.AnimationKeys[keyIndex].Vector2Value = args.Vector2Value;
+					model.AnimationKeys[keyIndex].Vector3Value = args.Vector3Value;
+				}
+				else
+				{
+					EditorContext.Instance.Record("Key Frame Added");
+					model.InsertNewKeyAt(currentFrame, args.SingleValue, args.Vector2Value, args.Vector3Value);
+				}
 			});
 		}
 
@@ -233,23 +207,6 @@ namespace Rails.Editor.ViewModel
 				return;
 			}
 			UpdateCurrentValue(keys[previousIndex], keys[nextIndex], frame);
-		}
-
-		public void OnValueEdited(ValueEditArgs args)
-		{
-			int keyIndex = keys.FindIndex(x => x.TimePosition == currentFrame);
-			if (keyIndex >= 0)
-			{
-				EditorContext.Instance.Record("Key Value Changed");
-				model.AnimationKeys[keyIndex].SingleValue = args.SingleValue;
-				model.AnimationKeys[keyIndex].Vector2Value = args.Vector2Value;
-				model.AnimationKeys[keyIndex].Vector3Value = args.Vector3Value;
-			}
-			else
-			{
-				EditorContext.Instance.Record("Key Frame Added");
-				model.InsertNewKeyAt(currentFrame, args.SingleValue, args.Vector2Value, args.Vector3Value);
-			}
 		}
 
 		public void DeselectAll()

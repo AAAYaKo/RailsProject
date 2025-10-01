@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using Rails.Runtime;
 using Unity.Properties;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Rails.Editor.ViewModel
@@ -8,30 +9,19 @@ namespace Rails.Editor.ViewModel
 	public class RailsAnimatorViewModel : BaseNotifyPropertyViewModel<RailsAnimator>
 	{
 		public const string SelectedClipKey = "selectedClip";
+		private static readonly CollectionComparer<RailsClipViewModel> clipsComparer = new();
 
 		[CreateProperty]
 		public ObservableList<RailsClipViewModel> Clips
 		{
 			get => clips;
-			set
-			{
-				if (clips == value)
-					return;
-				clips = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref clips, value, clipsComparer);
 		}
 		[CreateProperty]
 		public bool CanAddClip
 		{
 			get => canAddClip;
-			set
-			{
-				if (canAddClip == value)
-					return;
-				canAddClip = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref canAddClip, value);
 		}
 		[CreateProperty]
 		public int SelectedClipIndex
@@ -39,11 +29,8 @@ namespace Rails.Editor.ViewModel
 			get => selectedClipIndex;
 			set
 			{
-				if (selectedClipIndex == value)
-					return;
-				selectedClipIndex = value;
-				NotifyPropertyChanged();
-				SelectedClip = Clips[SelectedClipIndex];
+				SetProperty(ref selectedClipIndex, value);
+				SelectedClip = Clips.Count > 0 ? Clips[selectedClipIndex] : RailsClipViewModel.Empty;
 			}
 		}
 		[CreateProperty]
@@ -66,31 +53,20 @@ namespace Rails.Editor.ViewModel
 		public ICommand ClipAddCommand
 		{
 			get => clipAddCommand;
-			set
-			{
-				if (clipAddCommand == value)
-					return;
-				clipAddCommand = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref clipAddCommand, value);
 		}
 
 		[CreateProperty]
 		public ICommand<int> ClipSelectCommand
 		{
 			get => clipSelectCommand;
-			set
-			{
-				if (clipSelectCommand == value)
-					return;
-				clipSelectCommand = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref clipSelectCommand, value);
 		}
 
 		private ObservableList<RailsClipViewModel> clips = new();
 		private RailsClipViewModel selectedClip = RailsClipViewModel.Empty;
 		private int selectedClipIndex = 0;
+		private StoredInt storedSelectedIndex = new(SelectedClipKey);
 		private bool canAddClip;
 		private ICommand clipAddCommand;
 		private ICommand<int> clipSelectCommand;
@@ -105,8 +81,8 @@ namespace Rails.Editor.ViewModel
 			});
 			ClipSelectCommand = new RelayCommand<int>(x =>
 			{
-				EditorContext.Instance.Record(EditorContext.Instance.EditorWindow, $"Select Clip: {Clips[x]}");
-				EditorContext.Instance.DataStorage.SetInt(SelectedClipKey, x);
+				EditorContext.Instance.Record(EditorContext.Instance.EditorWindow, $"Select Clip: {Clips[x].Name}");
+				storedSelectedIndex.Value = x;
 			});
 		}
 
@@ -131,29 +107,29 @@ namespace Rails.Editor.ViewModel
 
 			UpdateClips();
 
-			selectedClipIndex = EditorContext.Instance.DataStorage.GetInt(SelectedClipKey, 0);
-			bool mustResetSelected = false;
-			if (SelectedClipIndex >= Clips.Count)
-			{
-				selectedClipIndex = 0;
-				mustResetSelected = true;
-			}
-			NotifyPropertyChanged(nameof(SelectedClipIndex));
-			SelectedClip = Clips.Count > 0 ? Clips[SelectedClipIndex] : RailsClipViewModel.Empty;
-			if (mustResetSelected)
-				EditorContext.Instance.DataStorage.SetInt(SelectedClipKey, 0);
+			if (storedSelectedIndex.Value >= Clips.Count)
+				storedSelectedIndex.Value = 0;
+			SelectedClipIndex = selectedClipIndex;
+		}
+
+		protected override void OnBind()
+		{
+			base.OnBind();
+			storedSelectedIndex.Bind(EditorContext.Instance.DataStorage.RecordsInt);
+			storedSelectedIndex.ValueChanged += OnStoredIndexChanged;
 		}
 
 		protected override void OnUnbind()
 		{
 			base.OnUnbind();
 			ClearViewModels<RailsClipViewModel, RailsClip>(Clips);
+			storedSelectedIndex.Unbind();
+			storedSelectedIndex.ValueChanged -= OnStoredIndexChanged;
 		}
 
-		protected override void OnRecordChanged(RecordIntChangedEvent evt)
+		private void OnStoredIndexChanged(int value)
 		{
-			if (evt.Key == SelectedClipKey)
-				SelectedClipIndex = evt.NextValue;
+			SelectedClipIndex = value;
 		}
 
 		private void UpdateClips()
