@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+﻿using Rails.Editor.Controls;
 
 namespace Rails.Editor
 {
@@ -13,42 +13,14 @@ namespace Rails.Editor
 		}
 	}
 
-	public struct SelectionBoxBeginEvent
+	public struct DeselectAllKeysEvent
 	{
-		public Rect SelectionWorldRect { get; }
-		public bool ActionKey { get; }
+		public TrackKeyView Key { get; }
 
 
-		public SelectionBoxBeginEvent(Rect selectionWorldRect, bool actionKey)
+		public DeselectAllKeysEvent(TrackKeyView key)
 		{
-			SelectionWorldRect = selectionWorldRect;
-			ActionKey = actionKey;
-		}
-	}
-
-	public struct SelectionBoxChangeEvent
-	{
-		public Rect SelectionWorldRect { get; }
-		public bool ActionKey { get; }
-
-
-		public SelectionBoxChangeEvent(Rect selectionWorldRect, bool actionKey)
-		{
-			SelectionWorldRect = selectionWorldRect;
-			ActionKey = actionKey;
-		}
-	}
-
-	public struct SelectionBoxCompleteEvent
-	{
-		public Rect SelectionWorldRect { get; }
-		public bool ActionKey { get; }
-
-
-		public SelectionBoxCompleteEvent(Rect selectionWorldRect, bool actionKey)
-		{
-			SelectionWorldRect = selectionWorldRect;
-			ActionKey = actionKey;
+			Key = key;
 		}
 	}
 }

@@ -260,20 +260,14 @@ namespace Rails.Editor.Controls
 
 		private void OnSelectionBegin(Rect selectionRect, MouseDownEvent evt)
 		{
-			foreach (var line in views)
-				line.OnSelectionBoxBegin(evt);
+			Rect selectionWorldRect = selectionBoxContainer.LocalToWorld(selectionRect);
+			EventBus.Publish(new SelectionBoxBeginEvent(selectionWorldRect, evt.actionKey));
 		}
 
 		private void OnSelectionChanged(Rect selectionRect, MouseMoveEvent evt)
 		{
 			Rect selectionWorldRect = selectionBoxContainer.LocalToWorld(selectionRect);
-			foreach (var line in views)
-			{
-				if (line.layout.Overlaps(selectionRect))
-				{
-					line.OnSelectionBoxChanged(selectionWorldRect, evt);
-				}
-			}
+			EventBus.Publish(new SelectionBoxChangeEvent(selectionWorldRect, evt.actionKey));
 
 			Vector2 mousePosition = viewport.WorldToLocal(evt.mousePosition);
 			if (!viewport.ContainsPoint(mousePosition))
@@ -285,13 +279,8 @@ namespace Rails.Editor.Controls
 
 		private void OnSelectionComplete(Rect selectionRect, MouseUpEvent evt)
 		{
-			foreach (var line in views)
-			{
-				if (line.layout.Overlaps(selectionRect))
-				{
-					line.OnSelectionBoxComplete();
-				}
-			}
+			Rect selectionWorldRect = selectionBoxContainer.LocalToWorld(selectionRect);
+			EventBus.Publish(new SelectionBoxCompleteEvent(selectionWorldRect, evt.actionKey));
 		}
 
 		private void OnKeyDragged(KeyDragEvent evt)

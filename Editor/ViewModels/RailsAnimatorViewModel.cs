@@ -30,7 +30,7 @@ namespace Rails.Editor.ViewModel
 			set
 			{
 				SetProperty(ref selectedClipIndex, value);
-				SelectedClip = Clips.Count > 0 ? Clips[selectedClipIndex] : RailsClipViewModel.Empty;
+				SelectedClip = Clips.Count > 0 && selectedClipIndex >= 0 ? Clips[selectedClipIndex] : RailsClipViewModel.Empty;
 			}
 		}
 		[CreateProperty]
@@ -78,6 +78,10 @@ namespace Rails.Editor.ViewModel
 			{
 				EditorContext.Instance.Record("Clip Added");
 				model.AddClip();
+
+				if (storedSelectedIndex.Value >= Clips.Count)
+					storedSelectedIndex.Value = 0;
+				SelectedClipIndex = storedSelectedIndex.Value;
 			});
 			ClipSelectCommand = new RelayCommand<int>(x =>
 			{
@@ -107,8 +111,14 @@ namespace Rails.Editor.ViewModel
 
 			UpdateClips();
 
-			if (storedSelectedIndex.Value >= Clips.Count)
-				storedSelectedIndex.Value = 0;
+			if (storedSelectedIndex.Value >= Clips.Count || storedSelectedIndex.Value < 0)
+			{
+				if (Clips.Count != 0)
+					storedSelectedIndex.Value = 0;
+				else
+					storedSelectedIndex.Value = -1;
+			}
+
 			SelectedClipIndex = storedSelectedIndex.Value;
 		}
 
@@ -135,12 +145,23 @@ namespace Rails.Editor.ViewModel
 		private void UpdateClips()
 		{
 			UpdateVieModels(Clips, model.Clips,
-				createViewModel: () => new RailsClipViewModel(),
+				createViewModel: i => new RailsClipViewModel(),
 				viewModelBindCallback: (vm, m) =>
 				{
 					vm.RemoveCommand = new RelayCommand(() =>
 					{
+						EditorContext.Instance.Record("Clip Removed");
 						model.RemoveClip(m);
+
+						if (storedSelectedIndex.Value >= Clips.Count || storedSelectedIndex.Value < 0)
+						{
+							if (Clips.Count != 0)
+								storedSelectedIndex.Value = 0;
+							else
+								storedSelectedIndex.Value = -1;
+						}
+
+						SelectedClipIndex = storedSelectedIndex.Value;
 					});
 				});
 		}

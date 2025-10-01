@@ -10,8 +10,9 @@ namespace Rails.Editor
 	public class DataStorage
 	{
 		[SerializeField] private IntDataTable recordsInt = new();
-		//[SerializeField] private List<RecordIntList> recordsIntList = new();
+		[SerializeField] private IntListDataTable recordsSelectedClips = new();
 
 		public IntDataTable RecordsInt => recordsInt;
+		public IntListDataTable RecordsSelectedClips => recordsSelectedClips;
 	}
 }

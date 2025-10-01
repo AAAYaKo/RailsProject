@@ -182,11 +182,7 @@ namespace Rails.Editor.ViewModel
 		private void UpdateTracks()
 		{
 			UpdateVieModels(Tracks, model.Tracks,
-				createViewModel: () =>
-				{
-					AnimationTrackViewModel track = new();
-					return track;
-				},
+				createViewModel: i => new AnimationTrackViewModel(i),
 				viewModelBindCallback: (vm, m) =>
 				{
 					vm.RemoveCommand = new RelayCommand(() =>

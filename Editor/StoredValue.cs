@@ -1,10 +1,11 @@
 using System;
+using System.Collections.Generic;
 
 namespace Rails.Editor
 {
 	public class StoredValue<TTable, TValue> where TTable : DataTable<TValue>
 	{
-		public TValue Value
+		public virtual TValue Value
 		{
 			get => value;
 			set
@@ -15,9 +16,9 @@ namespace Rails.Editor
 
 		public event Action<TValue> ValueChanged;
 
-		private string key;
-		private TValue value;
-		private TTable table;
+		protected string key;
+		protected TValue value;
+		protected TTable table;
 
 
 		public StoredValue(string key)
@@ -50,6 +51,22 @@ namespace Rails.Editor
 	public class StoredInt : StoredValue<IntDataTable, int>
 	{
 		public StoredInt(string key) : base(key)
+		{
+		}
+	}
+
+	public class StoredIntList : StoredValue<IntListDataTable, List<int>>
+	{
+		public override List<int> Value 
+		{ 
+			get => value;
+			set
+			{
+				table.Set(key, new List<int>(value));
+			}
+		}
+
+		public StoredIntList(string key) : base(key)
 		{
 		}
 	}

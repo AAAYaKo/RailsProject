@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Rails.Editor.ViewModel;
@@ -47,6 +46,8 @@ namespace Rails.Editor.Controls
 				OnSelectionChanged();
 			}
 		}
+		[CreateProperty]
+		public ICommand<List<int>> ChangeSelection { get; set; }
 		public List<int> SelectedKeysFrames { get; } = new();
 		public int FirstSelectedKeyFrame { get; private set; }
 		public int LastSelectedKeyFrame { get; private set; }
@@ -92,56 +93,56 @@ namespace Rails.Editor.Controls
 				dataSourcePath = new PropertyPath(nameof(AnimationTrackViewModel.TrackClass)),
 				bindingMode = BindingMode.ToTarget,
 			});
-			SetBinding(nameof(SelectedIndexes), new DataBinding
+			SetBinding(SelectedIndexesProperty, new DataBinding
 			{
 				dataSourcePath = new PropertyPath(nameof(AnimationTrackViewModel.SelectedIndexes)),
 				bindingMode = BindingMode.ToTarget,
 			});
+
+			SetBinding(nameof(ChangeSelection), new CommandBinding(nameof(AnimationTrackViewModel.ChangeSelection)));
 		}
 
 		protected override void OnAttach(AttachToPanelEvent evt)
 		{
 			base.OnAttach(evt);
+			if (selectedIndexes != null)
+				selectedIndexes.ListChanged += OnSelectionChanged;
 			EventBus.Subscribe<KeyClickEvent>(OnClickKey);
 			EventBus.Subscribe<KeyMoveEvent>(OnMoveKey);
+			EventBus.Subscribe<DeselectAllKeysEvent>(OnDeselectAll);
+			EventBus.Subscribe<SelectionBoxBeginEvent>(OnSelectionBoxBegin);
+			EventBus.Subscribe<SelectionBoxChangeEvent>(OnSelectionBoxChange);
+			EventBus.Subscribe<SelectionBoxCompleteEvent>(OnSelectionBoxComplete);
 		}
 
 		protected override void OnDetach(DetachFromPanelEvent evt)
 		{
 			base.OnDetach(evt);
+			if (selectedIndexes != null)
+				selectedIndexes.ListChanged -= OnSelectionChanged;
 			EventBus.Unsubscribe<KeyClickEvent>(OnClickKey);
 			EventBus.Unsubscribe<KeyMoveEvent>(OnMoveKey);
+			EventBus.Unsubscribe<DeselectAllKeysEvent>(OnDeselectAll);
+			EventBus.Unsubscribe<SelectionBoxBeginEvent>(OnSelectionBoxBegin);
+			EventBus.Unsubscribe<SelectionBoxChangeEvent>(OnSelectionBoxChange);
+			EventBus.Unsubscribe<SelectionBoxCompleteEvent>(OnSelectionBoxComplete);
 		}
 
-
-		public void OnSelectionBoxBegin(MouseDownEvent evt)
+		public void UpdateSelectedKeyFrames()
 		{
-			if (!evt.actionKey)
+			SelectedKeysFrames.Clear();
+			FirstSelectedKeyFrame = int.MaxValue;
+			LastSelectedKeyFrame = int.MinValue;
+			foreach (int key in SelectedIndexes)
 			{
-				DeselectAllKeys();
-				PopulateSelectedIndexes();
+				int frame = views[key].TimePosition;
+				FirstSelectedKeyFrame = math.min(frame, FirstSelectedKeyFrame);
+				LastSelectedKeyFrame = math.max(frame, LastSelectedKeyFrame);
+				SelectedKeysFrames.Add(frame);
 			}
 		}
 
-		public void OnSelectionBoxChanged(Rect selectionWorldRect, MouseMoveEvent evt)
-		{
-			Rect selectionRect = this.WorldToLocal(selectionWorldRect);
-			for (int i = 0; i < views.Count; i++)
-			{
-				var view = views[i];
-				if (view.layout.Overlaps(selectionRect))
-					SelectKey(i);
-				else if (!SelectedIndexes.Contains(i))
-					DeselectKey(i);
-			}
-		}
-
-		public void OnSelectionBoxComplete()
-		{
-			PopulateSelectedIndexes();
-		}
-
-		public void SelectKey(int keyIndex)
+		private void SelectKey(int keyIndex)
 		{
 			if (selectedViewKeys.Contains(keyIndex))
 				return;
@@ -156,7 +157,7 @@ namespace Rails.Editor.Controls
 				keyToTweenLines[keyIndex].AddToClassList(SelectedClass);
 		}
 
-		public void DeselectKey(int keyIndex)
+		private void DeselectKey(int keyIndex)
 		{
 			if (!selectedViewKeys.Contains(keyIndex))
 				return;
@@ -169,7 +170,7 @@ namespace Rails.Editor.Controls
 				keyToTweenLines[keyIndex].RemoveFromClassList(SelectedClass);
 		}
 
-		public void DeselectAllKeys(TrackKeyView keyIgnore = null)
+		private void DeselectAllKeys(TrackKeyView keyIgnore = null)
 		{
 			bool wasSelected = false;
 			selectedViewKeys.ForEach(x =>
@@ -195,23 +196,9 @@ namespace Rails.Editor.Controls
 			}
 		}
 
-		public void UpdateSelectedKeyFrames()
-		{
-			SelectedKeysFrames.Clear();
-			FirstSelectedKeyFrame = int.MaxValue;
-			LastSelectedKeyFrame = int.MinValue;
-			foreach (int key in SelectedIndexes)
-			{
-				int frame = views[key].TimePosition;
-				FirstSelectedKeyFrame = math.min(frame, FirstSelectedKeyFrame);
-				LastSelectedKeyFrame = math.max(frame, LastSelectedKeyFrame);
-				SelectedKeysFrames.Add(frame);
-			}
-		}
-
 		private void OnSelectionChanged()
 		{
-			List<int> toRemove = selectedViewKeys.FindAll(x => !SelectedIndexes.Contains(x));
+			int[] toRemove = selectedViewKeys.Except(SelectedIndexes).ToArray();
 			foreach (int key in toRemove)
 			{
 				DeselectKey(key);
@@ -275,18 +262,23 @@ namespace Rails.Editor.Controls
 		{
 			DeselectAllKeys();
 			base.UpdateList();
-			for (int i = 0; i < views.Count; i++)
+			for (int i = 0; i < views.Count; i++) //Hardrcode for tweenLines
 			{
 				var keyView = views[i];
 				var keyViewModel = Values[i];
 				keyView.SetTimePositionWithoutUpdate(keyViewModel.TimePosition);
 			}
-			if (!SelectedIndexes.IsNullOrEmpty())
+
+			UpdateTweenLines();
+
+			if (SelectedIndexes != null)
 			{
 				foreach (int key in SelectedIndexes)
-					SelectKey(key);
+				{
+					if (!selectedViewKeys.Contains(key))
+						SelectKey(key);
+				}
 			}
-			UpdateTweenLines();
 		}
 
 		protected override TrackKeyView CreateElement()
@@ -308,34 +300,62 @@ namespace Rails.Editor.Controls
 		private void OnClickKey(KeyClickEvent evt)
 		{
 			TrackKeyView key = evt.Key;
-			bool actionKey = evt.ActionKey;
 			int index = views.IndexOf(key);
 
 			if (index < 0)
 				return;
 
-			if (!actionKey && !selectedViewKeys.Contains(index))
-				DeselectAllKeys(key);
+			if (!evt.ActionKey && !selectedViewKeys.Contains(index))
+				EventBus.Publish(new DeselectAllKeysEvent(key));
 
 			if (!selectedViewKeys.Contains(index))
 			{
 				SelectKey(index);
 			}
 
-			PopulateSelectedIndexes();
+			ChangeSelection.Execute(selectedViewKeys);
 		}
 
-		private void PopulateSelectedIndexes()
+		private void OnDeselectAll(DeselectAllKeysEvent evt)
 		{
-			List<int> toRemove = SelectedIndexes.FindAll(x => !selectedViewKeys.Contains(x));
-			List<int> toAdd = selectedViewKeys.FindAll(x => !SelectedIndexes.Contains(x));
-			foreach (int keyIndex in toRemove)
-				SelectedIndexes.RemoveWithoutNotify(keyIndex);
+			DeselectAllKeys(evt.Key);
+			ChangeSelection.Execute(selectedViewKeys);
+		}
 
-			foreach (int keyIndex in toAdd)
-				SelectedIndexes.AddWithoutNotify(keyIndex);
+		private void OnSelectionBoxBegin(SelectionBoxBeginEvent evt)
+		{
+			if (evt.ActionKey)
+				return;
+			DeselectAllKeys();
+			ChangeSelection.Execute(selectedViewKeys);
+		}
 
-			SelectedIndexes.NotifyListChanged();
+		private void OnSelectionBoxChange(SelectionBoxChangeEvent evt)
+		{
+			Rect selectionRect = parent.WorldToLocal(evt.SelectionWorldRect);
+
+			if (!layout.Overlaps(selectionRect))
+				return;
+
+			selectionRect = this.WorldToLocal(evt.SelectionWorldRect);
+			for (int i = 0; i < views.Count; i++)
+			{
+				var view = views[i];
+				if (view.layout.Overlaps(selectionRect))
+					SelectKey(i);
+				else if (!SelectedIndexes.Contains(i))
+					DeselectKey(i);
+			}
+		}
+
+		private void OnSelectionBoxComplete(SelectionBoxCompleteEvent evt)
+		{
+			Rect selectionRect = parent.WorldToLocal(evt.SelectionWorldRect);
+
+			if (!layout.Overlaps(selectionRect))
+				return;
+
+			ChangeSelection.Execute(selectedViewKeys);
 		}
 	}
 }

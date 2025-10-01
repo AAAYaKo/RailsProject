@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using Rails.Runtime.Tracks;
 using Unity.Mathematics;
 using Unity.Properties;
@@ -11,6 +12,8 @@ namespace Rails.Editor.ViewModel
 {
 	public class AnimationTrackViewModel : BaseNotifyPropertyViewModel<AnimationTrack>
 	{
+		public const string StoreKey = "selectedKeys_";
+
 		[CreateProperty]
 		public UnityEngine.Object Reference
 		{
@@ -79,8 +82,13 @@ namespace Rails.Editor.ViewModel
 			get => valueEditCommand;
 			set => SetProperty(ref valueEditCommand, value);
 		}
+		[CreateProperty]
+		public ICommand<List<int>> ChangeSelection
+		{
+			get => changeSelection;
+			set => SetProperty(ref changeSelection, value);
+		}
 
-		public event Action SelectionChanged;
 
 		private UnityEngine.Object reference;
 		private TrackData trackData;
@@ -88,6 +96,7 @@ namespace Rails.Editor.ViewModel
 		private float? currentSingleValue;
 		private Vector2? currentVector2Value;
 		private Vector3? currentVector3Value;
+		private StoredIntList storedSelectedIndexes;
 		private bool isKeyFrame;
 		private int currentFrame;
 		private ObservableList<int> selectedIndexes = new();
@@ -95,11 +104,12 @@ namespace Rails.Editor.ViewModel
 		private ICommand keyFrameAddCommand;
 		private ICommand keyFrameRemoveCommand;
 		private ICommand<ValueEditArgs> valueEditCommand;
+		private ICommand<List<int>> changeSelection;
 
 
-		public AnimationTrackViewModel()
+		public AnimationTrackViewModel(int trackIndex)
 		{
-			SelectedIndexes.ListChanged += OnSelectionChanged;
+			storedSelectedIndexes = new StoredIntList(StoreKey + trackIndex);
 
 			KeyFrameRemoveCommand = new RelayCommand(() =>
 			{
@@ -108,7 +118,10 @@ namespace Rails.Editor.ViewModel
 					return;
 				EditorContext.Instance.Record("Key Frame Removed");
 				if (SelectedIndexes.Contains(keyIndex))
+				{
 					SelectedIndexes.Remove(keyIndex);
+					storedSelectedIndexes.Value = SelectedIndexes.ToList();
+				}
 				model.RemoveKey(model.AnimationKeys[keyIndex]);
 			});
 
@@ -136,6 +149,31 @@ namespace Rails.Editor.ViewModel
 					model.InsertNewKeyAt(currentFrame, args.SingleValue, args.Vector2Value, args.Vector3Value);
 				}
 			});
+
+			changeSelection = new RelayCommand<List<int>>(x =>
+			{
+				EditorContext.Instance.Record(EditorContext.Instance.EditorWindow, "Keys Selection Changed");
+				storedSelectedIndexes.Value = x;
+			});
+		}
+
+		protected override void OnBind()
+		{
+			base.OnBind();
+			storedSelectedIndexes.Bind(EditorContext.Instance.DataStorage.RecordsSelectedClips);
+			storedSelectedIndexes.ValueChanged += OnStoredSelectedChanged;
+		}
+
+		protected override void OnUnbind()
+		{
+			base.OnUnbind();
+			storedSelectedIndexes.Unbind();
+			storedSelectedIndexes.ValueChanged -= OnStoredSelectedChanged;
+			ClearViewModels<AnimationKeyViewModel, AnimationKey>(Keys,
+				resetViewModel: vm =>
+				{
+					vm.propertyChanged -= OnKeyPropertyChanged;
+				});
 		}
 
 		protected override void OnModelChanged()
@@ -158,10 +196,18 @@ namespace Rails.Editor.ViewModel
 			}
 
 			UpdateKeys();
+
+			if (!storedSelectedIndexes.Value.IsNullOrEmpty())
+			{
+				if (storedSelectedIndexes.Value.Any(x => x >= keys.Count || x < 0))
+					storedSelectedIndexes.Value = new List<int>();
+				SelectedIndexes.AddRangeWithoutNotify(storedSelectedIndexes.Value);
+			}
+
 			NotifyPropertyChanged(nameof(Type));
 			NotifyPropertyChanged(nameof(ValueType));
 			NotifyPropertyChanged(nameof(Keys));
-			NotifyPropertyChanged(nameof(model.AnimationKeys));
+			NotifyPropertyChanged(nameof(SelectedIndexes));
 		}
 
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -174,16 +220,6 @@ namespace Rails.Editor.ViewModel
 				UpdateKeys();
 				OnTimeHeadPositionChanged(currentFrame);
 			}
-		}
-
-		protected override void OnUnbind()
-		{
-			base.OnUnbind();
-			ClearViewModels<AnimationKeyViewModel, AnimationKey>(Keys,
-				resetViewModel: vm =>
-				{
-					vm.propertyChanged -= OnKeyPropertyChanged;
-				});
 		}
 
 		public void OnTimeHeadPositionChanged(int frame)
@@ -223,15 +259,14 @@ namespace Rails.Editor.ViewModel
 		private void UpdateKeys()
 		{
 			UpdateVieModels(Keys, model.AnimationKeys,
-				createViewModel: () =>
-				{
-					AnimationKeyViewModel key = new();
-					key.propertyChanged += OnKeyPropertyChanged;
-					return key;
-				},
+				createViewModel: i => new AnimationKeyViewModel(),
 				resetViewModel: vm =>
 				{
 					vm.propertyChanged -= OnKeyPropertyChanged;
+				},
+				viewModelBindCallback: (vm, m) =>
+				{
+					vm.propertyChanged += OnKeyPropertyChanged;
 				}
 			);
 		}
@@ -297,9 +332,15 @@ namespace Rails.Editor.ViewModel
 			}
 		}
 
-		private void OnSelectionChanged()
+		private void OnStoredSelectedChanged(List<int> newValue)
 		{
-			SelectionChanged?.Invoke();
+			int[] toRemove = SelectedIndexes.Except(newValue).ToArray();
+			int[] toAdd = newValue.Except(SelectedIndexes).ToArray();
+
+			toRemove.ForEach(x => SelectedIndexes.RemoveWithoutNotify(x));
+			toAdd.ForEach(x => SelectedIndexes.AddWithoutNotify(x));
+
+			SelectedIndexes.NotifyListChanged();
 		}
 
 		public static readonly Dictionary<Type, TrackData> TrackTypes = new()

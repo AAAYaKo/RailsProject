@@ -114,7 +114,7 @@ namespace Rails.Editor.Controls
 		protected override void UpdateList()
 		{
 			base.UpdateList();
-			if (SelectedIndex >= (Values?.Count ?? 0))
+			if (SelectedIndex >= (Values?.Count ?? 0) || SelectedIndex < 0)
 				SelectedIndex = 0;
 			ChangeSelection(SelectedIndex);
 		}

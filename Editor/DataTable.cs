@@ -4,19 +4,20 @@ using UnityEngine;
 
 namespace Rails.Editor
 {
-	public abstract class DataTable<T> : ISerializationCallbackReceiver
+	public class DataTable<T> : ISerializationCallbackReceiver
 	{
 		[SerializeField] protected List<Record> records = new();
 
 		public event Action<string> RecordChanged;
 		protected readonly Dictionary<string, T> cacheTable = new();
-
+		protected virtual IEqualityComparer<T> Comparer => defaultComparer;
+		private static readonly IEqualityComparer<T> defaultComparer = EqualityComparer<T>.Default;
 
 		public void Set(string key, T value)
 		{
 			if (cacheTable.ContainsKey(key))
 			{
-				if (!Changed(cacheTable[key], value))
+				if (Comparer.Equals(cacheTable[key], value))
 					return;
 				cacheTable[key] = value;
 			}
@@ -40,7 +41,7 @@ namespace Rails.Editor
 				cacheTable.Remove(key);
 		}
 
-		public void OnBeforeSerialize()
+		public virtual void OnBeforeSerialize()
 		{
 			records.Clear();
 
@@ -48,7 +49,7 @@ namespace Rails.Editor
 				records.Add(new Record(record.Key, record.Value));
 		}
 
-		public void OnAfterDeserialize()
+		public virtual void OnAfterDeserialize()
 		{
 			HashSet<string> keys = new(records.ConvertAll(x => x.Key));
 
@@ -56,7 +57,7 @@ namespace Rails.Editor
 			{
 				if (cacheTable.ContainsKey(record.Key))
 				{
-					if (!Changed(cacheTable[record.Key], record.Value))
+					if (Comparer.Equals(cacheTable[record.Key], record.Value))
 						continue;
 					T previous = cacheTable[record.Key];
 					cacheTable[record.Key] = record.Value;
@@ -69,8 +70,6 @@ namespace Rails.Editor
 				}
 			}
 		}
-
-		protected abstract bool Changed(T value, T next);
 
 		[Serializable]
 		public class Record

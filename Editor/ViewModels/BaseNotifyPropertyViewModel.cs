@@ -49,7 +49,7 @@ namespace Rails.Editor.ViewModel
 		{
 		}
 
-		protected void UpdateVieModels<VM, M>(ObservableList<VM> viewModels, List<M> models, Func<VM> createViewModel, Action<VM> resetViewModel = null, Action<VM, M> viewModelBindCallback = null)
+		protected void UpdateVieModels<VM, M>(ObservableList<VM> viewModels, List<M> models, Func<int, VM> createViewModel, Action<VM> resetViewModel = null, Action<VM, M> viewModelBindCallback = null)
 			where VM : BaseNotifyPropertyViewModel<M>
 			where M : INotifyPropertyChanged
 		{
@@ -61,7 +61,7 @@ namespace Rails.Editor.ViewModel
 
 			while (viewModels.Count < models.Count)
 			{
-				VM viewModel = createViewModel();
+				VM viewModel = createViewModel(viewModels.Count);
 				viewModels.AddWithoutNotify(viewModel);
 			}
 			while (viewModels.Count > models.Count)
@@ -78,6 +78,7 @@ namespace Rails.Editor.ViewModel
 				var viewModel = viewModels[i];
 
 				viewModel.UnbindModel();
+				resetViewModel?.Invoke(viewModel);
 				viewModel.BindModel(track);
 				viewModelBindCallback?.Invoke(viewModel, track);
 			}
@@ -94,7 +95,7 @@ namespace Rails.Editor.ViewModel
 				viewModel.UnbindModel();
 				resetViewModel?.Invoke(viewModel);
 			}
-			viewModels.Clear();
+			viewModels.ClearWithoutNotify();
 		}
 
 #nullable enable

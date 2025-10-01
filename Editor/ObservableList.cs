@@ -113,6 +113,17 @@ namespace Rails.Editor
 			list.RemoveAll(predicate);
 		}
 
+		public void AddRange(IEnumerable<T> collection)
+		{
+			list.AddRange(collection);
+			ListChanged?.Invoke();
+		}
+
+		public void AddRangeWithoutNotify(IEnumerable<T> collection)
+		{
+			list.AddRange(collection);
+		}
+
 		public void InsertRange(int index, IEnumerable<T> collection)
 		{
 			list.InsertRange(index, collection);

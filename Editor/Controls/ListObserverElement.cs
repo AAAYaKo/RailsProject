@@ -30,6 +30,20 @@ namespace Rails.Editor.Controls
 		protected VisualElement container;
 
 
+		protected override void OnAttach(AttachToPanelEvent evt)
+		{
+			base.OnAttach(evt);
+			if (values != null)
+				values.ListChanged += UpdateList;
+		}
+
+		protected override void OnDetach(DetachFromPanelEvent evt)
+		{
+			base.OnDetach(evt);
+			if (values != null)
+				values.ListChanged -= UpdateList;
+		}
+
 		protected abstract TElementView CreateElement();
 		protected virtual void ResetElement(TElementView element) { }
 
