@@ -109,7 +109,7 @@ namespace Rails.Editor.ViewModel
 
 			if (storedSelectedIndex.Value >= Clips.Count)
 				storedSelectedIndex.Value = 0;
-			SelectedClipIndex = selectedClipIndex;
+			SelectedClipIndex = storedSelectedIndex.Value;
 		}
 
 		protected override void OnBind()
