@@ -3,6 +3,7 @@ using System.ComponentModel;
 using Rails.Runtime;
 using Rails.Runtime.Tracks;
 using Unity.Properties;
+using UnityEngine.UIElements;
 
 namespace Rails.Editor.ViewModel
 {
@@ -125,6 +126,7 @@ namespace Rails.Editor.ViewModel
 		private string name;
 		private ObservableList<AnimationTrackViewModel> tracks = new();
 		private bool canEdit = true;
+		private bool selected = false;
 		private ICommand<Type> addTrackCommand;
 		private ICommand removeCommand;
 
@@ -143,6 +145,20 @@ namespace Rails.Editor.ViewModel
 					model.AddTrack(new FadeTrack());
 				}
 			});
+		}
+
+		public void Select(EventHandler<BindablePropertyChangedEventArgs> propertyChangedCallback)
+		{
+			selected = true;
+			propertyChanged += propertyChangedCallback;
+			tracks.ForEach(x => x.OnClipSelect());
+		}
+
+		public void Deselect(EventHandler<BindablePropertyChangedEventArgs> propertyChangedCallback)
+		{
+			selected = false;
+			propertyChanged += propertyChangedCallback;
+			tracks.ForEach(x => x.OnClipDeselect());
 		}
 
 		protected override void OnModelChanged()
@@ -176,15 +192,18 @@ namespace Rails.Editor.ViewModel
 		protected override void OnUnbind()
 		{
 			base.OnUnbind();
-			ClearViewModels<AnimationTrackViewModel, AnimationTrack>(Tracks);
+			ClearViewModels<AnimationTrackViewModel, AnimationTrack>(Tracks, vm => vm.OnClipDeselect());
 		}
 
 		private void UpdateTracks()
 		{
 			UpdateVieModels(Tracks, model.Tracks,
 				createViewModel: i => new AnimationTrackViewModel(i),
+				resetViewModel: vm => vm.OnClipDeselect(),
 				viewModelBindCallback: (vm, m) =>
 				{
+					if (selected)
+						vm.OnClipSelect();
 					vm.RemoveCommand = new RelayCommand(() =>
 					{
 						EditorContext.Instance.Record($"Removed {m.GetType().Name} from {name}");

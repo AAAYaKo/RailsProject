@@ -48,6 +48,8 @@ namespace Rails.Editor.Controls
 		}
 		[CreateProperty]
 		public ICommand<List<int>> ChangeSelection { get; set; }
+		[CreateProperty]
+		public ICommand<Dictionary<int, int>> MoveKeys { get; set; }
 		public List<int> SelectedKeysFrames { get; } = new();
 		public int FirstSelectedKeyFrame { get; private set; }
 		public int LastSelectedKeyFrame { get; private set; }
@@ -100,6 +102,7 @@ namespace Rails.Editor.Controls
 			});
 
 			SetBinding(nameof(ChangeSelection), new CommandBinding(nameof(AnimationTrackViewModel.ChangeSelection)));
+			SetBinding(nameof(MoveKeys), new CommandBinding(nameof(AnimationTrackViewModel.MoveKeys)));
 		}
 
 		protected override void OnAttach(AttachToPanelEvent evt)
@@ -113,6 +116,7 @@ namespace Rails.Editor.Controls
 			EventBus.Subscribe<SelectionBoxBeginEvent>(OnSelectionBoxBegin);
 			EventBus.Subscribe<SelectionBoxChangeEvent>(OnSelectionBoxChange);
 			EventBus.Subscribe<SelectionBoxCompleteEvent>(OnSelectionBoxComplete);
+			EventBus.Subscribe<KeyDragCompleteEvent>(OnKeyDragComplete);
 		}
 
 		protected override void OnDetach(DetachFromPanelEvent evt)
@@ -126,6 +130,7 @@ namespace Rails.Editor.Controls
 			EventBus.Unsubscribe<SelectionBoxBeginEvent>(OnSelectionBoxBegin);
 			EventBus.Unsubscribe<SelectionBoxChangeEvent>(OnSelectionBoxChange);
 			EventBus.Unsubscribe<SelectionBoxCompleteEvent>(OnSelectionBoxComplete);
+			EventBus.Unsubscribe<KeyDragCompleteEvent>(OnKeyDragComplete);
 		}
 
 		public void UpdateSelectedKeyFrames()
@@ -135,6 +140,8 @@ namespace Rails.Editor.Controls
 			LastSelectedKeyFrame = int.MinValue;
 			foreach (int key in SelectedIndexes)
 			{
+				if (key < 0 || key >= views.Count)
+					continue;
 				int frame = views[key].TimePosition;
 				FirstSelectedKeyFrame = math.min(frame, FirstSelectedKeyFrame);
 				LastSelectedKeyFrame = math.max(frame, LastSelectedKeyFrame);
@@ -356,6 +363,18 @@ namespace Rails.Editor.Controls
 				return;
 
 			ChangeSelection.Execute(selectedViewKeys);
+		}
+
+		private void OnKeyDragComplete(KeyDragCompleteEvent evt)
+		{
+			if (SelectedIndexes.IsNullOrEmpty())
+				return;
+			UpdateSelectedKeyFrames();
+			var keysMoveMap = SelectedIndexes
+				.Zip(SelectedKeysFrames, (x, y) => new { x, y })
+				.ToDictionary(x => x.x, x => x.y);
+
+			MoveKeys.Execute(keysMoveMap);
 		}
 	}
 }

@@ -35,7 +35,8 @@ namespace Rails.Editor
 
 		public void Unbind()
 		{
-			table.RecordChanged -= OnRecordChanged;
+			if (table != null)
+				table.RecordChanged -= OnRecordChanged;
 			table = null;
 		}
 
@@ -57,8 +58,8 @@ namespace Rails.Editor
 
 	public class StoredIntList : StoredValue<IntListDataTable, List<int>>
 	{
-		public override List<int> Value 
-		{ 
+		public override List<int> Value
+		{
 			get => value;
 			set
 			{

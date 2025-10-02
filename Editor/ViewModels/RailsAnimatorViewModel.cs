@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel;
 using Rails.Runtime;
 using Unity.Properties;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Rails.Editor.ViewModel
@@ -41,10 +40,9 @@ namespace Rails.Editor.ViewModel
 			{
 				if (selectedClip == value)
 					return;
-				if (selectedClip != null)
-					selectedClip.propertyChanged -= NotifySelectedClipChanged;
+				selectedClip?.Deselect(NotifySelectedClipChanged);
 				selectedClip = value;
-				selectedClip.propertyChanged += NotifySelectedClipChanged;
+				selectedClip.Select(NotifySelectedClipChanged);
 				NotifyPropertyChanged();
 			}
 		}

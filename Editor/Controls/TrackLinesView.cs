@@ -153,7 +153,6 @@ namespace Rails.Editor.Controls
 			selectionBoxManipulator.SelectionChanged += OnSelectionChanged;
 			selectionBoxManipulator.SelectionComplete += OnSelectionComplete;
 			EventBus.Subscribe<KeyDragEvent>(OnKeyDragged);
-			EventBus.Subscribe<KeyDragCompleteEvent>(OnKeyDragComplete);
 		}
 
 		protected override void OnDetach(DetachFromPanelEvent evt)
@@ -166,7 +165,6 @@ namespace Rails.Editor.Controls
 			selectionBoxManipulator.SelectionChanged -= OnSelectionChanged;
 			selectionBoxManipulator.SelectionComplete -= OnSelectionComplete;
 			EventBus.Unsubscribe<KeyDragEvent>(OnKeyDragged);
-			EventBus.Unsubscribe<KeyDragCompleteEvent>(OnKeyDragComplete);
 		}
 
 		public void Scroll(Vector2 delta)
@@ -296,23 +294,6 @@ namespace Rails.Editor.Controls
 			}
 
 			EventBus.Publish(new KeyMoveEvent(deltaFrames));
-		}
-
-		private void OnKeyDragComplete(KeyDragCompleteEvent evt)
-		{
-			for (int i = 0; i < Values.Count; i++)
-			{
-				var trackView = views[i];
-				if (trackView.SelectedIndexes.IsNullOrEmpty())
-					continue;
-				trackView.UpdateSelectedKeyFrames();
-				var trackViewModel = Values[i];
-				var keysMoveMap = trackView.SelectedIndexes
-					.Zip(trackView.SelectedKeysFrames, (x, y) => new { x, y })
-					.ToDictionary(x => x.x, x => x.y);
-
-				trackViewModel.MoveAnimationKeys(keysMoveMap);
-			}
 		}
 	}
 }

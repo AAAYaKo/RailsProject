@@ -88,7 +88,12 @@ namespace Rails.Editor.ViewModel
 			get => changeSelection;
 			set => SetProperty(ref changeSelection, value);
 		}
-
+		[CreateProperty]
+		public ICommand<Dictionary<int, int>> MoveKeys
+		{
+			get => moveKeys;
+			set => SetProperty(ref moveKeys, value);
+		}
 
 		private UnityEngine.Object reference;
 		private TrackData trackData;
@@ -105,7 +110,7 @@ namespace Rails.Editor.ViewModel
 		private ICommand keyFrameRemoveCommand;
 		private ICommand<ValueEditArgs> valueEditCommand;
 		private ICommand<List<int>> changeSelection;
-
+		private ICommand<Dictionary<int, int>> moveKeys;
 
 		public AnimationTrackViewModel(int trackIndex)
 		{
@@ -150,25 +155,23 @@ namespace Rails.Editor.ViewModel
 				}
 			});
 
-			changeSelection = new RelayCommand<List<int>>(x =>
+			ChangeSelection = new RelayCommand<List<int>>(x =>
 			{
 				EditorContext.Instance.Record(EditorContext.Instance.EditorWindow, "Keys Selection Changed");
-				storedSelectedIndexes.Value = x;
+				storedSelectedIndexes.Value = new(x);
 			});
+
+			MoveKeys = new RelayCommand<Dictionary<int, int>>(MoveAnimationKeys);
 		}
 
 		protected override void OnBind()
 		{
 			base.OnBind();
-			storedSelectedIndexes.Bind(EditorContext.Instance.DataStorage.RecordsSelectedClips);
-			storedSelectedIndexes.ValueChanged += OnStoredSelectedChanged;
 		}
 
 		protected override void OnUnbind()
 		{
 			base.OnUnbind();
-			storedSelectedIndexes.Unbind();
-			storedSelectedIndexes.ValueChanged -= OnStoredSelectedChanged;
 			ClearViewModels<AnimationKeyViewModel, AnimationKey>(Keys,
 				resetViewModel: vm =>
 				{
@@ -245,15 +248,59 @@ namespace Rails.Editor.ViewModel
 			UpdateCurrentValue(keys[previousIndex], keys[nextIndex], frame);
 		}
 
-		public void DeselectAll()
+		public void OnClipSelect()
 		{
-			SelectedIndexes.Clear();
+			storedSelectedIndexes.Bind(EditorContext.Instance.DataStorage.RecordsSelectedClips);
+			storedSelectedIndexes.ValueChanged += OnStoredSelectedChanged;
+			OnStoredSelectedChanged(storedSelectedIndexes.Value);
 		}
 
-		public void MoveAnimationKeys(Dictionary<int, int> keysFramesPositions)
+		public void OnClipDeselect()
 		{
-			EditorContext.Instance.Record("Animation Keys Moved");
+			storedSelectedIndexes.Unbind();
+			storedSelectedIndexes.ValueChanged -= OnStoredSelectedChanged;
+		}
+
+		private void MoveAnimationKeys(Dictionary<int, int> keysFramesPositions)
+		{
+			EditorContext.Instance.Record(EditorContext.Instance.EditorWindow, "Animation Keys Moved");
+			UpdateSelectionAfterMove(keysFramesPositions);
 			model.MoveMultipleKeys(keysFramesPositions);
+		}
+
+		private void UpdateSelectionAfterMove(Dictionary<int, int> keysFramesPositions)
+		{
+			HashSet<int> removedKeys = new();
+			List<(int Index, int Position)> movedKeysMap = new(keys.Count);
+
+			for (int i = 0; i < keys.Count; i++)
+			{
+				if (keysFramesPositions.ContainsValue(keys[i].TimePosition)) //these keys will be removed
+				{
+					removedKeys.Add(i);
+					continue;
+				}
+
+				movedKeysMap.Add((i, keysFramesPositions.TryGetValue(i, out int newPosition) ?
+					newPosition :
+					keys[i].TimePosition)); //add keys with their positions after moving
+			}
+
+			movedKeysMap.Sort((a, b) => a.Position.CompareTo(b.Position)); //keys must be ordered by time position
+
+			Dictionary<int, int> newIndexMap = new(movedKeysMap.Count);
+			for (int i = 0; i < movedKeysMap.Count; i++)
+				newIndexMap[movedKeysMap[i].Index] = i; //fill the map: from current key index in list to new index after moving
+			List<int> newSelection = new(storedSelectedIndexes.Value.Count);
+			foreach (int keyIndex in storedSelectedIndexes.Value) //form new selection
+			{
+				if (removedKeys.Contains(keyIndex)) //skip removed keys
+					continue;
+
+				if (newIndexMap.TryGetValue(keyIndex, out int newKeyIndex))
+					newSelection.Add(newKeyIndex); //convert old index to new index
+			}
+			storedSelectedIndexes.Value = newSelection;
 		}
 
 		private void UpdateKeys()

@@ -51,7 +51,7 @@ namespace Rails.Editor
 
 		public void Record(UnityEngine.Object target, string undoRecordName)
 		{
-			Undo.RecordObject(target, undoRecordName);
+			Undo.RecordObjects(new UnityEngine.Object[] { CurrentTarget, target }, $"Rails({CurrentTarget.name}) " + undoRecordName);
 		}
 
 		public void AnimatorDestroyed()
