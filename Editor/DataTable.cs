@@ -28,10 +28,10 @@ namespace Rails.Editor
 			RecordChanged?.Invoke(key);
 		}
 
-		public T Get(string key)
+		public T Get(string key, T defaultValue = default)
 		{
 			if (!cacheTable.TryGetValue(key, out T value))
-				return default;
+				return defaultValue;
 			return value;
 		}
 

@@ -71,4 +71,11 @@ namespace Rails.Editor
 		{
 		}
 	}
+
+	public class StoredFloat : StoredValue<FloatDataTable, float>
+	{
+		public StoredFloat(string key) : base(key)
+		{
+		}
+	}
 }

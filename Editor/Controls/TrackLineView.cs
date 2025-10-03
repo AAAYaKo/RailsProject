@@ -224,7 +224,11 @@ namespace Rails.Editor.Controls
 		{
 			if (Values.IsNullOrEmpty())
 			{
-				tweenLines.ForEach(x => container.Remove(x));
+				tweenLines.ForEach(x =>
+				{
+					x.Unbind();
+					container.Remove(x);
+				});
 				tweenLines.Clear();
 				return;
 			}
@@ -239,6 +243,7 @@ namespace Rails.Editor.Controls
 			while (count < tweenLines.Count)
 			{
 				var line = tweenLines[^1];
+				line.Unbind();
 				container.Remove(line);
 				tweenLines.Remove(line);
 			}
@@ -253,8 +258,7 @@ namespace Rails.Editor.Controls
 					TrackTweenLineView line = tweenLines[lineI];
 					keyToTweenLines.Add(i, line);
 					lineI++;
-					line.StartFrame = views[i].TimePosition;
-					line.EndFrame = views[i + 1].TimePosition;
+					line.Bind(views[i], views[i + 1]);
 				}
 			}
 		}
@@ -269,12 +273,6 @@ namespace Rails.Editor.Controls
 		{
 			DeselectAllKeys();
 			base.UpdateList();
-			for (int i = 0; i < views.Count; i++) //Hardrcode for tweenLines
-			{
-				var keyView = views[i];
-				var keyViewModel = Values[i];
-				keyView.SetTimePositionWithoutUpdate(keyViewModel.TimePosition);
-			}
 
 			UpdateTweenLines();
 
@@ -300,8 +298,6 @@ namespace Rails.Editor.Controls
 				return;
 			foreach (var key in SelectedIndexes)
 				views[key].TimePosition = Values[key].TimePosition + evt.DeltaFrames;
-
-			UpdateTweenLines();
 		}
 
 		private void OnClickKey(KeyClickEvent evt)

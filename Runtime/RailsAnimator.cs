@@ -9,16 +9,20 @@ using UnityEngine;
 namespace Rails.Runtime
 {
 	public class RailsAnimator : MonoBehaviour, INotifyPropertyChanged
+#if UNITY_EDITOR
+		, ISerializationCallbackReceiver
+#endif
 	{
+		private static readonly CollectionComparer<RailsClip> comparer = new ();
+
 		[SerializeField] private List<RailsClip> clips = new();
 
-		[CreateProperty]
 		public List<RailsClip> Clips
 		{
 			get => clips;
 			set
 			{
-				if (Utils.ListEquals(clips, value))
+				if (comparer.Equals(clips, value))
 					return;
 				clips = value;
 				NotifyPropertyChanged();
@@ -28,66 +32,13 @@ namespace Rails.Runtime
 		public event PropertyChangedEventHandler PropertyChanged;
 
 #if UNITY_EDITOR
+		private readonly List<RailsClip> clipsCopy = new();
 		public static event Action<RailsAnimator> AnimatorReset;
 #endif
 
 		//Test
 		private void Start()
 		{
-			//MoveAnchorTrack track = new MoveAnchorTrack();
-			//track.animationComponent = (RectTransform)transform;
-			//track.AddKey(new AnimationKey
-			//{
-			//	TimePosition = 0,
-			//	Vector2Value = new Vector2(0, 0),
-			//	Ease = new RailsEase
-			//	{
-			//		Type = RailsEase.EaseType.NoAnimation,
-			//	}
-			//});
-
-			//track.AddKey(new AnimationKey
-			//{
-			//	TimePosition = 15,
-			//	Vector2Value = new Vector2(100, 0),
-			//	Ease = new RailsEase
-			//	{
-			//		Type = RailsEase.EaseType.EaseFunction,
-			//		EaseFunc = DG.Tweening.Ease.InOutSine,
-			//	}
-			//});
-
-			//track.AddKey(new AnimationKey
-			//{
-			//	TimePosition = 75,
-			//	Vector2Value = new Vector2(200, 150),
-			//	Ease = new RailsEase
-			//	{
-			//		Type = RailsEase.EaseType.EaseCurve,
-			//		Controls = new Unity.Mathematics.float4(1 / 5f, 1 / 3f, 0, 1),
-			//	}
-			//});
-
-			//track.AddKey(new AnimationKey
-			//{
-			//	TimePosition = 90,
-			//	Vector2Value = new Vector2(400, 100),
-			//	Ease = new RailsEase
-			//	{
-			//		Type = RailsEase.EaseType.NoAnimation,
-			//	}
-			//});
-
-			//track.AddKey(new AnimationKey
-			//{
-			//	TimePosition = 120,
-			//	Vector2Value = new Vector2(50, 50),
-			//	Ease = new RailsEase
-			//	{
-			//		Type = RailsEase.EaseType.NoAnimation,
-			//	}
-			//});
-
 			//RailsClip clip = new RailsClip();
 			//clips.Add(clip);
 			//clip.AddTrack(track);
@@ -115,14 +66,24 @@ namespace Rails.Runtime
 		}
 
 #if UNITY_EDITOR
-		private void OnValidate()
-		{
-			NotifyPropertyChanged(nameof(Clips));
-		}
-
 		private void Reset()
 		{
 			AnimatorReset?.Invoke(this);
+		}
+
+		public void OnBeforeSerialize()
+		{
+			clipsCopy.Clear();
+			clipsCopy.AddRange(Clips);
+		}
+
+		public void OnAfterDeserialize()
+		{
+			if (!comparer.Equals(clips, clipsCopy))
+				NotifyPropertyChanged(nameof(Clips));
+
+			clipsCopy.Clear();
+			clipsCopy.AddRange(Clips);
 		}
 #endif
 

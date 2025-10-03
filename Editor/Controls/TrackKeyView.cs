@@ -1,4 +1,5 @@
-﻿using Rails.Editor.Manipulator;
+﻿using System;
+using Rails.Editor.Manipulator;
 using Rails.Editor.ViewModel;
 using Unity.Properties;
 using UnityEngine.UIElements;
@@ -14,14 +15,19 @@ namespace Rails.Editor.Controls
 			get => timePosition ?? 0;
 			set
 			{
-				SetTimePositionWithoutUpdate(value);
+				if (timePosition == value)
+					return;
+				timePosition = value;
 				UpdatePosition();
+				TimePositionChanged?.Invoke(value);
 			}
 		}
 
 		private TrackKeyMoveDragManipulator manipulator;
 		private int? timePosition;
 		private float framePixelSize = 30;
+
+		public event Action<int> TimePositionChanged;
 
 
 		public TrackKeyView()
@@ -69,13 +75,6 @@ namespace Rails.Editor.Controls
 			this.framePixelSize = framePixelSize;
 			manipulator.OnFramePixelSizeChanged(framePixelSize);
 			UpdatePosition();
-		}
-
-		public void SetTimePositionWithoutUpdate(int value)
-		{
-			if (timePosition == value)
-				return;
-			timePosition = value;
 		}
 
 		private void OnClick(ClickEvent evt)

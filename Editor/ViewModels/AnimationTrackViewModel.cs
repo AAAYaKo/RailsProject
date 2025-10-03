@@ -217,8 +217,7 @@ namespace Rails.Editor.ViewModel
 		{
 			if (e.PropertyName == nameof(AnimationTrack.SceneReference))
 				Reference = model.SceneReference;
-
-			if (e.PropertyName == nameof(AnimationTrack.AnimationKeys))
+			else if (e.PropertyName == nameof(AnimationTrack.AnimationKeys))
 			{
 				UpdateKeys();
 				OnTimeHeadPositionChanged(currentFrame);
@@ -381,9 +380,8 @@ namespace Rails.Editor.ViewModel
 
 		private void OnStoredSelectedChanged(List<int> newValue)
 		{
-			int[] toRemove = SelectedIndexes.Except(newValue).ToArray();
-			int[] toAdd = newValue.Except(SelectedIndexes).ToArray();
-
+			int[] toRemove = newValue == null ? SelectedIndexes.ToArray() : SelectedIndexes.Except(newValue).ToArray();
+			int[] toAdd = newValue?.Except(SelectedIndexes).ToArray() ?? new int[0];
 			toRemove.ForEach(x => SelectedIndexes.RemoveWithoutNotify(x));
 			toAdd.ForEach(x => SelectedIndexes.AddWithoutNotify(x));
 

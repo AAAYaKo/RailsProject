@@ -7,6 +7,9 @@ namespace Rails.Runtime.Tracks
 {
 	[Serializable]
 	public class AnimationKey : INotifyPropertyChanged
+#if UNITY_EDITOR
+		, ISerializationCallbackReceiver
+#endif
 	{
 		[SerializeField] private int timePosition;
 		[SerializeField] private RailsEase ease = new();
@@ -73,6 +76,15 @@ namespace Rails.Runtime.Tracks
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
+#if UNITY_EDITOR
+		private int timePositionCopy;
+		private RailsEase easeCopy;
+		private float singleValueCopy;
+		private Vector3 vector3ValueCopy;
+		private Vector2 vector2ValueCopy;
+#endif
+
+
 		public void SetTimePositionWithoutNotify(int value)
 		{
 			if (timePosition == value)
@@ -84,5 +96,37 @@ namespace Rails.Runtime.Tracks
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
 		}
+
+#if UNITY_EDITOR
+		public void OnBeforeSerialize()
+		{
+			timePositionCopy = TimePosition;
+			easeCopy = Ease;
+			singleValueCopy = SingleValue;
+			vector2ValueCopy = Vector2Value;
+			vector3ValueCopy = Vector3Value;
+		}
+
+		public void OnAfterDeserialize()
+		{
+			if (timePositionCopy != TimePosition)
+				NotifyPropertyChanged(nameof(TimePosition));
+			if (easeCopy != Ease)
+				NotifyPropertyChanged(nameof(Ease));
+			if (singleValueCopy != SingleValue)
+				NotifyPropertyChanged(nameof(SingleValue));
+			if (vector2ValueCopy != Vector2Value)
+				NotifyPropertyChanged(nameof(Vector2Value));
+			if (vector3ValueCopy != Vector3Value)
+				NotifyPropertyChanged(nameof(Vector3Value));
+
+			timePositionCopy = TimePosition;
+			easeCopy = Ease;
+			singleValueCopy = SingleValue;
+			vector2ValueCopy = Vector2Value;
+			vector3ValueCopy = Vector3Value;
+		}
+
+#endif
 	}
 }

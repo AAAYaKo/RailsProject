@@ -176,17 +176,11 @@ namespace Rails.Editor.ViewModel
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(RailsClip.Name))
-			{
 				Name = model.Name;
-			}
-			if (e.PropertyName == nameof(RailsClip.Tracks))
-			{
+			else if (e.PropertyName == nameof(RailsClip.Tracks))
 				UpdateTracks();
-			}
-			if (e.PropertyName == nameof(RailsClip.Duration))
-			{
+			else if (e.PropertyName == nameof(RailsClip.Duration))
 				DurationFrames = model.Duration;
-			}
 		}
 
 		protected override void OnUnbind()

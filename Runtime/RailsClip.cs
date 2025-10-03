@@ -10,9 +10,13 @@ namespace Rails.Runtime
 {
 	[Serializable]
 	public class RailsClip : INotifyPropertyChanged
+#if UNITY_EDITOR
+		, ISerializationCallbackReceiver
+#endif
 	{
 		public const float FrameTime = 1f / 60;
 		public const int Fps = 60;
+		private static readonly CollectionComparer<AnimationTrack> comparer = new();
 
 		[SerializeReference] private List<AnimationTrack> tracks = new();
 		[SerializeField] private EventsTrack eventTrack = new();
@@ -26,7 +30,7 @@ namespace Rails.Runtime
 			get => tracks;
 			set
 			{
-				if (Utils.ListEquals(tracks, value))
+				if (comparer.Equals(tracks, value))
 					return;
 				tracks = value;
 				NotifyPropertyChanged();
@@ -45,6 +49,13 @@ namespace Rails.Runtime
 			}
 		}
 		public string Name { get => name; set => name = value; }
+
+#if UNITY_EDITOR
+		private readonly List<AnimationTrack> tracksCopy = new();
+		private int durationCopy;
+		private string nameCopy;
+#endif
+
 
 		public Sequence BuildSequence()
 		{
@@ -71,5 +82,30 @@ namespace Rails.Runtime
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
 		}
+
+#if UNITY_EDITOR
+		public void OnBeforeSerialize()
+		{
+			tracksCopy.Clear();
+			tracksCopy.AddRange(Tracks);
+			durationCopy = Duration;
+			nameCopy = Name;
+		}
+
+		public void OnAfterDeserialize()
+		{
+			if (!comparer.Equals(tracksCopy, Tracks))
+				NotifyPropertyChanged(nameof(Tracks));
+			if (durationCopy != Duration)
+				NotifyPropertyChanged(nameof(Duration));
+			if (nameCopy != Name)
+				NotifyPropertyChanged(nameof(Name));
+
+			tracksCopy.Clear();
+			tracksCopy.AddRange(Tracks);
+			durationCopy = Duration;
+			nameCopy = Name;
+		}
+#endif
 	}
 }

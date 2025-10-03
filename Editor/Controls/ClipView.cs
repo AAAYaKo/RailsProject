@@ -1,16 +1,19 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Rails.Editor.Controls
 {
 	[UxmlElement]
-	public partial class ClipView : VisualElement
+	public partial class ClipView : BaseView
 	{
+		private const string FixedDimensionKey = "clipFixedDimension";
 		private TracksListView tracksListView;
 		private ClipControl clipControl;
 		private TrackLinesView trackView;
 		private RailsRuler ruler;
 		private RailsPlayHead playHead;
+		private TwoPanelsView split;
 
 		private static VisualTreeAsset templateLeft;
 		private static VisualTreeAsset templateRight;
@@ -24,14 +27,14 @@ namespace Rails.Editor.Controls
 
 		public ClipView()
 		{
-			TwoPanelsView split = new();
+			split = new TwoPanelsView();
 			split.style.width = new Length(100, LengthUnit.Percent);
 			split.style.height = new Length(100, LengthUnit.Percent);
 			split.style.flexGrow = 1;
 			templateLeft.CloneTree(split.FirstPanel);
 			templateRight.CloneTree(split.SecondPanel);
 
-			split.FixedPaneInitialDimension = 300;
+			split.FixedPaneInitialDimension = Storage.RecordsFloat.Get(FixedDimensionKey, 300);
 			hierarchy.Add(split);
 
 			clipControl = split.FirstPanel.Q<ClipControl>();
@@ -39,8 +42,22 @@ namespace Rails.Editor.Controls
 			trackView = split.SecondPanel.Q<TrackLinesView>();
 			ruler = split.SecondPanel.Q<RailsRuler>();
 			playHead = split.SecondPanel.Q<RailsPlayHead>();
+		}
+
+		protected override void OnAttach(AttachToPanelEvent evt)
+		{
+			base.OnAttach(evt);
 			RegisterCallback<WheelEvent>(ScrollHandler, TrickleDown.TrickleDown);
 			trackView.VerticalScroller.valueChanged += OnVerticalScroller;
+			split.FixedPanelDimensionChanged += OnDimensionChanged;
+		}
+
+		protected override void OnDetach(DetachFromPanelEvent evt)
+		{
+			base.OnDetach(evt);
+			UnregisterCallback<WheelEvent>(ScrollHandler, TrickleDown.TrickleDown);
+			trackView.VerticalScroller.valueChanged -= OnVerticalScroller;
+			split.FixedPanelDimensionChanged -= OnDimensionChanged;
 		}
 
 		private void OnVerticalScroller(float value)
@@ -58,6 +75,11 @@ namespace Rails.Editor.Controls
 			tracksListView.Scroll.scrollOffset += new Vector2(0, y);
 
 			evt.StopPropagation();
+		}
+
+		private void OnDimensionChanged(float dimension)
+		{
+			Storage.RecordsFloat.Set(FixedDimensionKey, dimension);
 		}
 	}
 }

@@ -9,6 +9,8 @@ namespace Rails.Editor
 {
 	public class RailsEditor : EditorWindow
 	{
+		private const string FixedDimensionKey = "clipsListFixedDimension";
+
 		[SerializeField] private StyleSheet darkTheme = default;
 		[SerializeField] private StyleSheet lightTheme = default;
 		[SerializeField] private VisualTreeAsset m_VisualTreeAsset = default;
@@ -44,6 +46,8 @@ namespace Rails.Editor
 			EditorContext.Instance.EditorWindow = null;
 			EditorContext.Instance.ViewModel.UnbindModel();
 			EditorContext.Instance.ViewModel = null;
+			if (twoPanels != null)
+				twoPanels.FixedPanelDimensionChanged -= OnDimensionChanged;
 		}
 
 		private void CreateGUI()
@@ -58,6 +62,8 @@ namespace Rails.Editor
 			root.Add(uxml);
 
 			twoPanels = root.Q<TwoPanelsView>();
+			twoPanels.FixedPaneInitialDimension = dataStorage.RecordsFloat.Get(FixedDimensionKey, 250);
+			twoPanels.FixedPanelDimensionChanged += OnDimensionChanged;
 
 			Resources.Load<VisualTreeAsset>("RailsFirstPage").CloneTree(twoPanels.FirstPanel);
 			var clips = twoPanels.FirstPanel.Q<ClipsListView>("clips-view");
@@ -75,7 +81,12 @@ namespace Rails.Editor
 		{
 			EditorContext.Instance.ViewModel.UnbindModel();
 			EditorContext.Instance.ViewModel.BindModel(target);
-			this.currentTarget = target;
+			currentTarget = target;
+		}
+
+		private void OnDimensionChanged(float dimension)
+		{
+			dataStorage.RecordsFloat.Set(FixedDimensionKey, dimension);
 		}
 	}
 }

@@ -11,8 +11,13 @@ namespace Rails.Runtime.Tracks
 {
 	[Serializable]
 	public abstract class AnimationTrack : INotifyPropertyChanged
+#if UNITY_EDITOR
+		, ISerializationCallbackReceiver
+#endif
 	{
-		[SerializeField] protected List<AnimationKey> animationKeys = new();
+		public static readonly CollectionComparer<AnimationKey> comparer = new();
+
+		[SerializeField] private List<AnimationKey> animationKeys = new();
 		[SerializeField] private UnityEngine.Object sceneReference;
 
 		public List<AnimationKey> AnimationKeys
@@ -20,7 +25,7 @@ namespace Rails.Runtime.Tracks
 			get => animationKeys;
 			set
 			{
-				if (animationKeys == value)
+				if (comparer.Equals(animationKeys, value))
 					return;
 				animationKeys = value;
 				NotifyPropertyChanged();
@@ -39,6 +44,11 @@ namespace Rails.Runtime.Tracks
 		}
 
 		public event PropertyChangedEventHandler PropertyChanged;
+
+#if UNITY_EDITOR
+		private readonly List<AnimationKey> animationKeysCopy = new();
+		private UnityEngine.Object sceneReferenceCopy;
+#endif
 
 
 		public void InsertInSequence(Sequence sequence, float frameTime)
@@ -173,16 +183,6 @@ namespace Rails.Runtime.Tracks
 			animationKeys.Remove(key);
 		}
 
-		private void MoveKeyWithoutNotify(AnimationKey key, int targetPosition, int[] otherSelectedKeys)
-		{
-			var otherKey = animationKeys.Find(x => x.TimePosition == targetPosition);
-			if (otherKey != null && !otherSelectedKeys.Contains(animationKeys.IndexOf(otherKey)))
-				RemoveKeyWithoutNotify(otherKey);
-			RemoveKeyWithoutNotify(key);
-			key.SetTimePositionWithoutNotify(targetPosition);
-			AddKeyWithoutNotify(key);
-		}
-
 		private void InsertNewKey(AnimationKey previousKey, AnimationKey nextKey, int frame)
 		{
 			if (previousKey == null)
@@ -281,6 +281,27 @@ namespace Rails.Runtime.Tracks
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
 		}
+
+#if UNITY_EDITOR
+		public void OnBeforeSerialize()
+		{
+			animationKeysCopy.Clear();
+			animationKeysCopy.AddRange(AnimationKeys);
+			sceneReferenceCopy = sceneReference;
+		}
+
+		public void OnAfterDeserialize()
+		{
+			if (!comparer.Equals(animationKeysCopy, AnimationKeys))
+				NotifyPropertyChanged(nameof(AnimationKeys));
+			if (sceneReferenceCopy != sceneReference)
+				NotifyPropertyChanged(nameof(SceneReference));
+
+			animationKeysCopy.Clear();
+			animationKeysCopy.AddRange(AnimationKeys);
+			sceneReferenceCopy = sceneReference;
+		}
+#endif
 
 		public enum ValueType
 		{

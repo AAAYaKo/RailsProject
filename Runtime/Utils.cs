@@ -39,43 +39,5 @@ namespace Rails.Runtime
 			}
 			return true;
 		}
-
-		public static bool ListEquals<T>(List<T> first, List<T> second) where T : class
-		{
-			if (first == null && second != null || first != null && second == null)
-				return false;
-
-			if (first == null && second == null)
-				return true;
-
-			if (first.Count != second.Count)
-				return false;
-
-			for (int i = 0; i < first.Count; i++)
-			{
-				if (first[i] != second[i])
-					return false;
-			}
-			return true;
-		}
-
-		public static bool ListEquals(List<int> first, List<int> second)
-		{
-			if (first == null && second != null || first != null && second == null)
-				return false;
-
-			if (first == null && second == null)
-				return true;
-
-			if (first.Count != second.Count)
-				return false;
-
-			for (int i = 0; i < first.Count; i++)
-			{
-				if (first[i] != second[i])
-					return false;
-			}
-			return true;
-		}
 	}
 }

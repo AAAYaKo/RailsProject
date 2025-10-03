@@ -4,6 +4,8 @@ namespace Rails.Editor.Controls
 {
 	public abstract class BaseView : VisualElement
 	{
+		protected static DataStorage Storage => EditorContext.Instance.DataStorage;
+
 		protected BaseView()
 		{
 			RegisterCallback<AttachToPanelEvent>(OnAttach);

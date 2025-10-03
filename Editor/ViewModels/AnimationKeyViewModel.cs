@@ -54,21 +54,26 @@ namespace Rails.Editor.ViewModel
 			SingleValue = model.SingleValue;
 			Vector2Value = model.Vector2Value;
 			Vector3Value = model.Vector3Value;
-			if (Ease == null)
-				SetEaseWithoutNotify(new EaseViewModel());
-			Ease.BindModel(model.Ease);
 		}
 
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(AnimationKey.TimePosition))
 				TimePosition = model.TimePosition;
-			if (e.PropertyName == nameof(AnimationKey.SingleValue))
+			else if (e.PropertyName == nameof(AnimationKey.SingleValue))
 				SingleValue = model.SingleValue;
-			if (e.PropertyName == nameof(AnimationKey.Vector2Value))
+			else if (e.PropertyName == nameof(AnimationKey.Vector2Value))
 				Vector2Value = model.Vector2Value;
-			if (e.PropertyName == nameof(AnimationKey.Vector3Value))
+			else if (e.PropertyName == nameof(AnimationKey.Vector3Value))
 				Vector3Value = model.Vector3Value;
+		}
+
+		protected override void OnBind()
+		{
+			base.OnBind();
+			if (Ease == null)
+				SetEaseWithoutNotify(new EaseViewModel());
+			Ease.BindModel(model.Ease);
 		}
 
 		protected override void OnUnbind()

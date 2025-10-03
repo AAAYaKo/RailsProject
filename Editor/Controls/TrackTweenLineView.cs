@@ -1,38 +1,14 @@
-﻿using UnityEngine.UIElements;
+using UnityEngine.UIElements;
 
 namespace Rails.Editor.Controls
 {
 	[UxmlElement]
 	public partial class TrackTweenLineView : BaseView
 	{
-		public int StartFrame
-		{
-			get => startFrame ?? 0;
-			set
-			{
-				if (startFrame == value)
-					return;
-				startFrame = value;
-				UpdateStartPosition();
-				UpdateEndPosition();
-			}
-		}
-
-		public int EndFrame
-		{
-			get => endFrame ?? 0;
-			set
-			{
-				if (endFrame == value)
-					return;
-				endFrame = value;
-				UpdateStartPosition();
-				UpdateEndPosition();
-			}
-		}
-
-		private int? startFrame;
-		private int? endFrame;
+		private TrackKeyView start;
+		private TrackKeyView end;
+		private int startTimePosition;
+		private int endTimePosition;
 		private float framePixelSize = 30;
 
 
@@ -47,6 +23,24 @@ namespace Rails.Editor.Controls
 			line.pickingMode = PickingMode.Ignore;
 		}
 
+		public void Bind(TrackKeyView start, TrackKeyView end)
+		{
+			this.start = start;
+			this.end = end;
+			start.TimePositionChanged += OnStartPositionChanged;
+			end.TimePositionChanged += OnEndPositionChanged;
+		}
+
+		public void Unbind()
+		{
+			if (start != null)
+				start.TimePositionChanged -= OnStartPositionChanged;
+			if (end != null)
+				end.TimePositionChanged -= OnEndPositionChanged;
+			start = null;
+			end = null;
+		}
+
 		protected override void OnAttach(AttachToPanelEvent evt)
 		{
 			base.OnAttach(evt);
@@ -58,6 +52,7 @@ namespace Rails.Editor.Controls
 		{
 			base.OnDetach(evt);
 			EventBus.Unsubscribe<FramePixelSizeChangedEvent>(OnFramePixelSizeChanged);
+			Unbind();
 		}
 
 		private void OnFramePixelSizeChanged(FramePixelSizeChangedEvent evt)
@@ -68,18 +63,20 @@ namespace Rails.Editor.Controls
 		private void OnFramePixelSizeChanged(float framePixelSize)
 		{
 			this.framePixelSize = framePixelSize;
-			UpdateStartPosition();
-			UpdateEndPosition();
+			OnStartPositionChanged(startTimePosition);
 		}
 
-		private void UpdateStartPosition()
+		private void OnStartPositionChanged(int position)
 		{
-			style.left = framePixelSize * StartFrame + TrackLinesView.StartAdditional;
+			startTimePosition = position;
+			style.left = framePixelSize * startTimePosition + TrackLinesView.StartAdditional;
+			OnEndPositionChanged(endTimePosition);
 		}
 
-		private void UpdateEndPosition()
+		private void OnEndPositionChanged(int position)
 		{
-			style.width = framePixelSize * (EndFrame - StartFrame);
+			endTimePosition = position;
+			style.width = framePixelSize * (endTimePosition - startTimePosition);
 		}
 	}
 }
