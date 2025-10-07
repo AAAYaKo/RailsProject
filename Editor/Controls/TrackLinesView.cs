@@ -1,4 +1,3 @@
-using System.Linq;
 using Rails.Editor.Manipulator;
 using Rails.Editor.ViewModel;
 using Rails.Runtime;
@@ -10,13 +9,12 @@ using UnityEngine.UIElements;
 namespace Rails.Editor.Controls
 {
 	[UxmlElement]
-	public partial class TrackLinesView : ListObserverElement<AnimationTrackViewModel, TrackLineView>
+	public partial class TrackLinesView : ListObserverElement<AnimationTrackViewModel, AnimationTrackLineView>
 	{
 		public static readonly BindingId TimeHeadPositionProperty = nameof(TimeHeadPosition);
 
 		public const int EndAdditional = 60;
 		public const int StartAdditional = 10;
-		public static readonly BindingId DurationProperty = nameof(Duration);
 
 		[UxmlAttribute("duration"), CreateProperty]
 		public int Duration
@@ -48,7 +46,6 @@ namespace Rails.Editor.Controls
 				{
 					AdjustContainer(FramePixelSize);
 				}
-				NotifyPropertyChanged(DurationProperty);
 			}
 		}
 		[UxmlAttribute("timePosition"), CreateProperty]
@@ -102,6 +99,7 @@ namespace Rails.Editor.Controls
 		public ScrollView ScrollView => scrollView;
 		public Scroller VerticalScroller => verticalScroller;
 		public MinMaxSlider Slider => slider;
+		public VisualElement Viewport => viewport;
 
 		private static VisualTreeAsset templateMain;
 		private ScrollView scrollView;
@@ -152,7 +150,6 @@ namespace Rails.Editor.Controls
 			selectionBoxManipulator.SelectionBegin += OnSelectionBegin;
 			selectionBoxManipulator.SelectionChanged += OnSelectionChanged;
 			selectionBoxManipulator.SelectionComplete += OnSelectionComplete;
-			EventBus.Subscribe<KeyDragEvent>(OnKeyDragged);
 		}
 
 		protected override void OnDetach(DetachFromPanelEvent evt)
@@ -164,7 +161,6 @@ namespace Rails.Editor.Controls
 			selectionBoxManipulator.SelectionBegin -= OnSelectionBegin;
 			selectionBoxManipulator.SelectionChanged -= OnSelectionChanged;
 			selectionBoxManipulator.SelectionComplete -= OnSelectionComplete;
-			EventBus.Unsubscribe<KeyDragEvent>(OnKeyDragged);
 		}
 
 		public void Scroll(Vector2 delta)
@@ -186,16 +182,16 @@ namespace Rails.Editor.Controls
 			slider.value += new Vector2(positionDelta, positionDelta);
 		}
 
-		protected override TrackLineView CreateElement()
+		protected override AnimationTrackLineView CreateElement()
 		{
-			TrackLineView line = new();
+			AnimationTrackLineView line = new();
 			VisualElement trackBack = new();
-			trackBack.AddToClassList("track-line-background");
+			trackBack.AddToClassList("animation-track-line-background");
 			tracksBackgroundContainer.Add(trackBack);
 			return line;
 		}
 
-		protected override void ResetElement(TrackLineView element)
+		protected override void ResetElement(AnimationTrackLineView element)
 		{
 			tracksBackgroundContainer.RemoveAt(0);
 		}
@@ -279,21 +275,6 @@ namespace Rails.Editor.Controls
 		{
 			Rect selectionWorldRect = selectionBoxContainer.LocalToWorld(selectionRect);
 			EventBus.Publish(new SelectionBoxCompleteEvent(selectionWorldRect, evt.actionKey));
-		}
-
-		private void OnKeyDragged(KeyDragEvent evt)
-		{
-			int deltaFrames = evt.DragFrames;
-			foreach (var line in views)
-			{
-				if (line.SelectedKeysFrames.IsNullOrEmpty())
-					continue;
-				if (line.FirstSelectedKeyFrame + deltaFrames < 0
-					|| line.LastSelectedKeyFrame + deltaFrames > Duration)
-					return;
-			}
-
-			EventBus.Publish(new KeyMoveEvent(deltaFrames));
 		}
 	}
 }

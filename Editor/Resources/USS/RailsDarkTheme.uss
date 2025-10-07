@@ -36,3 +36,8 @@
 	--color-active: #57DED3;
 	--color-not-active: #618986;
 }
+
+.event{
+	--color-active: #E1E1E1;
+	--color-not-active: #ACACAC;
+}

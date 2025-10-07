@@ -6,14 +6,8 @@ using UnityEngine.UIElements;
 
 namespace Rails.Editor.ViewModel
 {
-	public class AnimationKeyViewModel : BaseNotifyPropertyViewModel<AnimationKey>
+	public class AnimationKeyViewModel : BaseKeyViewModel<AnimationKey>
 	{
-		[CreateProperty]
-		public int TimePosition
-		{
-			get => timePosition ?? 0;
-			set => SetProperty(ref timePosition, value);
-		}
 		[CreateProperty]
 		public float SingleValue
 		{
@@ -39,7 +33,6 @@ namespace Rails.Editor.ViewModel
 			set => SetProperty(ease, value, SetEaseWithoutNotify);
 		}
 
-		private int? timePosition;
 		private float? singleValue;
 		private Vector2? vector2Value;
 		private Vector3? vector3Value;
@@ -58,9 +51,8 @@ namespace Rails.Editor.ViewModel
 
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(AnimationKey.TimePosition))
-				TimePosition = model.TimePosition;
-			else if (e.PropertyName == nameof(AnimationKey.SingleValue))
+			base.OnModelPropertyChanged(sender, e);
+			if (e.PropertyName == nameof(AnimationKey.SingleValue))
 				SingleValue = model.SingleValue;
 			else if (e.PropertyName == nameof(AnimationKey.Vector2Value))
 				Vector2Value = model.Vector2Value;

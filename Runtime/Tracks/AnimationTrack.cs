@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using DG.Tweening;
 using Unity.Mathematics;
 using UnityEngine;
@@ -10,27 +7,10 @@ using UnityEngine;
 namespace Rails.Runtime.Tracks
 {
 	[Serializable]
-	public abstract class AnimationTrack : INotifyPropertyChanged
-#if UNITY_EDITOR
-		, ISerializationCallbackReceiver
-#endif
+	public abstract class AnimationTrack : BaseTrack<AnimationKey>
 	{
-		public static readonly CollectionComparer<AnimationKey> comparer = new();
-
-		[SerializeField] private List<AnimationKey> animationKeys = new();
 		[SerializeField] private UnityEngine.Object sceneReference;
 
-		public List<AnimationKey> AnimationKeys
-		{
-			get => animationKeys;
-			set
-			{
-				if (comparer.Equals(animationKeys, value))
-					return;
-				animationKeys = value;
-				NotifyPropertyChanged();
-			}
-		}
 		public UnityEngine.Object SceneReference
 		{
 			get => sceneReference;
@@ -43,30 +23,27 @@ namespace Rails.Runtime.Tracks
 			}
 		}
 
-		public event PropertyChangedEventHandler PropertyChanged;
-
 #if UNITY_EDITOR
-		private readonly List<AnimationKey> animationKeysCopy = new();
 		private UnityEngine.Object sceneReferenceCopy;
 #endif
 
 
-		public void InsertInSequence(Sequence sequence, float frameTime)
+		public override void InsertInSequence(Sequence sequence, float frameTime)
 		{
-			if (animationKeys.Count == 0)
+			if (AnimationKeys.Count == 0)
 				return;
 			if (SceneReference == null)
 			{
 				Debug.LogWarning("Track hasn't Scene Reference");
 				return;
 			}
-			if (animationKeys.Count == 1)
+			if (AnimationKeys.Count == 1)
 			{
-				InsertInstantChange(animationKeys[0], sequence, frameTime);
+				InsertInstantChange(AnimationKeys[0], sequence, frameTime);
 				return;
 			}
 
-			var sorted = animationKeys.OrderBy(x => x.TimePosition).ToArray();
+			var sorted = AnimationKeys.OrderBy(x => x.TimePosition).ToArray();
 
 			for (int i = 0; i < sorted.Length - 1; i++)
 			{
@@ -85,40 +62,9 @@ namespace Rails.Runtime.Tracks
 			}
 		}
 
-		public void AddKey(AnimationKey key)
+		public override void InsertNewKeyAt(int frame)
 		{
-			AddKeyWithoutNotify(key);
-			NotifyPropertyChanged(nameof(AnimationKeys));
-		}
-
-		public void RemoveKey(AnimationKey key)
-		{
-			RemoveKeyWithoutNotify(key);
-			NotifyPropertyChanged(nameof(AnimationKeys));
-		}
-
-		public void MoveMultipleKeys(Dictionary<int, int> keysFramePositions)
-		{
-			foreach (var request in keysFramePositions)
-				animationKeys[request.Key].SetTimePositionWithoutNotify(request.Value);
-
-			List<AnimationKey> keysToRemove = new();
-			foreach (var request in keysFramePositions)
-			{
-				var otherKey = animationKeys.Find(x => x != animationKeys[request.Key] && x.TimePosition == request.Value);
-				if (otherKey != null)
-					keysToRemove.Add(otherKey);
-			}	
-			keysToRemove.ForEach(x => RemoveKeyWithoutNotify(x));
-
-			animationKeys.Sort((x, y) => x.TimePosition.CompareTo(y.TimePosition));
-
-			NotifyPropertyChanged(nameof(AnimationKeys));
-		}
-
-		public void InsertNewKeyAt(int frame)
-		{
-			int previousIndex = animationKeys.FindLastIndex(x =>
+			int previousIndex = AnimationKeys.FindLastIndex(x =>
 			{
 				return x.TimePosition <= frame;
 			});
@@ -128,17 +74,17 @@ namespace Rails.Runtime.Tracks
 				return;
 			}
 			int nextIndex = previousIndex + 1;
-			if (nextIndex >= animationKeys.Count)
+			if (nextIndex >= AnimationKeys.Count)
 			{
-				InsertNewKey(animationKeys[previousIndex], null, frame);
+				InsertNewKey(AnimationKeys[previousIndex], null, frame);
 				return;
 			}
-			InsertNewKey(animationKeys[previousIndex], animationKeys[nextIndex], frame);
+			InsertNewKey(AnimationKeys[previousIndex], AnimationKeys[nextIndex], frame);
 		}
 
 		public void InsertNewKeyAt(int frame, float singleValue, Vector2 vector2Value, Vector3 vector3Value)
 		{
-			int previousIndex = animationKeys.FindLastIndex(x =>
+			int previousIndex = AnimationKeys.FindLastIndex(x =>
 			{
 				return x.TimePosition <= frame;
 			});
@@ -148,39 +94,12 @@ namespace Rails.Runtime.Tracks
 				return;
 			}
 			int nextIndex = previousIndex + 1;
-			if (nextIndex >= animationKeys.Count)
+			if (nextIndex >= AnimationKeys.Count)
 			{
-				InsertNewKey(animationKeys[previousIndex], null, frame, singleValue, vector2Value, vector3Value);
+				InsertNewKey(AnimationKeys[previousIndex], null, frame, singleValue, vector2Value, vector3Value);
 				return;
 			}
-			InsertNewKey(animationKeys[previousIndex], animationKeys[nextIndex], frame, singleValue, vector2Value, vector3Value);
-		}
-
-		private void AddKeyWithoutNotify(AnimationKey key)
-		{
-			bool inserted = false;
-			for (int i = 0; i < animationKeys.Count; i++)
-			{
-				if (animationKeys[i].TimePosition > key.TimePosition) //to maintain order
-				{
-					animationKeys.Insert(i, key);
-					inserted = true;
-					break;
-				}
-				else if (animationKeys[i].TimePosition == key.TimePosition) //replace the key with the same time position
-				{
-					animationKeys[i] = key;
-					inserted = true;
-					break;
-				}
-			}
-			if (!inserted) //add to the end if the key is not already in the list
-				animationKeys.Add(key);
-		}
-
-		private void RemoveKeyWithoutNotify(AnimationKey key)
-		{
-			animationKeys.Remove(key);
+			InsertNewKey(AnimationKeys[previousIndex], AnimationKeys[nextIndex], frame, singleValue, vector2Value, vector3Value);
 		}
 
 		private void InsertNewKey(AnimationKey previousKey, AnimationKey nextKey, int frame)
@@ -277,29 +196,26 @@ namespace Rails.Runtime.Tracks
 		protected abstract Tween CreateTween(AnimationKey keyStart, AnimationKey keyEnd, float frameTime);
 		protected abstract void InstantChange(AnimationKey key);
 
-		protected void NotifyPropertyChanged([CallerMemberName] string property = "")
-		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
-		}
-
 #if UNITY_EDITOR
-		public void OnBeforeSerialize()
+		public override void OnBeforeSerialize()
 		{
-			animationKeysCopy.Clear();
-			animationKeysCopy.AddRange(AnimationKeys);
+			base.OnBeforeSerialize();
 			sceneReferenceCopy = sceneReference;
 		}
 
-		public void OnAfterDeserialize()
+		public override void OnAfterDeserialize()
 		{
-			if (!comparer.Equals(animationKeysCopy, AnimationKeys))
-				NotifyPropertyChanged(nameof(AnimationKeys));
-			if (sceneReferenceCopy != sceneReference)
-				NotifyPropertyChanged(nameof(SceneReference));
+			try
+			{
+				base.OnAfterDeserialize();
+				if (sceneReferenceCopy != sceneReference)
+					NotifyPropertyChanged(nameof(SceneReference));
+				sceneReferenceCopy = sceneReference;
+			}
+			catch
+			{
 
-			animationKeysCopy.Clear();
-			animationKeysCopy.AddRange(AnimationKeys);
-			sceneReferenceCopy = sceneReference;
+			}
 		}
 #endif
 

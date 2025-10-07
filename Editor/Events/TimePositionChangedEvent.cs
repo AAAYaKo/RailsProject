@@ -1,6 +1,4 @@
-﻿using Rails.Editor.Controls;
-
-namespace Rails.Editor
+﻿namespace Rails.Editor
 {
 	public struct TimePositionChangedEvent
 	{
@@ -10,17 +8,6 @@ namespace Rails.Editor
 		public TimePositionChangedEvent(float timePosition)
 		{
 			TimePosition = timePosition;
-		}
-	}
-
-	public struct DeselectAllKeysEvent
-	{
-		public TrackKeyView Key { get; }
-
-
-		public DeselectAllKeysEvent(TrackKeyView key)
-		{
-			Key = key;
 		}
 	}
 }

@@ -6,13 +6,11 @@ using UnityEngine;
 namespace Rails.Runtime.Tracks
 {
 	[Serializable]
-	public class EventsTrack
+	public class EventsTrack : BaseTrack<EventKey>
 	{
-		[SerializeField] private List<EventKey> keys = new();
-
-		public void InsertInSequence(Sequence sequence, float frameTime)
+		public override void InsertInSequence(Sequence sequence, float frameTime)
 		{
-			foreach (var key in keys)
+			foreach (var key in AnimationKeys)
 			{
 				sequence.InsertCallback(key.TimePosition * frameTime, () =>
 				{
@@ -21,14 +19,12 @@ namespace Rails.Runtime.Tracks
 			}
 		}
 
-		public void AddKey(EventKey key)
+		public override void InsertNewKeyAt(int frame)
 		{
-			keys.Add(key);
-		}
-
-		public void RemoveKey(EventKey key)
-		{
-			keys.Remove(key);
+			AddKey(new EventKey()
+			{
+				TimePosition = frame,
+			});
 		}
 	}
 }

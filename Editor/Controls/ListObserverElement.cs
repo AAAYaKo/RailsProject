@@ -25,6 +25,8 @@ namespace Rails.Editor.Controls
 			}
 		}
 
+		public List<TElementView> Views => views;
+
 		protected ObservableList<TElementModel> values = new();
 		protected List<TElementView> views = new();
 		protected VisualElement container;

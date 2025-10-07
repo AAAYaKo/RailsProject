@@ -1,19 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using Rails.Runtime.Tracks;
 using Unity.Mathematics;
 using Unity.Properties;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace Rails.Editor.ViewModel
 {
-	public class AnimationTrackViewModel : BaseNotifyPropertyViewModel<AnimationTrack>
+	public class AnimationTrackViewModel : BaseTrackViewModel<AnimationTrack, AnimationKey, AnimationKeyViewModel>
 	{
-		public const string StoreKey = "selectedKeys_";
-
 		[CreateProperty]
 		public UnityEngine.Object Reference
 		{
@@ -29,9 +25,7 @@ namespace Rails.Editor.ViewModel
 		[CreateProperty]
 		public AnimationTrack.ValueType ValueType => trackData?.ValueType ?? AnimationTrack.ValueType.Single;
 		[CreateProperty]
-		public string TrackClass => trackData?.TrackClass;
-		[CreateProperty]
-		public ObservableList<AnimationKeyViewModel> Keys => keys;
+		public override string TrackClass => trackData?.TrackClass;
 		[CreateProperty]
 		public float CurrentSingleValue
 		{
@@ -50,14 +44,6 @@ namespace Rails.Editor.ViewModel
 			get => currentVector3Value ?? Vector3.zero;
 			set => SetProperty(ref currentVector3Value, value);
 		}
-		[CreateProperty]
-		public bool IsKeyFrame
-		{
-			get => isKeyFrame;
-			set => SetProperty(ref isKeyFrame, value);
-		}
-		[CreateProperty]
-		public ObservableList<int> SelectedIndexes => selectedIndexes;
 		[CreateProperty]
 		public ICommand RemoveCommand
 		{
@@ -82,65 +68,28 @@ namespace Rails.Editor.ViewModel
 			get => valueEditCommand;
 			set => SetProperty(ref valueEditCommand, value);
 		}
-		[CreateProperty]
-		public ICommand<List<int>> ChangeSelection
-		{
-			get => changeSelection;
-			set => SetProperty(ref changeSelection, value);
-		}
-		[CreateProperty]
-		public ICommand<Dictionary<int, int>> MoveKeys
-		{
-			get => moveKeys;
-			set => SetProperty(ref moveKeys, value);
-		}
 
 		private UnityEngine.Object reference;
 		private TrackData trackData;
-		private ObservableList<AnimationKeyViewModel> keys = new();
 		private float? currentSingleValue;
 		private Vector2? currentVector2Value;
 		private Vector3? currentVector3Value;
-		private StoredIntList storedSelectedIndexes;
-		private bool isKeyFrame;
-		private int currentFrame;
-		private ObservableList<int> selectedIndexes = new();
 		private ICommand removeCommand;
 		private ICommand keyFrameAddCommand;
 		private ICommand keyFrameRemoveCommand;
 		private ICommand<ValueEditArgs> valueEditCommand;
-		private ICommand<List<int>> changeSelection;
-		private ICommand<Dictionary<int, int>> moveKeys;
 
-		public AnimationTrackViewModel(int trackIndex)
+
+		public AnimationTrackViewModel(int trackIndex) : base()
 		{
 			storedSelectedIndexes = new StoredIntList(StoreKey + trackIndex);
 
-			KeyFrameRemoveCommand = new RelayCommand(() =>
-			{
-				int keyIndex = keys.FindIndex(x => x.TimePosition == currentFrame);
-				if (keyIndex < 0)
-					return;
-				EditorContext.Instance.Record("Key Frame Removed");
-				if (SelectedIndexes.Contains(keyIndex))
-				{
-					SelectedIndexes.Remove(keyIndex);
-					storedSelectedIndexes.Value = SelectedIndexes.ToList();
-				}
-				model.RemoveKey(model.AnimationKeys[keyIndex]);
-			});
+			KeyFrameRemoveCommand = new RelayCommand(() => RemoveKey(currentFrame));
+			KeyFrameAddCommand = new RelayCommand(() => AddKey(currentFrame));
 
-			KeyFrameAddCommand = new RelayCommand(() =>
-			{
-				int keyIndex = keys.FindIndex(x => x.TimePosition == currentFrame);
-				if (keyIndex >= 0)
-					return;
-				EditorContext.Instance.Record("Key Frame Added");
-				model.InsertNewKeyAt(currentFrame);
-			});
 			ValueEditCommand = new RelayCommand<ValueEditArgs>(args =>
 			{
-				int keyIndex = keys.FindIndex(x => x.TimePosition == currentFrame);
+				int keyIndex = Keys.FindIndex(x => x.TimePosition == currentFrame);
 				if (keyIndex >= 0)
 				{
 					EditorContext.Instance.Record("Key Value Changed");
@@ -154,80 +103,12 @@ namespace Rails.Editor.ViewModel
 					model.InsertNewKeyAt(currentFrame, args.SingleValue, args.Vector2Value, args.Vector3Value);
 				}
 			});
-
-			ChangeSelection = new RelayCommand<List<int>>(x =>
-			{
-				EditorContext.Instance.Record(EditorContext.Instance.EditorWindow, "Keys Selection Changed");
-				storedSelectedIndexes.Value = new(x);
-			});
-
-			MoveKeys = new RelayCommand<Dictionary<int, int>>(MoveAnimationKeys);
 		}
 
-		protected override void OnBind()
-		{
-			base.OnBind();
-		}
-
-		protected override void OnUnbind()
-		{
-			base.OnUnbind();
-			ClearViewModels<AnimationKeyViewModel, AnimationKey>(Keys,
-				resetViewModel: vm =>
-				{
-					vm.propertyChanged -= OnKeyPropertyChanged;
-				});
-		}
-
-		protected override void OnModelChanged()
-		{
-			if (model == null)
-				return;
-
-			Reference = model.SceneReference;
-			trackData = TrackTypes[model.GetType()];
-
-			selectedIndexes.Clear();
-			if (model == null)
-			{
-				if (keys.Count > 0)
-					ClearViewModels<AnimationKeyViewModel, AnimationKey>(Keys, vm =>
-					{
-						vm.propertyChanged -= OnKeyPropertyChanged;
-					});
-				return;
-			}
-
-			UpdateKeys();
-
-			if (!storedSelectedIndexes.Value.IsNullOrEmpty())
-			{
-				if (storedSelectedIndexes.Value.Any(x => x >= keys.Count || x < 0))
-					storedSelectedIndexes.Value = new List<int>();
-				SelectedIndexes.AddRangeWithoutNotify(storedSelectedIndexes.Value);
-			}
-
-			NotifyPropertyChanged(nameof(Type));
-			NotifyPropertyChanged(nameof(ValueType));
-			NotifyPropertyChanged(nameof(Keys));
-			NotifyPropertyChanged(nameof(SelectedIndexes));
-		}
-
-		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == nameof(AnimationTrack.SceneReference))
-				Reference = model.SceneReference;
-			else if (e.PropertyName == nameof(AnimationTrack.AnimationKeys))
-			{
-				UpdateKeys();
-				OnTimeHeadPositionChanged(currentFrame);
-			}
-		}
-
-		public void OnTimeHeadPositionChanged(int frame)
+		public override void OnTimeHeadPositionChanged(int frame)
 		{
 			currentFrame = frame;
-			int previousIndex = keys.FindLastIndex(x =>
+			int previousIndex = Keys.FindLastIndex(x =>
 			{
 				return x.TimePosition <= frame;
 			});
@@ -237,89 +118,35 @@ namespace Rails.Editor.ViewModel
 				UpdateCurrentValue(null, null, frame);
 				return;
 			}
-			IsKeyFrame = keys[previousIndex].TimePosition == frame;
+			IsKeyFrame = Keys[previousIndex].TimePosition == frame;
 			int nextIndex = previousIndex + 1;
-			if (nextIndex >= keys.Count)
+			if (nextIndex >= Keys.Count)
 			{
-				UpdateCurrentValue(keys[previousIndex], null, frame);
+				UpdateCurrentValue(Keys[previousIndex], null, frame);
 				return;
 			}
-			UpdateCurrentValue(keys[previousIndex], keys[nextIndex], frame);
+			UpdateCurrentValue(Keys[previousIndex], Keys[nextIndex], frame);
 		}
 
-		public void OnClipSelect()
+		protected override void OnModelChanged()
 		{
-			storedSelectedIndexes.Bind(EditorContext.Instance.DataStorage.RecordsSelectedClips);
-			storedSelectedIndexes.ValueChanged += OnStoredSelectedChanged;
-			OnStoredSelectedChanged(storedSelectedIndexes.Value);
+			base.OnModelChanged();
+
+			if (model == null)
+				return;
+
+			Reference = model.SceneReference;
+			trackData = TrackTypes[model.GetType()];
+
+			NotifyPropertyChanged(nameof(Type));
+			NotifyPropertyChanged(nameof(ValueType));
 		}
 
-		public void OnClipDeselect()
+		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
-			storedSelectedIndexes.Unbind();
-			storedSelectedIndexes.ValueChanged -= OnStoredSelectedChanged;
-		}
-
-		private void MoveAnimationKeys(Dictionary<int, int> keysFramesPositions)
-		{
-			EditorContext.Instance.Record(EditorContext.Instance.EditorWindow, "Animation Keys Moved");
-			UpdateSelectionAfterMove(keysFramesPositions);
-			model.MoveMultipleKeys(keysFramesPositions);
-		}
-
-		private void UpdateSelectionAfterMove(Dictionary<int, int> keysFramesPositions)
-		{
-			HashSet<int> removedKeys = new();
-			List<(int Index, int Position)> movedKeysMap = new(keys.Count);
-
-			for (int i = 0; i < keys.Count; i++)
-			{
-				if (keysFramesPositions.ContainsValue(keys[i].TimePosition)) //these keys will be removed
-				{
-					removedKeys.Add(i);
-					continue;
-				}
-
-				movedKeysMap.Add((i, keysFramesPositions.TryGetValue(i, out int newPosition) ?
-					newPosition :
-					keys[i].TimePosition)); //add keys with their positions after moving
-			}
-
-			movedKeysMap.Sort((a, b) => a.Position.CompareTo(b.Position)); //keys must be ordered by time position
-
-			Dictionary<int, int> newIndexMap = new(movedKeysMap.Count);
-			for (int i = 0; i < movedKeysMap.Count; i++)
-				newIndexMap[movedKeysMap[i].Index] = i; //fill the map: from current key index in list to new index after moving
-			List<int> newSelection = new(storedSelectedIndexes.Value.Count);
-			foreach (int keyIndex in storedSelectedIndexes.Value) //form new selection
-			{
-				if (removedKeys.Contains(keyIndex)) //skip removed keys
-					continue;
-
-				if (newIndexMap.TryGetValue(keyIndex, out int newKeyIndex))
-					newSelection.Add(newKeyIndex); //convert old index to new index
-			}
-			storedSelectedIndexes.Value = newSelection;
-		}
-
-		private void UpdateKeys()
-		{
-			UpdateVieModels(Keys, model.AnimationKeys,
-				createViewModel: i => new AnimationKeyViewModel(),
-				resetViewModel: vm =>
-				{
-					vm.propertyChanged -= OnKeyPropertyChanged;
-				},
-				viewModelBindCallback: (vm, m) =>
-				{
-					vm.propertyChanged += OnKeyPropertyChanged;
-				}
-			);
-		}
-
-		private void OnKeyPropertyChanged(object sender, BindablePropertyChangedEventArgs e)
-		{
-			OnTimeHeadPositionChanged(currentFrame);
+			base.OnModelPropertyChanged(sender, e);
+			if (e.PropertyName == nameof(AnimationTrack.SceneReference))
+				Reference = model.SceneReference;
 		}
 
 		private void UpdateCurrentValue(AnimationKeyViewModel previousKey, AnimationKeyViewModel nextKey, int frame)
@@ -376,16 +203,6 @@ namespace Rails.Editor.ViewModel
 			{
 				return math.remap(previousKey.TimePosition, nextKey.TimePosition, 0f, 1f, frame);
 			}
-		}
-
-		private void OnStoredSelectedChanged(List<int> newValue)
-		{
-			int[] toRemove = newValue == null ? SelectedIndexes.ToArray() : SelectedIndexes.Except(newValue).ToArray();
-			int[] toAdd = newValue?.Except(SelectedIndexes).ToArray() ?? new int[0];
-			toRemove.ForEach(x => SelectedIndexes.RemoveWithoutNotify(x));
-			toAdd.ForEach(x => SelectedIndexes.AddWithoutNotify(x));
-
-			SelectedIndexes.NotifyListChanged();
 		}
 
 		public static readonly Dictionary<Type, TrackData> TrackTypes = new()

@@ -510,6 +510,20 @@ namespace Rails.Runtime
 			return BezierUtils.GetBezierYbyX(time / duration, polynomial ?? float3x2.zero);
 		}
 
+		public float Eased(float t)
+		{
+			if (Type is EaseType.NoAnimation)
+				return 0;
+			if (Type is EaseType.EaseCurve)
+			{
+				if (polynomial == null)
+					CalculatePolynomial();
+				float y = BezierUtils.GetBezierYbyX(t, polynomial ?? float3x2.zero);
+				return math.lerp(0, 1, y);
+			}
+			return DOVirtual.EasedValue(0, 1, t, EaseFunc);
+		}
+
 		public float EasedValue(float from, float to, float t)
 		{
 			if (Type is EaseType.NoAnimation)

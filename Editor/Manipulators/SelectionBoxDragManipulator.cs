@@ -85,6 +85,15 @@ namespace Rails.Editor.Manipulator
 				rectTemplate.Bottom = position.y;
 			}
 
+			if (rectTemplate.Left < 0)
+				rectTemplate.Left = 0;
+			if (rectTemplate.Right > target.resolvedStyle.width)
+				rectTemplate.Right = target.resolvedStyle.width;
+			if (rectTemplate.Top < 0)
+				rectTemplate.Top = 0;
+			if (rectTemplate.Bottom > target.resolvedStyle.height)
+				rectTemplate.Bottom = target.resolvedStyle.height;
+
 			selectionBox.style.left = rectTemplate.Left;
 			selectionBox.style.top = rectTemplate.Top;
 			selectionBox.style.width = rectTemplate.Right - rectTemplate.Left;

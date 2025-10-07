@@ -23,6 +23,12 @@ namespace Rails.Editor.ViewModel
 			set => SetProperty(ref name, value);
 		}
 		[CreateProperty]
+		public EventTrackViewModel EventTrack
+		{
+			get => eventTrack;
+			set => SetProperty(ref eventTrack, value);
+		}
+		[CreateProperty]
 		public ObservableList<AnimationTrackViewModel> Tracks
 		{
 			get => tracks;
@@ -118,17 +124,25 @@ namespace Rails.Editor.ViewModel
 			get => removeCommand;
 			set => SetProperty(ref removeCommand, value);
 		}
+		[CreateProperty]
+		public ICommand RemoveSelectedKeysCommand
+		{
+			get => removeSelectedKeysCommand;
+			set => SetProperty(ref removeSelectedKeysCommand, value);
+		}
 
 		private string durationText;
 		private int durationFrames;
 		private string timeHeadPositionText;
 		private int? timeHeadPositionFrames;
 		private string name;
+		private EventTrackViewModel eventTrack = new();
 		private ObservableList<AnimationTrackViewModel> tracks = new();
 		private bool canEdit = true;
 		private bool selected = false;
 		private ICommand<Type> addTrackCommand;
 		private ICommand removeCommand;
+		private ICommand removeSelectedKeysCommand;
 
 
 		public RailsClipViewModel()
@@ -145,12 +159,14 @@ namespace Rails.Editor.ViewModel
 					model.AddTrack(new FadeTrack());
 				}
 			});
+			RemoveSelectedKeysCommand = new RelayCommand(RemoveKeys);
 		}
 
 		public void Select(EventHandler<BindablePropertyChangedEventArgs> propertyChangedCallback)
 		{
 			selected = true;
 			propertyChanged += propertyChangedCallback;
+			eventTrack.OnClipSelect();
 			tracks.ForEach(x => x.OnClipSelect());
 		}
 
@@ -158,6 +174,7 @@ namespace Rails.Editor.ViewModel
 		{
 			selected = false;
 			propertyChanged += propertyChangedCallback;
+			eventTrack.OnClipDeselect();
 			tracks.ForEach(x => x.OnClipDeselect());
 		}
 
@@ -187,6 +204,13 @@ namespace Rails.Editor.ViewModel
 		{
 			base.OnUnbind();
 			ClearViewModels<AnimationTrackViewModel, AnimationTrack>(Tracks, vm => vm.OnClipDeselect());
+			eventTrack.UnbindModel();
+		}
+
+		protected override void OnBind()
+		{
+			base.OnBind();
+			eventTrack.BindModel(model.EventTrack);
 		}
 
 		private void UpdateTracks()
@@ -256,6 +280,14 @@ namespace Rails.Editor.ViewModel
 				frames = ClampDuration(frames);
 				durationText = EditorUtils.FormatTime(frames, RailsClip.Fps);
 			}
+		}
+
+		protected void RemoveKeys()
+		{
+			EditorContext.Instance.Record("Key Frames Removed");
+			eventTrack.RemoveSelectedKeys();
+			foreach (var track in tracks)
+				track.RemoveSelectedKeys();
 		}
 	}
 }

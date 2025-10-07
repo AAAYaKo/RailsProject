@@ -38,7 +38,6 @@ namespace Rails.Editor.Controls
 				dataSourcePath = new PropertyPath(nameof(AnimationKeyViewModel.TimePosition)),
 				bindingMode = BindingMode.ToTarget,
 			});
-
 			manipulator = new TrackKeyMoveDragManipulator();
 			this.AddManipulator(manipulator);
 		}
@@ -47,7 +46,7 @@ namespace Rails.Editor.Controls
 		{
 			base.OnAttach(evt);
 			RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
-			RegisterCallback<ClickEvent>(OnClick, TrickleDown.TrickleDown);
+			RegisterCallback<MouseDownEvent>(OnClick, TrickleDown.TrickleDown);
 			manipulator.KeyDragBegin += OnKeyDragBegin;
 			manipulator.KeyDragChanged += OnKeyDragChanged;
 			manipulator.KeyDragComplete += OnKeyDragComplete;
@@ -59,7 +58,7 @@ namespace Rails.Editor.Controls
 		{
 			base.OnDetach(evt);
 			UnregisterCallback<GeometryChangedEvent>(OnGeometryChanged);
-			UnregisterCallback<ClickEvent>(OnClick, TrickleDown.TrickleDown);
+			UnregisterCallback<MouseDownEvent>(OnClick, TrickleDown.TrickleDown);
 			manipulator.KeyDragBegin -= OnKeyDragBegin;
 			manipulator.KeyDragChanged -= OnKeyDragChanged;
 			manipulator.KeyDragComplete -= OnKeyDragComplete;
@@ -77,9 +76,12 @@ namespace Rails.Editor.Controls
 			UpdatePosition();
 		}
 
-		private void OnClick(ClickEvent evt)
+		private void OnClick(MouseDownEvent evt)
 		{
-			EventBus.Publish(new KeyClickEvent(this, evt.actionKey));
+			if (evt.button == 0)
+				EventBus.Publish(new KeyClickEvent(this, evt.actionKey));
+			else if (evt.button == 1)
+				EventBus.Publish(new KeyRightClickEvent(this));
 		}
 
 		private void OnGeometryChanged(GeometryChangedEvent evt)

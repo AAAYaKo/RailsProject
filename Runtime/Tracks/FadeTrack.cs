@@ -1,8 +1,6 @@
 ﻿using System;
 using DG.Tweening;
-using Unity.Properties;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Rails.Runtime.Tracks
 {

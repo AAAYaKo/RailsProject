@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Rails.Editor.ViewModel;
+using Rails.Runtime;
 using Unity.Mathematics;
 using Unity.Properties;
 using UnityEngine;
@@ -9,9 +10,11 @@ using UnityEngine.UIElements;
 namespace Rails.Editor.Controls
 {
 	[UxmlElement]
-	public partial class TrackLineView : ListObserverElement<AnimationKeyViewModel, TrackKeyView>
+	public partial class BaseTrackLineView<TKeyViewModel, TKey> : ListObserverElement<TKeyViewModel, TrackKeyView>
+		where TKeyViewModel : BaseKeyViewModel<TKey>
+		where TKey : BaseKey
 	{
-		private const string SelectedClass = "track-key--selected";
+		public const string SelectedClass = "track-key--selected";
 		public static readonly BindingId SelectedIndexesProperty = nameof(SelectedIndexes);
 
 		[UxmlAttribute("trackClass"), CreateProperty]
@@ -47,22 +50,23 @@ namespace Rails.Editor.Controls
 			}
 		}
 		[CreateProperty]
-		public ICommand<List<int>> ChangeSelection { get; set; }
+		public ICommand<List<int>> ChangeSelectionCommand { get; set; }
 		[CreateProperty]
-		public ICommand<Dictionary<int, int>> MoveKeys { get; set; }
+		public ICommand<Dictionary<int, int>> MoveKeysCommand { get; set; }
+		[CreateProperty]
+		public ICommand<int> KeyFrameAddAtTimeCommand { get; set; }
+
 		public List<int> SelectedKeysFrames { get; } = new();
 		public int FirstSelectedKeyFrame { get; private set; }
 		public int LastSelectedKeyFrame { get; private set; }
 
 		private ObservableList<int> selectedIndexes;
 		private List<int> selectedViewKeys = new();
-		private List<TrackTweenLineView> tweenLines = new();
-		private Dictionary<int, TrackTweenLineView> keyToTweenLines = new();
 		private VisualElement moveContainer;
 		private string trackClass;
 
 
-		public TrackLineView()
+		public BaseTrackLineView()
 		{
 			container = new VisualElement();
 			moveContainer = new VisualElement();
@@ -84,25 +88,30 @@ namespace Rails.Editor.Controls
 			Add(moveContainer);
 
 			pickingMode = PickingMode.Ignore;
-			AddToClassList("track-line");
 			SetBinding(nameof(Values), new DataBinding
 			{
-				dataSourcePath = new PropertyPath(nameof(AnimationTrackViewModel.Keys)),
+				dataSourcePath = new PropertyPath("Keys"),
 				bindingMode = BindingMode.ToTarget,
 			});
 			SetBinding(nameof(TrackClass), new DataBinding
 			{
-				dataSourcePath = new PropertyPath(nameof(AnimationTrackViewModel.TrackClass)),
+				dataSourcePath = new PropertyPath("TrackClass"),
 				bindingMode = BindingMode.ToTarget,
 			});
 			SetBinding(SelectedIndexesProperty, new DataBinding
 			{
-				dataSourcePath = new PropertyPath(nameof(AnimationTrackViewModel.SelectedIndexes)),
+				dataSourcePath = new PropertyPath("SelectedIndexes"),
 				bindingMode = BindingMode.ToTarget,
 			});
 
-			SetBinding(nameof(ChangeSelection), new CommandBinding(nameof(AnimationTrackViewModel.ChangeSelection)));
-			SetBinding(nameof(MoveKeys), new CommandBinding(nameof(AnimationTrackViewModel.MoveKeys)));
+			SetBinding(nameof(ChangeSelectionCommand), new CommandBinding("ChangeSelectionCommand"));
+			SetBinding(nameof(MoveKeysCommand), new CommandBinding("MoveKeysCommand"));
+			SetBinding(nameof(KeyFrameAddAtTimeCommand), new CommandBinding("KeyFrameAddAtTimeCommand"));
+		}
+
+		public void AddKey(int frame)
+		{
+			KeyFrameAddAtTimeCommand.Execute(frame);
 		}
 
 		protected override void OnAttach(AttachToPanelEvent evt)
@@ -111,6 +120,7 @@ namespace Rails.Editor.Controls
 			if (selectedIndexes != null)
 				selectedIndexes.ListChanged += OnSelectionChanged;
 			EventBus.Subscribe<KeyClickEvent>(OnClickKey);
+			EventBus.Subscribe<KeyRightClickEvent>(OnRightClickKey);
 			EventBus.Subscribe<KeyMoveEvent>(OnMoveKey);
 			EventBus.Subscribe<DeselectAllKeysEvent>(OnDeselectAll);
 			EventBus.Subscribe<SelectionBoxBeginEvent>(OnSelectionBoxBegin);
@@ -125,6 +135,7 @@ namespace Rails.Editor.Controls
 			if (selectedIndexes != null)
 				selectedIndexes.ListChanged -= OnSelectionChanged;
 			EventBus.Unsubscribe<KeyClickEvent>(OnClickKey);
+			EventBus.Unsubscribe<KeyRightClickEvent>(OnRightClickKey);
 			EventBus.Unsubscribe<KeyMoveEvent>(OnMoveKey);
 			EventBus.Unsubscribe<DeselectAllKeysEvent>(OnDeselectAll);
 			EventBus.Unsubscribe<SelectionBoxBeginEvent>(OnSelectionBoxBegin);
@@ -133,7 +144,7 @@ namespace Rails.Editor.Controls
 			EventBus.Unsubscribe<KeyDragCompleteEvent>(OnKeyDragComplete);
 		}
 
-		public void UpdateSelectedKeyFrames()
+		private void UpdateSelectedKeyFrames()
 		{
 			SelectedKeysFrames.Clear();
 			FirstSelectedKeyFrame = int.MaxValue;
@@ -157,11 +168,7 @@ namespace Rails.Editor.Controls
 				return;
 			selectedViewKeys.Add(keyIndex);
 			var key = views[keyIndex];
-			container.Remove(key);
-			moveContainer.Add(key);
-			key.AddToClassList(SelectedClass);
-			if (keyToTweenLines.ContainsKey(keyIndex))
-				keyToTweenLines[keyIndex].AddToClassList(SelectedClass);
+			SelectVisually(key, keyIndex);
 		}
 
 		private void DeselectKey(int keyIndex)
@@ -170,11 +177,7 @@ namespace Rails.Editor.Controls
 				return;
 			selectedViewKeys.Remove(keyIndex);
 			var key = views[keyIndex];
-			moveContainer.Remove(key);
-			container.Add(key);
-			key.RemoveFromClassList(SelectedClass);
-			if (keyToTweenLines.ContainsKey(keyIndex))
-				keyToTweenLines[keyIndex].RemoveFromClassList(SelectedClass);
+			DeselectVisually(key, keyIndex);
 		}
 
 		private void DeselectAllKeys(TrackKeyView keyIgnore = null)
@@ -188,11 +191,7 @@ namespace Rails.Editor.Controls
 					wasSelected = true;
 					return;
 				}
-				moveContainer.Remove(key);
-				container.Add(key);
-				key.RemoveFromClassList(SelectedClass);
-				if (keyToTweenLines.ContainsKey(x))
-					keyToTweenLines[x].RemoveFromClassList(SelectedClass);
+				DeselectVisually(key, x);
 			});
 			selectedViewKeys.Clear();
 			if (wasSelected)
@@ -203,8 +202,27 @@ namespace Rails.Editor.Controls
 			}
 		}
 
+		protected virtual void SelectVisually(TrackKeyView key, int keyIndex)
+		{
+			container.Remove(key);
+			moveContainer.Add(key);
+			key.AddToClassList(SelectedClass);
+		}
+
+		protected virtual void DeselectVisually(TrackKeyView key, int keyIndex)
+		{
+			moveContainer.Remove(key);
+			container.Add(key);
+			key.RemoveFromClassList(SelectedClass);
+		}
+
 		private void OnSelectionChanged()
 		{
+			if (SelectedIndexes.IsNullOrEmpty())
+			{
+				DeselectAllKeys();
+				return;
+			}
 			int[] toRemove = selectedViewKeys.Except(SelectedIndexes).ToArray();
 			foreach (int key in toRemove)
 			{
@@ -220,70 +238,11 @@ namespace Rails.Editor.Controls
 			UpdateSelectedKeyFrames();
 		}
 
-		private void UpdateTweenLines()
-		{
-			if (Values.IsNullOrEmpty())
-			{
-				tweenLines.ForEach(x =>
-				{
-					x.Unbind();
-					container.Remove(x);
-				});
-				tweenLines.Clear();
-				return;
-			}
-			int count = Values.Take(Values.Count - 1).Count(x => x.Ease.EaseType is not Runtime.RailsEase.EaseType.NoAnimation);
-
-			while (count > tweenLines.Count)
-			{
-				var line = CreateTweenLine();
-				container.Add(line);
-				tweenLines.Add(line);
-			}
-			while (count < tweenLines.Count)
-			{
-				var line = tweenLines[^1];
-				line.Unbind();
-				container.Remove(line);
-				tweenLines.Remove(line);
-			}
-
-			int lineI = 0;
-			keyToTweenLines.Clear();
-			for (int i = 0; i < Values.Count - 1; i++)
-			{
-				var previous = Values[i];
-				if (previous.Ease.EaseType is not Runtime.RailsEase.EaseType.NoAnimation)
-				{
-					TrackTweenLineView line = tweenLines[lineI];
-					keyToTweenLines.Add(i, line);
-					lineI++;
-					line.Bind(views[i], views[i + 1]);
-				}
-			}
-		}
-
-		private TrackTweenLineView CreateTweenLine()
-		{
-			TrackTweenLineView line = new();
-			return line;
-		}
-
 		protected override void UpdateList()
 		{
 			DeselectAllKeys();
 			base.UpdateList();
-
-			UpdateTweenLines();
-
-			if (SelectedIndexes != null)
-			{
-				foreach (int key in SelectedIndexes)
-				{
-					if (!selectedViewKeys.Contains(key))
-						SelectKey(key);
-				}
-			}
+			OnSelectionChanged();
 		}
 
 		protected override TrackKeyView CreateElement()
@@ -316,13 +275,30 @@ namespace Rails.Editor.Controls
 				SelectKey(index);
 			}
 
-			ChangeSelection.Execute(selectedViewKeys);
+			ChangeSelectionCommand.Execute(selectedViewKeys);
+		}
+
+		private void OnRightClickKey(KeyRightClickEvent evt)
+		{
+			TrackKeyView key = evt.Key;
+			int index = views.IndexOf(key);
+
+			if (index < 0)
+				return;
+
+			if (!selectedViewKeys.Contains(index))
+				EventBus.Publish(new DeselectAllKeysEvent(key));
+
+			if (!selectedViewKeys.Contains(index))
+				SelectKey(index);
+
+			ChangeSelectionCommand.Execute(selectedViewKeys);
 		}
 
 		private void OnDeselectAll(DeselectAllKeysEvent evt)
 		{
 			DeselectAllKeys(evt.Key);
-			ChangeSelection.Execute(selectedViewKeys);
+			ChangeSelectionCommand.Execute(selectedViewKeys);
 		}
 
 		private void OnSelectionBoxBegin(SelectionBoxBeginEvent evt)
@@ -330,7 +306,7 @@ namespace Rails.Editor.Controls
 			if (evt.ActionKey)
 				return;
 			DeselectAllKeys();
-			ChangeSelection.Execute(selectedViewKeys);
+			ChangeSelectionCommand.Execute(selectedViewKeys);
 		}
 
 		private void OnSelectionBoxChange(SelectionBoxChangeEvent evt)
@@ -358,7 +334,7 @@ namespace Rails.Editor.Controls
 			if (!layout.Overlaps(selectionRect))
 				return;
 
-			ChangeSelection.Execute(selectedViewKeys);
+			ChangeSelectionCommand.Execute(selectedViewKeys);
 		}
 
 		private void OnKeyDragComplete(KeyDragCompleteEvent evt)
@@ -370,7 +346,7 @@ namespace Rails.Editor.Controls
 				.Zip(SelectedKeysFrames, (x, y) => new { x, y })
 				.ToDictionary(x => x.x, x => x.y);
 
-			MoveKeys.Execute(keysMoveMap);
+			MoveKeysCommand.Execute(keysMoveMap);
 		}
 	}
 }

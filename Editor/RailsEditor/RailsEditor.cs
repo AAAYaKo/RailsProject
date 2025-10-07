@@ -1,6 +1,7 @@
 using Rails.Editor.Controls;
 using Rails.Editor.ViewModel;
 using Rails.Runtime;
+using Unity.Properties;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;

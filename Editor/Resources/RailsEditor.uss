@@ -102,7 +102,7 @@
     -unity-background-image-tint-color: var(--rails-drop-down-color);
 }
 
-.track-line {
+.animation-track-line {
     flex-shrink: 0;
     flex-direction: row;
     height: 39px;
@@ -111,7 +111,16 @@
     margin-top: 0;
 }
 
-.track-line-background {
+.event-track-line {
+    flex-shrink: 0;
+    flex-direction: row;
+    height: 22px;
+    min-height: 22px;
+    width: 100%;
+    margin-top: 0;
+}
+
+.animation-track-line-background {
     flex-shrink: 0;
     flex-direction: row;
     height: 39px;
@@ -120,6 +129,53 @@
     border-bottom-color: var(--rails-track-separator-color);
     width: 100%;
     margin-top: 0;
+}
+
+.event-track-line-background {
+    border-bottom-width: 1px;
+    border-bottom-color: var(--rails-track-separator-color);
+    margin-top: 0;
+    background-color: var(--rails-track-background-color);
+}
+
+.track-key {
+    background-image: var(--rails-icon-gem-fill);
+    -unity-background-image-tint-color: var(--color-not-active);
+    width: 12px;
+    height: 12px;
+    position: absolute;
+    align-self: center;
+}
+
+.track-key.track-key--selected {
+    background-image: var(--rails-icon-gem-fill);
+    -unity-background-image-tint-color: var(--color-active);
+    width: 12px;
+    height: 12px;
+    position: absolute;
+    align-self: center;
+}
+
+.track-tween-line-container {
+    position: absolute;
+    height: 100%;
+    justify-content: center;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.track-tween-line {
+    height: 1px;
+    align-self: center;
+    width: 100%;
+    background-color: var(--color-not-active);
+}
+
+.track-tween-line-container.track-key--selected > .track-tween-line {
+    height: 1px;
+    align-self: center;
+    width: 100%;
+    background-color: var(--color-active);
 }
 
 .time-scroller * .unity-min-max-slider__tracker {
@@ -177,46 +233,6 @@
     height: 10px;
     margin-right: 4px;
     background-color: var(--rails-ruler-stroke-color);
-}
-
-.track-key {
-    background-image: var(--rails-icon-gem-fill);
-    -unity-background-image-tint-color: var(--color-not-active);
-    width: 12px;
-    height: 12px;
-    position: absolute;
-    align-self: center;
-}
-
-.track-key.track-key--selected {
-    background-image: var(--rails-icon-gem-fill);
-    -unity-background-image-tint-color: var(--color-active);
-    width: 12px;
-    height: 12px;
-    position: absolute;
-    align-self: center;
-}
-
-.track-tween-line-container {
-    position: absolute;
-    height: 100%;
-    justify-content: center;
-    padding-left: 5px;
-    padding-right: 5px;
-}
-
-.track-tween-line {
-    height: 1px;
-    align-self: center;
-    width: 100%;
-    background-color: var(--color-not-active);
-}
-
-.track-tween-line-container.track-key--selected > .track-tween-line {
-    height: 1px;
-    align-self: center;
-    width: 100%;
-    background-color: var(--color-active);
 }
 
 .play-head-icon {
