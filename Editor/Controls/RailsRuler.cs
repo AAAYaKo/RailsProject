@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+using System.Collections.Generic;
 using Rails.Editor.Manipulator;
 using Rails.Editor.ViewModel;
 using Rails.Runtime;
@@ -44,7 +43,7 @@ namespace Rails.Editor.Controls
 
 		private float framePixelSize = 30;
 		private float stepSize => framePixelSize * stepFrames;
-		private int stepFrames = 1;
+		private int stepFrames = 0;
 		private int fps = RailsClip.Fps;
 		private float timePosition;
 		private int duration;
@@ -136,16 +135,16 @@ namespace Rails.Editor.Controls
 		private void Repaint()
 		{
 			if (stepFrames <= 0)
-				stepFrames = 1;
+				return;
 			float length = layout.width;
-			int firstFrame = 0;
-			while (firstFrame + stepSize < timePosition)
-				firstFrame += stepFrames;
+			int firstFrame = Mathf.FloorToInt(timePosition / stepFrames) * stepFrames;
+
 			int currentFrame = firstFrame - stepFrames;
-			float shift = (firstFrame - timePosition) * framePixelSize + TrackLinesView.StartAdditional;
+			float shift = -timePosition * framePixelSize + TrackLinesView.StartAdditional;
 			float currenShift = shift;
 			int i = 0;
 			bool hasExtra = false;
+
 			for (; i < stepList.Count; i++)
 			{
 				var step = stepList[i];
@@ -162,15 +161,10 @@ namespace Rails.Editor.Controls
 				int countToRemove = stepList.Count - i;
 				for (int j = 0; j < countToRemove; j++)
 				{
-					if (Children().Contains(stepList[^1]))
-					{
-						pool.Push(stepList[^1]);
-						Remove(stepList[^1]);
-						stepList.RemoveAt(stepList.Count - 1);
-					}
+					pool.Push(stepList[^1]);
+					stepList[^1].style.display = DisplayStyle.None;
+					stepList.RemoveAt(stepList.Count - 1);
 				}
-
-				return;
 			}
 			while (currenShift < length)
 			{
@@ -178,7 +172,7 @@ namespace Rails.Editor.Controls
 					break;
 				var step = GetNextStep();
 				InitStep(step);
-				Add(step);
+				step.style.display = DisplayStyle.Flex;
 
 				stepList.Add(step);
 			}
@@ -204,6 +198,7 @@ namespace Rails.Editor.Controls
 				if (pool.Count > 0)
 					return pool.Pop();
 				RulerStep step = new();
+				hierarchy.Add(step);
 				step.Fps = fps;
 				return step;
 			}
