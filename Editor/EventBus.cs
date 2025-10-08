@@ -24,7 +24,7 @@ namespace Rails.Editor
 				bus[typeof(T)].Remove(callback);
 		}
 
-		public static void Publish<T>(T eventT)
+		public static void Publish<T>(in T eventT)
 		{
 			if (!bus.ContainsKey(typeof(T)))
 				return;

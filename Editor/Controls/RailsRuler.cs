@@ -18,7 +18,7 @@ namespace Rails.Editor.Controls
 		private const float MaxStepSize = 240;
 
 		[UxmlAttribute("duration"), CreateProperty]
-		public int Duration 
+		public int Duration
 		{
 			get => duration;
 			set
@@ -90,10 +90,35 @@ namespace Rails.Editor.Controls
 			float length = layout.width;
 			this.framePixelSize = framePixelSize;
 			while (stepSize < MinStepSize && stepSize < length)
-				stepFrames++;
+			{
+				stepFrames = stepFrames switch
+				{
+					< 2 => stepFrames + 1,
+					< 5 => stepFrames + 3,
+					< 20 => stepFrames + 5,
+					< 30 => stepFrames + 10,
+					< 60 => stepFrames + 30,
+					_ => stepFrames + 60,
+				};
+			}
 
 			while (stepSize > MaxStepSize && stepFrames > 0)
-				stepFrames--;
+			{
+				stepFrames = stepFrames switch
+				{
+					> 60 => stepFrames - 60,
+					> 30 => stepFrames - 30,
+					> 20 => stepFrames - 10,
+					> 5 => stepFrames - 5,
+					> 2 => stepFrames - 3,
+					_ => stepFrames - 1,
+				};
+				if (stepFrames <= 0)
+				{
+					stepFrames = 1;
+					break;
+				}
+			}
 			Repaint();
 		}
 
@@ -134,12 +159,15 @@ namespace Rails.Editor.Controls
 			}
 			if (hasExtra)
 			{
-				for (int j = i + 1; j < stepList.Count; j++)
+				int countToRemove = stepList.Count - i;
+				for (int j = 0; j < countToRemove; j++)
 				{
-					pool.Push(stepList[^1]);
 					if (Children().Contains(stepList[^1]))
+					{
+						pool.Push(stepList[^1]);
 						Remove(stepList[^1]);
-					stepList.RemoveAt(stepList.Count - 1);
+						stepList.RemoveAt(stepList.Count - 1);
+					}
 				}
 
 				return;
@@ -148,7 +176,7 @@ namespace Rails.Editor.Controls
 			{
 				var step = GetNextStep();
 				InitStep(step);
-				hierarchy.Add(step);
+				Add(step);
 
 				stepList.Add(step);
 				if (currentFrame == Duration)
@@ -186,7 +214,7 @@ namespace Rails.Editor.Controls
 					if (frame == value)
 						return;
 					frame = value;
-					label.text = ViewModel.EditorUtils.FormatTime(frame, fps);
+					label.text = EditorUtils.FormatTime(frame, fps);
 				}
 			}
 			public int Fps
@@ -197,7 +225,7 @@ namespace Rails.Editor.Controls
 					if (fps == value)
 						return;
 					fps = value;
-					label.text = ViewModel.EditorUtils.FormatTime(frame, fps);
+					label.text = EditorUtils.FormatTime(frame, fps);
 				}
 			}
 			private int frame = 1;
