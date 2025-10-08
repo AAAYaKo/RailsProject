@@ -2,7 +2,6 @@
 using Rails.Editor.Manipulator;
 using Rails.Editor.ViewModel;
 using Rails.Runtime;
-using Rails.Runtime.Tracks;
 using Unity.Properties;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -10,7 +9,7 @@ using UnityEngine.UIElements;
 namespace Rails.Editor.Controls
 {
 	[UxmlElement]
-	public partial class ClipView : BaseView
+	public partial class ClipView : FocusableView
 	{
 		private const string FixedDimensionKey = "clipFixedDimension";
 
@@ -93,12 +92,14 @@ namespace Rails.Editor.Controls
 			ContextualMenuManipulator contextMenuEvents = new(ShowContextMenu);
 			events.AddManipulator(contextMenuTracks);
 			trackView.AddManipulator(contextMenuEvents);
+			focusable = true;
 		}
 
 		protected override void OnAttach(AttachToPanelEvent evt)
 		{
 			base.OnAttach(evt);
 			RegisterCallback<WheelEvent>(ScrollHandler, TrickleDown.TrickleDown);
+			RegisterCallback<KeyUpEvent>(OnKeyClick, TrickleDown.TrickleDown);
 			trackView.VerticalScroller.valueChanged += OnVerticalScroller;
 			split.FixedPanelDimensionChanged += OnDimensionChanged;
 			selectionBoxManipulator.SelectionBegin += OnSelectionBegin;
@@ -115,6 +116,7 @@ namespace Rails.Editor.Controls
 		{
 			base.OnDetach(evt);
 			UnregisterCallback<WheelEvent>(ScrollHandler, TrickleDown.TrickleDown);
+			UnregisterCallback<KeyUpEvent>(OnKeyClick, TrickleDown.TrickleDown);
 			trackView.VerticalScroller.valueChanged -= OnVerticalScroller;
 			split.FixedPanelDimensionChanged -= OnDimensionChanged;
 			selectionBoxManipulator.SelectionBegin -= OnSelectionBegin;
@@ -140,6 +142,14 @@ namespace Rails.Editor.Controls
 			tracksListView.Scroll.scrollOffset += new Vector2(0, y);
 
 			evt.StopPropagation();
+		}
+
+		private void OnKeyClick(KeyUpEvent evt)
+		{
+			if (evt.keyCode is KeyCode.Delete or KeyCode.Backspace && HasAnySelected())
+			{
+				RemoveSelectedKeysCommand.Execute();
+			}
 		}
 
 		private void OnDimensionChanged(float dimension)
