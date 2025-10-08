@@ -149,9 +149,9 @@ namespace Rails.Editor.Controls
 			for (; i < stepList.Count; i++)
 			{
 				var step = stepList[i];
-				InitStep(step);
+				bool isOverflow = InitStep(step);
 
-				if (currenShift > length && i < stepList.Count - 1 || currentFrame == Duration)
+				if (currenShift > length && i < stepList.Count - 1 || isOverflow)
 				{
 					hasExtra = true;
 					break;
@@ -174,24 +174,29 @@ namespace Rails.Editor.Controls
 			}
 			while (currenShift < length)
 			{
+				if (currentFrame == Duration)
+					break;
 				var step = GetNextStep();
 				InitStep(step);
 				Add(step);
 
 				stepList.Add(step);
-				if (currentFrame == Duration)
-					break;
 			}
 
-			void InitStep(RulerStep step)
+			bool InitStep(RulerStep step)
 			{
+				bool result = false;
 				currentFrame += stepFrames;
 				if (currentFrame > Duration)
+				{
 					currentFrame = Duration;
+					result = true;
+				}
 				step.Frame = currentFrame;
 
 				currenShift = shift + currentFrame * framePixelSize;
 				step.style.left = currenShift;
+				return result;
 			}
 
 			RulerStep GetNextStep()
