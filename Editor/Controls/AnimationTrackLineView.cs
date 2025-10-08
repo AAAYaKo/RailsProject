@@ -70,6 +70,7 @@ namespace Rails.Editor.Controls
 					TrackTweenLineView line = tweenLines[lineI];
 					keyToTweenLines.Add(i, line);
 					lineI++;
+					line.Unbind();
 					line.Bind(views[i], views[i + 1]);
 					if (SelectedIndexes?.Contains(i) == true)
 						line.AddToClassList(SelectedClass);

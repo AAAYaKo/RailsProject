@@ -92,6 +92,7 @@ namespace Rails.Editor.ViewModel
 			var toRemove = SelectedIndexes
 				.Select(x => model.AnimationKeys[x])
 				.ToArray();
+			storedSelectedIndexes.Value = new();
 			model.RemoveKeys(toRemove);
 		}
 
@@ -166,7 +167,20 @@ namespace Rails.Editor.ViewModel
 			if (keyIndex >= 0)
 				return;
 			EditorContext.Instance.Record("Key Frame Added");
+
+			keyIndex = keys.FindIndex(x => x.TimePosition > frame);
+			var copy = SelectedIndexes.ToList();
+			if (keyIndex >= 0)
+			{
+				for (int i = 0; i < copy.Count; i++)
+				{
+					if (copy[i] >= keyIndex)
+						copy[i] += 1;
+				}
+			}
+
 			model.InsertNewKeyAt(frame);
+			storedSelectedIndexes.Value = copy;
 		}
 
 		protected void RemoveKey(int frame)
