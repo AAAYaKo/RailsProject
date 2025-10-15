@@ -28,7 +28,7 @@ namespace Rails.Editor
 			this.execute = execute;
 		}
 
-		public void Execute(T parameter)
+		public void Execute(in T parameter)
 		{
 			execute(parameter);
 		}

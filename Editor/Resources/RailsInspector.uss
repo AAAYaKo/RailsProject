@@ -1,0 +1,71 @@
+.constrained-toggle .unity-toggle__input {
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+}
+
+.constrained-toggle .unity-toggle__input .unity-toggle__checkmark {
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: resource('Icons/constrained_disabled');
+    -unity-background-image-tint-color: rgb(196, 196, 196);
+}
+
+.constrained-toggle .unity-toggle__input:hover .unity-toggle__checkmark {
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    width: 100%;
+    height: 100%;
+    -unity-background-image-tint-color: rgb(240, 240, 240);
+}
+
+.constrained-toggle .unity-toggle__input:checked .unity-toggle__checkmark {
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: resource('Icons/constrained_enabled');
+}
+
+.driver-button {
+}
+
+.driver-button:hover {
+}
+
+.type-mark {
+    flex-grow: 0;
+    width: 4px;
+    flex-shrink: 0;
+    background-color: var(--color-active);
+}
+
+.key-index {
+    -unity-text-align: middle-left;
+    color: var(--color-active)
+}

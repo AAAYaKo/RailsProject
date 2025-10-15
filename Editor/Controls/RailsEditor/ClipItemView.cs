@@ -14,21 +14,9 @@ namespace Rails.Editor.Controls
 		private static VisualTreeAsset template;
 
 		[CreateProperty]
-		public ICommand RemoveCommand
-		{
-			get => removeCommand;
-			set
-			{
-				if (removeCommand == value)
-					return;
-				removeCommand = value;
-
-				NotifyPropertyChanged(RemoveCommandProperty);
-			}
-		}
+		public ICommand RemoveCommand { get; set; }
 		[CreateProperty]
 		public string Name { get; set; }
-		private ICommand removeCommand;
 
 
 		static ClipItemView()

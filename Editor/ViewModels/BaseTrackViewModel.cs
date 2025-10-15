@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using Rails.Runtime;
@@ -10,7 +12,7 @@ namespace Rails.Editor.ViewModel
 	public abstract class BaseTrackViewModel<TTrack, TKey, TKeyViewModel> : BaseNotifyPropertyViewModel<TTrack>
 		where TKey : BaseKey
 		where TTrack : BaseTrack<TKey>
-		where TKeyViewModel : BaseKeyViewModel<TKey>, new()
+		where TKeyViewModel : BaseKeyViewModel<TKey>
 	{
 		public const string StoreKey = "selectedKeys_";
 
@@ -44,10 +46,12 @@ namespace Rails.Editor.ViewModel
 			get => keyFrameAddAtTimeCommand;
 			set => SetProperty(ref keyFrameAddAtTimeCommand, value);
 		}
+		public IEnumerable<IKeyViewModel> SelectedKeys => SelectedIndexes.Select(x => keys[x]);
 
+		protected Action keysSelectionChanged;
 		protected ObservableList<TKeyViewModel> keys = new();
 		protected ObservableList<int> selectedIndexes = new();
-		private ICommand<int> keyFrameAddAtTimeCommand;
+		protected ICommand<int> keyFrameAddAtTimeCommand;
 		protected ICommand<List<int>> changeSelection;
 		protected ICommand<Dictionary<int, int>> moveKeys;
 		protected StoredIntList storedSelectedIndexes;
@@ -62,8 +66,9 @@ namespace Rails.Editor.ViewModel
 			KeyFrameAddAtTimeCommand = new RelayCommand<int>(AddKey);
 		}
 
-		public void OnClipSelect()
+		public void OnClipSelect(Action keysSelectionChanged)
 		{
+			this.keysSelectionChanged = keysSelectionChanged;
 			storedSelectedIndexes.Bind(EditorContext.Instance.DataStorage.RecordsSelectedClips);
 			storedSelectedIndexes.ValueChanged += OnStoredSelectedChanged;
 			OnStoredSelectedChanged(storedSelectedIndexes.Value);
@@ -71,6 +76,8 @@ namespace Rails.Editor.ViewModel
 
 		public void OnClipDeselect()
 		{
+			keysSelectionChanged = null;
+			storedSelectedIndexes.Value = new();
 			storedSelectedIndexes.Unbind();
 			storedSelectedIndexes.ValueChanged -= OnStoredSelectedChanged;
 		}
@@ -117,10 +124,12 @@ namespace Rails.Editor.ViewModel
 			if (model == null)
 			{
 				if (keys.Count > 0)
+				{
 					ClearViewModels<TKeyViewModel, TKey>(Keys, vm =>
 					{
 						vm.propertyChanged -= OnKeyPropertyChanged;
 					});
+				}
 				return;
 			}
 
@@ -148,8 +157,8 @@ namespace Rails.Editor.ViewModel
 
 		protected void UpdateKeys()
 		{
-			UpdateVieModels(Keys, model.AnimationKeys,
-				createViewModel: i => new TKeyViewModel(),
+			UpdateViewModels(Keys, model.AnimationKeys,
+				createViewModel: CreateKey,
 				resetViewModel: vm =>
 				{
 					vm.propertyChanged -= OnKeyPropertyChanged;
@@ -160,6 +169,8 @@ namespace Rails.Editor.ViewModel
 				}
 			);
 		}
+
+		protected abstract TKeyViewModel CreateKey(int index);
 
 		protected void AddKey(int frame)
 		{
@@ -199,13 +210,13 @@ namespace Rails.Editor.ViewModel
 
 		protected void ChangeSelection(List<int> selection)
 		{
-			EditorContext.Instance.Record(EditorContext.Instance.EditorWindow, "Keys Selection Changed");
+			EditorContext.Instance.Record(EditorContext.Instance.Editor, "Keys Selection Changed");
 			storedSelectedIndexes.Value = new(selection);
 		}
 
 		protected void MoveKeys(Dictionary<int, int> keysFramesPositions)
 		{
-			EditorContext.Instance.Record(EditorContext.Instance.EditorWindow, "Animation Keys Moved");
+			EditorContext.Instance.Record(EditorContext.Instance.Editor, "Animation Keys Moved");
 			UpdateSelectionAfterMove(keysFramesPositions);
 			model.MoveMultipleKeys(keysFramesPositions);
 		}
@@ -253,6 +264,7 @@ namespace Rails.Editor.ViewModel
 			toAdd.ForEach(x => SelectedIndexes.AddWithoutNotify(x));
 
 			SelectedIndexes.NotifyListChanged();
+			keysSelectionChanged?.Invoke();
 		}
 
 		private void OnKeyPropertyChanged(object sender, BindablePropertyChangedEventArgs e)

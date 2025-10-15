@@ -49,7 +49,7 @@ namespace Rails.Editor.ViewModel
 		{
 		}
 
-		protected void UpdateVieModels<VM, M>(ObservableList<VM> viewModels, List<M> models, Func<int, VM> createViewModel, Action<VM> resetViewModel = null, Action<VM, M> viewModelBindCallback = null)
+		protected void UpdateViewModels<VM, M>(ObservableList<VM> viewModels, IList<M> models, Func<int, VM> createViewModel, Action<VM> resetViewModel = null, Action<VM, M> viewModelBindCallback = null)
 			where VM : BaseNotifyPropertyViewModel<M>
 			where M : INotifyPropertyChanged
 		{

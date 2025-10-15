@@ -11,6 +11,11 @@ namespace Rails.Runtime
 			return Mathf.Approximately(first.x, second.x) && Mathf.Approximately(first.y, second.y);
 		}
 
+		public static bool Approximately(Vector3 first, Vector3 second)
+		{
+			return Mathf.Approximately(first.x, second.x) && Mathf.Approximately(first.y, second.y) && Mathf.Approximately(first.z, second.z);
+		}
+
 		public static bool Approximately(float4 a, float4 b)
 		{
 			for (int i = 0; i < 4; i++)

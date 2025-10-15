@@ -1,0 +1,27 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <Style src="project://database/Assets/Rails/Editor/Resources/RailsInspector.uss?fileID=7433441132597879392&amp;guid=d1550699aec253647961b5b3fffcfc99&amp;type=3#RailsInspector" />
+    <ui:VisualElement name="title" style="flex-grow: 0; flex-direction: row; border-left-width: 0; border-left-color: rgba(0, 0, 0, 0); height: 20px; background-color: rgb(60, 60, 60); border-top-width: 1px; border-bottom-width: 1px; border-bottom-color: rgb(48, 48, 48); border-top-color: rgb(26, 26, 26);">
+        <ui:VisualElement name="type-mark" class="type-mark" />
+        <ui:Toggle class="unity-foldout__toggle">
+            <Bindings>
+                <ui:DataBinding property="value" data-source-path="ShowInspectorFoldout" binding-mode="TwoWay" />
+            </Bindings>
+        </ui:Toggle>
+        <ui:Label text="Object Name" name="reference-name" style="-unity-text-align: middle-left;">
+            <Bindings>
+                <ui:DataBinding property="text" data-source-path="TrackName" binding-mode="ToTarget" />
+            </Bindings>
+        </ui:Label>
+        <ui:Label text="Key:" name="key" style="color: rgb(142, 142, 142); -unity-text-align: middle-left;" />
+        <ui:Label text="0" name="key-index" class="key-index">
+            <Bindings>
+                <ui:DataBinding property="text" data-source-path="KeyIndex" binding-mode="ToTarget" />
+            </Bindings>
+        </ui:Label>
+    </ui:VisualElement>
+    <ui:VisualElement name="content" style="flex-grow: 0; border-bottom-width: 1px; border-bottom-color: rgb(48, 48, 48);">
+        <Bindings>
+            <ui:DataBinding property="style.display" data-source-path="ShowInspectorFoldout" binding-mode="ToTarget" />
+        </Bindings>
+    </ui:VisualElement>
+</ui:UXML>

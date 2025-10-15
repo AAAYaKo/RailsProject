@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Rails.Editor.ViewModel;
+﻿using Rails.Editor.ViewModel;
 using Rails.Runtime;
 using Unity.Properties;
 using UnityEngine;
@@ -101,12 +99,7 @@ namespace Rails.Editor.Controls
 		protected override VisualElement CreateElement()
 		{
 			ClipItemView view = new();
-			view.SetBinding(ClipItemView.NameProperty, new DataBinding
-			{
-				dataSourcePath = new PropertyPath(nameof(RailsClip.Name)),
-				bindingMode = BindingMode.ToTarget,
-			});
-
+			view.SetBinding(ClipItemView.NameProperty, new ToTargetBinding(nameof(RailsClip.Name)));
 			view.SetBinding(ClipItemView.RemoveCommandProperty, new CommandBinding(nameof(RailsClipViewModel.RemoveCommand)));
 			return view;
 		}

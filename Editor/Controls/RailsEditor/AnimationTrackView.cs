@@ -19,6 +19,8 @@ namespace Rails.Editor.Controls
 		public static readonly BindingId KeyFrameAddCommandProperty = nameof(KeyFrameAddCommand);
 		public static readonly BindingId KeyFrameRemoveCommandProperty = nameof(KeyFrameRemoveCommand);
 		public static readonly BindingId ValueEditCommandProperty = nameof(ValueEditCommand);
+		public static readonly BindingId TrackClassProperty = nameof(TrackClass);
+		public static readonly BindingId ValueTypeProperty = nameof(ValueType);
 
 		[UxmlAttribute("type"), CreateProperty]
 		public AnimationTrack.ValueType ValueType
@@ -147,26 +149,10 @@ namespace Rails.Editor.Controls
 
 			keyToggle = this.Q<VisualElement>(className: "rails_key_toggle");
 
-			SetBinding(IsKeyFrameProperty, new DataBinding
-			{
-				dataSourcePath = new PropertyPath(nameof(AnimationTrackViewModel.IsKeyFrame)),
-				bindingMode = BindingMode.ToTarget,
-			});
-			SetBinding(FloatValueProperty, new DataBinding
-			{
-				dataSourcePath = new PropertyPath(nameof(AnimationTrackViewModel.CurrentSingleValue)),
-				bindingMode = BindingMode.ToTarget,
-			});
-			SetBinding(Vector2ValueProperty, new DataBinding
-			{
-				dataSourcePath = new PropertyPath(nameof(AnimationTrackViewModel.CurrentVector2Value)),
-				bindingMode = BindingMode.ToTarget,
-			});
-			SetBinding(Vector3ValueProperty, new DataBinding
-			{
-				dataSourcePath = new PropertyPath(nameof(AnimationTrackViewModel.CurrentVector3Value)),
-				bindingMode = BindingMode.ToTarget,
-			});
+			SetBinding(IsKeyFrameProperty, new ToTargetBinding(nameof(AnimationTrackViewModel.IsKeyFrame)));
+			SetBinding(FloatValueProperty, new ToTargetBinding(nameof(AnimationTrackViewModel.CurrentSingleValue)));
+			SetBinding(Vector2ValueProperty, new ToTargetBinding(nameof(AnimationTrackViewModel.CurrentVector2Value)));
+			SetBinding(Vector3ValueProperty, new ToTargetBinding(nameof(AnimationTrackViewModel.CurrentVector3Value)));
 			SetBinding(RemoveCommandProperty, new CommandBinding(nameof(AnimationTrackViewModel.RemoveCommand)));
 			SetBinding(KeyFrameAddCommandProperty, new CommandBinding(nameof(AnimationTrackViewModel.KeyFrameAddCommand)));
 			SetBinding(KeyFrameRemoveCommandProperty, new CommandBinding(nameof(AnimationTrackViewModel.KeyFrameRemoveCommand)));

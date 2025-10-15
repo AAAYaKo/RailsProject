@@ -33,17 +33,25 @@ namespace Rails.Editor.ViewModel
 			set => SetProperty(ease, value, SetEaseWithoutNotify);
 		}
 
+		public override string TrackName => Reference == null ? "No Reference" : Reference.name;
+		public Object Reference { private get; set; }
+
 		private float? singleValue;
 		private Vector2? vector2Value;
 		private Vector3? vector3Value;
 		private EaseViewModel ease;
+
+
+		public AnimationKeyViewModel(string trackClass, int keyIndex) : base(trackClass, keyIndex)
+		{
+		}
 
 		protected override void OnModelChanged()
 		{
 			if (model == null)
 				return;
 
-			TimePosition = model.TimePosition;
+			TimePosition = new AnimationTime() { Frames = model.TimePosition };
 			SingleValue = model.SingleValue;
 			Vector2Value = model.Vector2Value;
 			Vector3Value = model.Vector3Value;

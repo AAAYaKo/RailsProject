@@ -12,9 +12,9 @@ namespace Rails.Editor.ViewModel
 		public static readonly RailsClipViewModel Empty = new()
 		{
 			CanEdit = false,
-			durationText = "--:--",
 		};
 		private static readonly CollectionComparer<AnimationTrackViewModel> tracksComparer = new();
+		private static readonly CollectionComparer<IKeyViewModel> keysComparer = new();
 
 		[CreateProperty]
 		public string Name
@@ -28,6 +28,8 @@ namespace Rails.Editor.ViewModel
 			get => eventTrack;
 			set => SetProperty(ref eventTrack, value);
 		}
+		[CreateProperty]
+		public ObservableList<IKeyViewModel> SelectedKeys => selectedKeys;
 		[CreateProperty]
 		public ObservableList<AnimationTrackViewModel> Tracks
 		{
@@ -43,73 +45,62 @@ namespace Rails.Editor.ViewModel
 		[CreateProperty]
 		public string DurationText
 		{
-			get => durationText;
+			get => duration.FormatTime(RailsClip.Fps);
 			set
 			{
-				if (durationText == value)
-					return;
-
-				SetDurationTextWithoutNotify(value, out int frames);
-				if (DurationFrames != frames)
-					EditorContext.Instance.Record("Clip Duration Changed");
-				SetDurationFramesWithoutNotify(frames);
-				TimeHeadPositionFrames = ClampTimeHeadPosition(TimeHeadPositionFrames);
-
-				NotifyPropertyChanged();
-				NotifyPropertyChanged(nameof(DurationFrames));
+				if (AnimationTime.TryParse(value, RailsClip.Fps, out var duration))
+				{
+					if (Duration != duration)
+					{
+						EditorContext.Instance.Record("Clip Duration Changed");
+						Duration = duration;
+						model.Duration = duration;
+					}
+				}
 			}
 		}
 		[CreateProperty]
 		public string TimeHeadPositionText
 		{
-			get => timeHeadPositionText;
+			get => timeHeadPosition.FormatTime(RailsClip.Fps);
 			set
 			{
-				if (timeHeadPositionText == value)
-					return;
-
-				SetTimeHeadPositionTextWithoutNotify(value, out int frames);
-				SetTimeHeadPositionFramesWithoutNotify(frames);
-
-				NotifyPropertyChanged();
-				NotifyPropertyChanged(nameof(TimeHeadPositionFrames));
-
-				Tracks.ForEach(x => x.OnTimeHeadPositionChanged(frames));
+				if (AnimationTime.TryParse(value, RailsClip.Fps, out var timeHeadPosition))
+				{
+					if (TimeHeadPosition != timeHeadPosition)
+					{
+						TimeHeadPosition = timeHeadPosition;
+					}
+				}
 			}
 		}
 		[CreateProperty]
-		public int DurationFrames
+		public AnimationTime Duration
 		{
-			get => durationFrames;
+			get => duration;
 			set
 			{
-				if (durationFrames == value)
-					return;
+				value = ClampDuration(value);
+				if (SetProperty(ref duration, value))
+				{
+					NotifyPropertyChanged(nameof(DurationText));
+					TimeHeadPosition = ClampTimeHeadPosition(TimeHeadPosition);
+				}
 
-				SetDurationFramesWithoutNotify(value);
-				SetDurationTextWithoutNotify(EditorUtils.FormatTime(DurationFrames, RailsClip.Fps), out _);
-				TimeHeadPositionFrames = ClampTimeHeadPosition(TimeHeadPositionFrames);
-
-				NotifyPropertyChanged();
-				NotifyPropertyChanged(nameof(DurationText));
 			}
 		}
 		[CreateProperty]
-		public int TimeHeadPositionFrames
+		public AnimationTime TimeHeadPosition
 		{
-			get => timeHeadPositionFrames ?? 0;
+			get => timeHeadPosition;
 			set
 			{
-				if (timeHeadPositionFrames == value)
-					return;
-
-				SetTimeHeadPositionFramesWithoutNotify(value);
-				SetTimeHeadPositionTextWithoutNotify(EditorUtils.FormatTime(TimeHeadPositionFrames, RailsClip.Fps), out _);
-
-				NotifyPropertyChanged();
-				NotifyPropertyChanged(nameof(TimeHeadPositionText));
-
-				Tracks.ForEach(x => x.OnTimeHeadPositionChanged(value));
+				value = ClampTimeHeadPosition(value);
+				if (SetProperty(ref timeHeadPosition, value))
+				{
+					NotifyPropertyChanged(nameof(TimeHeadPositionText));
+					Tracks.ForEach(x => x.OnTimeHeadPositionChanged(value.Frames));
+				}
 			}
 		}
 		[CreateProperty]
@@ -131,12 +122,11 @@ namespace Rails.Editor.ViewModel
 			set => SetProperty(ref removeSelectedKeysCommand, value);
 		}
 
-		private string durationText;
-		private int durationFrames;
-		private string timeHeadPositionText;
-		private int? timeHeadPositionFrames;
+		private AnimationTime duration;
+		private AnimationTime timeHeadPosition;
 		private string name;
 		private EventTrackViewModel eventTrack = new();
+		private ObservableList<IKeyViewModel> selectedKeys = new();
 		private ObservableList<AnimationTrackViewModel> tracks = new();
 		private bool canEdit = true;
 		private bool selected = false;
@@ -166,8 +156,8 @@ namespace Rails.Editor.ViewModel
 		{
 			selected = true;
 			propertyChanged += propertyChangedCallback;
-			eventTrack.OnClipSelect();
-			tracks.ForEach(x => x.OnClipSelect());
+			eventTrack.OnClipSelect(OnKeysSelectionChanged);
+			tracks.ForEach(x => x.OnClipSelect(OnKeysSelectionChanged));
 		}
 
 		public void Deselect(EventHandler<BindablePropertyChangedEventArgs> propertyChangedCallback)
@@ -185,9 +175,8 @@ namespace Rails.Editor.ViewModel
 			Name = model.Name;
 			UpdateTracks();
 
-			DurationFrames = model.Duration;
-
-			TimeHeadPositionFrames = 0;
+			Duration = new() { Frames = model.Duration };
+			TimeHeadPosition = new AnimationTime() { Frames = 0 };
 		}
 
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -197,7 +186,7 @@ namespace Rails.Editor.ViewModel
 			else if (e.PropertyName == nameof(RailsClip.Tracks))
 				UpdateTracks();
 			else if (e.PropertyName == nameof(RailsClip.Duration))
-				DurationFrames = model.Duration;
+				Duration = new() { Frames = model.Duration };
 		}
 
 		protected override void OnUnbind()
@@ -215,13 +204,13 @@ namespace Rails.Editor.ViewModel
 
 		private void UpdateTracks()
 		{
-			UpdateVieModels(Tracks, model.Tracks,
+			UpdateViewModels(Tracks, model.Tracks,
 				createViewModel: i => new AnimationTrackViewModel(i),
 				resetViewModel: vm => vm.OnClipDeselect(),
 				viewModelBindCallback: (vm, m) =>
 				{
 					if (selected)
-						vm.OnClipSelect();
+						vm.OnClipSelect(OnKeysSelectionChanged);
 					vm.RemoveCommand = new RelayCommand(() =>
 					{
 						EditorContext.Instance.Record($"Removed {m.GetType().Name} from {name}");
@@ -231,63 +220,37 @@ namespace Rails.Editor.ViewModel
 			);
 		}
 
-		private int ClampTimeHeadPosition(int value)
+		private AnimationTime ClampTimeHeadPosition(AnimationTime value)
 		{
-			if (value < 0)
-				value = 0;
-			else if (value > DurationFrames)
-				value = DurationFrames;
+			if (value.Frames < 0)
+				value.Frames = 0;
+			else if (value.Frames > Duration.Frames)
+				value.Frames = Duration.Frames;
 			return value;
 		}
 
-		private int ClampDuration(int value)
+		private AnimationTime ClampDuration(AnimationTime value)
 		{
-			if (value < 1)
-				value = 1;
+			if (value.Frames < 1)
+				value.Frames = 1;
 			return value;
 		}
 
-		private void SetTimeHeadPositionFramesWithoutNotify(int value)
-		{
-			value = ClampTimeHeadPosition(value);
-			timeHeadPositionFrames = value;
-		}
-
-		private void SetTimeHeadPositionTextWithoutNotify(string value, out int frames)
-		{
-			value = value.Replace(" ", "");
-
-			if (EditorUtils.TryReadTimeValue(value, RailsClip.Fps, out frames))
-			{
-				frames = ClampTimeHeadPosition(frames);
-				timeHeadPositionText = EditorUtils.FormatTime(frames, RailsClip.Fps);
-			}
-		}
-
-		private void SetDurationFramesWithoutNotify(int value)
-		{
-			value = ClampDuration(value);
-			durationFrames = value;
-			model.Duration = value;
-		}
-
-		private void SetDurationTextWithoutNotify(string value, out int frames)
-		{
-			value = value.Replace(" ", "");
-
-			if (EditorUtils.TryReadTimeValue(value, RailsClip.Fps, out frames))
-			{
-				frames = ClampDuration(frames);
-				durationText = EditorUtils.FormatTime(frames, RailsClip.Fps);
-			}
-		}
-
-		protected void RemoveKeys()
+		private void RemoveKeys()
 		{
 			EditorContext.Instance.Record("Key Frames Removed");
 			eventTrack.RemoveSelectedKeys();
 			foreach (var track in tracks)
 				track.RemoveSelectedKeys();
+		}
+
+		private void OnKeysSelectionChanged()
+		{
+			selectedKeys.ClearWithoutNotify();
+			selectedKeys.AddRangeWithoutNotify(eventTrack.SelectedKeys);
+			foreach (var track in tracks)
+				selectedKeys.AddRangeWithoutNotify(track.SelectedKeys);
+			selectedKeys.NotifyListChanged();
 		}
 	}
 }

@@ -7,6 +7,8 @@ namespace Rails.Editor.Controls
 {
 	public abstract class ListObserverElement<TElementModel, TElementView> : BaseView where TElementView : VisualElement
 	{
+		public static readonly BindingId ValuesProperty = nameof(Values);
+
 		[CreateProperty]
 		public ObservableList<TElementModel> Values
 		{

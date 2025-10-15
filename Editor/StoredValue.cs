@@ -10,7 +10,7 @@ namespace Rails.Editor
 			get => value;
 			set
 			{
-				table.Set(key, value);
+				table?.Set(key, value);
 			}
 		}
 
@@ -63,7 +63,7 @@ namespace Rails.Editor
 			get => value;
 			set
 			{
-				table.Set(key, new List<int>(value));
+				table?.Set(key, new List<int>(value));
 			}
 		}
 

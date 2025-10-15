@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 
 namespace Rails.Editor
 {
 	[Serializable]
-	public class ObservableList<T> : IList<T>
+	public class ObservableList<T> : IList<T>, IList
 	{
 		[SerializeField] private List<T> list = new();
 		public event Action ListChanged;
@@ -25,6 +24,64 @@ namespace Rails.Editor
 		public int Count => list.Count;
 
 		public bool IsReadOnly => false;
+
+		bool IList.IsFixedSize => false;
+
+		bool ICollection.IsSynchronized => false;
+
+		object ICollection.SyncRoot => (list as ICollection).SyncRoot;
+
+		object IList.this[int index]
+		{
+			get => list[index];
+			set
+			{
+				if (value is T valueT)
+				{
+					list[index] = valueT;
+					ListChanged?.Invoke();
+				}
+			}
+		}
+
+
+		int IList.Add(object value)
+		{
+			if (value is T valueT)
+				Add(valueT);
+			return Count - 1;
+		}
+
+		bool IList.Contains(object value)
+		{
+			if (value is T valueT)
+				return Contains(valueT);
+			return false;
+		}
+
+		int IList.IndexOf(object value)
+		{
+			if (value is T valueT)
+				return IndexOf(valueT);
+			return -1;
+		}
+
+		void IList.Insert(int index, object value)
+		{
+			if (value is T valueT)
+				Insert(index, valueT);
+		}
+
+		void IList.Remove(object value)
+		{
+			if (value is T valueT)
+				Remove(valueT);
+		}
+
+		void ICollection.CopyTo(Array array, int index)
+		{
+			(list as IList).CopyTo(array, index);
+		}
 
 		public void Add(T item)
 		{

@@ -25,7 +25,8 @@ namespace Rails.Editor
 		public float FramePixelSize { get; internal set; }
 		public float TimePosition { get; internal set; }
 		public DataStorage DataStorage { get; internal set; }
-		public RailsEditor EditorWindow { get; internal set; }
+		public RailsEditor Editor { get; internal set; }
+		public RailsInspector Inspector { get; internal set; }
 
 		private static EditorContext _instance;
 		private RailsAnimator currentTarget;
@@ -91,8 +92,10 @@ namespace Rails.Editor
 			});
 			ConverterGroups.RegisterGlobalConverter((ref bool x) =>
 			{
-				return x ? DisplayStyle.None : DisplayStyle.Flex;
+				return x ? new StyleEnum<DisplayStyle>(DisplayStyle.Flex) : new StyleEnum<DisplayStyle>(DisplayStyle.None);
 			});
+			ConverterGroups.RegisterGlobalConverter((ref AnimationTime x) => x.Frames);
+			ConverterGroups.RegisterGlobalConverter((ref int x) => new AnimationTime() { Frames = x });
 		}
 
 		private void TargetChangedHandler()

@@ -17,7 +17,10 @@ namespace Rails.Editor.ViewModel
 			set
 			{
 				if (SetProperty(ref reference, value))
+				{
 					model.SceneReference = reference;
+					Keys.ForEach(x => x.Reference = reference);
+				}
 			}
 		}
 		[CreateProperty]
@@ -110,7 +113,7 @@ namespace Rails.Editor.ViewModel
 			currentFrame = frame;
 			int previousIndex = Keys.FindLastIndex(x =>
 			{
-				return x.TimePosition <= frame;
+				return x.TimePosition.Frames <= frame;
 			});
 			if (previousIndex == -1)
 			{
@@ -136,7 +139,9 @@ namespace Rails.Editor.ViewModel
 				return;
 
 			Reference = model.SceneReference;
+
 			trackData = TrackTypes[model.GetType()];
+			keys.ForEach(x => x.TrackClass = trackData.TrackClass);
 
 			NotifyPropertyChanged(nameof(Type));
 			NotifyPropertyChanged(nameof(ValueType));
@@ -203,6 +208,14 @@ namespace Rails.Editor.ViewModel
 			{
 				return math.remap(previousKey.TimePosition, nextKey.TimePosition, 0f, 1f, frame);
 			}
+		}
+
+		protected override AnimationKeyViewModel CreateKey(int index)
+		{
+			return new AnimationKeyViewModel(TrackClass, index)
+			{
+				Reference = Reference,
+			};
 		}
 
 		public static readonly Dictionary<Type, TrackData> TrackTypes = new()

@@ -9,6 +9,8 @@ namespace Rails.Editor.Controls
 	[UxmlElement]
 	public partial class TrackKeyView : BaseView
 	{
+		public static readonly BindingId TimePositionProperty = nameof(TimePosition);
+
 		[UxmlAttribute("timePosition"), CreateProperty]
 		public int TimePosition
 		{
@@ -33,11 +35,7 @@ namespace Rails.Editor.Controls
 		public TrackKeyView()
 		{
 			AddToClassList("track-key");
-			SetBinding(nameof(TimePosition), new DataBinding
-			{
-				dataSourcePath = new PropertyPath(nameof(AnimationKeyViewModel.TimePosition)),
-				bindingMode = BindingMode.ToTarget,
-			});
+			SetBinding(TimePositionProperty, new ToTargetBinding(nameof(AnimationKeyViewModel.TimePosition)));
 			manipulator = new TrackKeyMoveDragManipulator();
 			this.AddManipulator(manipulator);
 		}

@@ -24,36 +24,43 @@ namespace Rails.Editor
 		[MenuItem("Window/RailsEditor")]
 		public static void OpenWindow()
 		{
-			RailsEditor wnd = GetWindow<RailsEditor>();
 			var logo = EditorGUIUtility.pixelsPerPoint > 1 ? Resources.Load<Texture>("Icons/logo@2x") : Resources.Load<Texture>("Icons/logo");
-			wnd.titleContent = new GUIContent("RailsEditor", logo);
+			RailsEditor editor = GetWindow<RailsEditor>();
+			RailsInspector inspector = GetWindow<RailsInspector>();
+			editor.titleContent = new GUIContent("RailsEditor", logo);
+			inspector.titleContent = new GUIContent("RailsInspector", logo);
 		}
 
 		private void OnEnable()
 		{
-			EditorContext.Instance.CurrentTargetChanged += TargetChangedHandler;
 			EditorContext.Instance.DataStorage = dataStorage;
-			EditorContext.Instance.EditorWindow = this;
+			EditorContext.Instance.Editor = this;
 			EditorContext.Instance.ViewModel = new();
 			if (currentTarget != null && EditorContext.Instance.CurrentTarget == null)
 				EditorContext.Instance.CurrentTarget = currentTarget;
 			TargetChangedHandler(EditorContext.Instance.CurrentTarget);
+			EditorContext.Instance.CurrentTargetChanged += TargetChangedHandler;
 		}
 
 		private void OnDisable()
 		{
 			EditorContext.Instance.CurrentTargetChanged -= TargetChangedHandler;
 			EditorContext.Instance.DataStorage = null;
-			EditorContext.Instance.EditorWindow = null;
+			EditorContext.Instance.Editor = null;
 			EditorContext.Instance.ViewModel.UnbindModel();
 			EditorContext.Instance.ViewModel = null;
 			if (twoPanels != null)
 				twoPanels.FixedPanelDimensionChanged -= OnDimensionChanged;
 		}
 
+		private void OnDestroy()
+		{
+			if (EditorContext.Instance.Inspector != null)
+				EditorContext.Instance.Inspector.Close();
+		}
+
 		private void CreateGUI()
 		{
-			// Each editor window contains a root VisualElement object
 			VisualElement root = rootVisualElement;
 
 			// Instantiate UXML

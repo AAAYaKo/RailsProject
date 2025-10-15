@@ -12,5 +12,10 @@ namespace Rails.Editor.ViewModel
 		{
 			storedSelectedIndexes = new StoredIntList(StoreKey + "event");
 		}
+
+		protected override EventKeyViewModel CreateKey(int index)
+		{
+			return new(TrackClass, index);
+		}
 	}
 }

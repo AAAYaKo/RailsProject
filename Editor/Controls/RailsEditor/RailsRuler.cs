@@ -150,7 +150,7 @@ namespace Rails.Editor.Controls
 				var step = stepList[i];
 				bool isOverflow = InitStep(step);
 
-				if (currenShift > length && i < stepList.Count - 1 || isOverflow)
+				if ((currenShift > length || isOverflow) && i < stepList.Count - 1)
 				{
 					hasExtra = true;
 					break;
@@ -158,7 +158,7 @@ namespace Rails.Editor.Controls
 			}
 			if (hasExtra)
 			{
-				int countToRemove = stepList.Count - i;
+				int countToRemove = stepList.Count - (i + 1);
 				for (int j = 0; j < countToRemove; j++)
 				{
 					pool.Push(stepList[^1]);
@@ -181,7 +181,7 @@ namespace Rails.Editor.Controls
 			{
 				bool result = false;
 				currentFrame += stepFrames;
-				if (currentFrame > Duration)
+				if (currentFrame >= Duration)
 				{
 					currentFrame = Duration;
 					result = true;
@@ -208,13 +208,13 @@ namespace Rails.Editor.Controls
 		{
 			public int Frame
 			{
-				get => frame;
+				get => time.Frames;
 				set
 				{
-					if (frame == value)
+					if (time.Frames == value)
 						return;
-					frame = value;
-					label.text = EditorUtils.FormatTime(frame, fps);
+					time.Frames = value;
+					label.text = time.FormatTime(fps);
 				}
 			}
 			public int Fps
@@ -225,10 +225,10 @@ namespace Rails.Editor.Controls
 					if (fps == value)
 						return;
 					fps = value;
-					label.text = EditorUtils.FormatTime(frame, fps);
+					label.text = time.FormatTime(fps);
 				}
 			}
-			private int frame = 1;
+			private AnimationTime time;
 			private int fps = 60;
 			private Label label;
 

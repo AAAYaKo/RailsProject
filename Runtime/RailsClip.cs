@@ -18,7 +18,7 @@ namespace Rails.Runtime
 		public const int Fps = 60;
 		private static readonly CollectionComparer<AnimationTrack> comparer = new();
 
-		[SerializeReference] private List<AnimationTrack> tracks = new();
+		[SerializeField] private List<AnimationTrack> tracks = new();
 		[SerializeField] private EventsTrack eventTrack = new();
 		[SerializeField] private int duration; //in frames
 		[SerializeField] private string name;
@@ -36,7 +36,7 @@ namespace Rails.Runtime
 				NotifyPropertyChanged();
 			}
 		}
-		public EventsTrack EventTrack { get => eventTrack; set => eventTrack = value; }
+		public EventsTrack EventTrack => eventTrack;
 		public int Duration
 		{
 			get => duration;

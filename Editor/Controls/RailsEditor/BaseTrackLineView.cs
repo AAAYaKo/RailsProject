@@ -16,6 +16,10 @@ namespace Rails.Editor.Controls
 	{
 		public const string SelectedClass = "track-key--selected";
 		public static readonly BindingId SelectedIndexesProperty = nameof(SelectedIndexes);
+		public static readonly BindingId TrackClassProperty = nameof(TrackClass);
+		public static readonly BindingId ChangeSelectionCommandProperty = nameof(ChangeSelectionCommand);
+		public static readonly BindingId MoveKeysCommandProperty = nameof(MoveKeysCommand);
+		public static readonly BindingId KeyFrameAddAtTimeCommandProperty = nameof(KeyFrameAddAtTimeCommand);
 
 		[UxmlAttribute("trackClass"), CreateProperty]
 		public string TrackClass
@@ -88,25 +92,12 @@ namespace Rails.Editor.Controls
 			Add(moveContainer);
 
 			pickingMode = PickingMode.Ignore;
-			SetBinding(nameof(Values), new DataBinding
-			{
-				dataSourcePath = new PropertyPath("Keys"),
-				bindingMode = BindingMode.ToTarget,
-			});
-			SetBinding(nameof(TrackClass), new DataBinding
-			{
-				dataSourcePath = new PropertyPath("TrackClass"),
-				bindingMode = BindingMode.ToTarget,
-			});
-			SetBinding(SelectedIndexesProperty, new DataBinding
-			{
-				dataSourcePath = new PropertyPath("SelectedIndexes"),
-				bindingMode = BindingMode.ToTarget,
-			});
-
-			SetBinding(nameof(ChangeSelectionCommand), new CommandBinding("ChangeSelectionCommand"));
-			SetBinding(nameof(MoveKeysCommand), new CommandBinding("MoveKeysCommand"));
-			SetBinding(nameof(KeyFrameAddAtTimeCommand), new CommandBinding("KeyFrameAddAtTimeCommand"));
+			SetBinding(ValuesProperty, new ToTargetBinding("Keys"));
+			SetBinding(TrackClassProperty, new ToTargetBinding("TrackClass"));
+			SetBinding(SelectedIndexesProperty, new ToTargetBinding("SelectedIndexes"));
+			SetBinding(ChangeSelectionCommandProperty, new CommandBinding("ChangeSelectionCommand"));
+			SetBinding(MoveKeysCommandProperty, new CommandBinding("MoveKeysCommand"));
+			SetBinding(KeyFrameAddAtTimeCommandProperty, new CommandBinding("KeyFrameAddAtTimeCommand"));
 		}
 
 		public void AddKey(int frame)
@@ -256,7 +247,7 @@ namespace Rails.Editor.Controls
 			if (SelectedIndexes.IsNullOrEmpty())
 				return;
 			foreach (var key in SelectedIndexes)
-				views[key].TimePosition = Values[key].TimePosition + evt.DeltaFrames;
+				views[key].TimePosition = Values[key].TimePosition.Frames + evt.DeltaFrames;
 		}
 
 		private void OnClickKey(KeyClickEvent evt)
@@ -269,10 +260,14 @@ namespace Rails.Editor.Controls
 
 			if (!evt.ActionKey && !selectedViewKeys.Contains(index))
 				EventBus.Publish(new DeselectAllKeysEvent(key));
-
+			
 			if (!selectedViewKeys.Contains(index))
 			{
 				SelectKey(index);
+			}
+			else if (evt.ActionKey && selectedViewKeys.Contains(index))
+			{
+				DeselectKey(index);
 			}
 
 			ChangeSelectionCommand.Execute(selectedViewKeys);

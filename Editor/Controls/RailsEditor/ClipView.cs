@@ -82,11 +82,7 @@ namespace Rails.Editor.Controls
 			selectionBoxManipulator = new SelectionBoxDragManipulator(selectionBoxContainer);
 			selectionBoxManipulatorLayer.AddManipulator(selectionBoxManipulator);
 
-			SetBinding(nameof(Duration), new DataBinding
-			{
-				dataSourcePath = new PropertyPath("SelectedClip.DurationFrames"),
-				bindingMode = BindingMode.ToTarget,
-			});
+			SetBinding(nameof(Duration), new ToTargetBinding("SelectedClip.Duration"));
 			SetBinding(nameof(RemoveSelectedKeysCommand), new CommandBinding("SelectedClip.RemoveSelectedKeysCommand"));
 			ContextualMenuManipulator contextMenuTracks = new(ShowContextMenu);
 			ContextualMenuManipulator contextMenuEvents = new(ShowContextMenu);

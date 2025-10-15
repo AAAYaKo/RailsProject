@@ -17,7 +17,15 @@ namespace Rails.Editor.Manipulator
 		public SelectionBoxDragManipulator(VisualElement selectionBoxContainer)
 		{
 			this.selectionBoxContainer = selectionBoxContainer;
-			activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse });
+			activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse, modifiers = EventModifiers.None });
+
+			EventModifiers actionKeys = Application.platform switch
+			{
+				RuntimePlatform.OSXEditor or RuntimePlatform.OSXPlayer => EventModifiers.Command,
+				_ => EventModifiers.Control,
+			};
+
+			activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse, modifiers = actionKeys });
 
 			selectionBox = new VisualElement();
 			selectionBox.style.position = Position.Absolute;

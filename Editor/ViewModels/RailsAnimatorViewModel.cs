@@ -83,7 +83,7 @@ namespace Rails.Editor.ViewModel
 			});
 			ClipSelectCommand = new RelayCommand<int>(x =>
 			{
-				EditorContext.Instance.Record(EditorContext.Instance.EditorWindow, $"Select Clip: {Clips[x].Name}");
+				EditorContext.Instance.Record(EditorContext.Instance.Editor, $"Select Clip: {Clips[x].Name}");
 				storedSelectedIndex.Value = x;
 			});
 		}
@@ -142,7 +142,7 @@ namespace Rails.Editor.ViewModel
 
 		private void UpdateClips()
 		{
-			UpdateVieModels(Clips, model.Clips,
+			UpdateViewModels(Clips, model.Clips,
 				createViewModel: i => new RailsClipViewModel(),
 				viewModelBindCallback: (vm, m) =>
 				{

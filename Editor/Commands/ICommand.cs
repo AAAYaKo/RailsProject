@@ -7,6 +7,6 @@
 
 	public interface ICommand<T>
 	{
-		void Execute(T parameter);
+		void Execute(in T parameter);
 	}
 }
