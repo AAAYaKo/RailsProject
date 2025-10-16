@@ -12,7 +12,6 @@ namespace Rails.Editor.ViewModel
 {
 	public class SerializableCallbackViewModel : BaseNotifyPropertyViewModel<SerializableCallback>
 	{
-		private const string NoFunction = "No Function";
 		private static readonly CollectionComparer<AnyValueViewModel> comparer = new();
 
 		[CreateProperty]
@@ -29,16 +28,15 @@ namespace Rails.Editor.ViewModel
 			}
 		}
 		[CreateProperty]
-		public string SelectedMethod
+		public MethodOption SelectedMethod
 		{
 			get => selectedMethod;
 			set => selectedMethod = value;
 		}
 		[CreateProperty]
-		public List<string> MethodOptions
+		public List<MethodOption> MethodOptions
 		{
-			get => methodOptions;
-			set => methodOptions = value;
+			get => methodOptions.ToList();
 		}
 		[CreateProperty]
 		public SerializableCallbackState State
@@ -56,49 +54,33 @@ namespace Rails.Editor.ViewModel
 		[CreateProperty]
 		public ObservableList<AnyValueViewModel> Params => _params;
 		[CreateProperty]
-		public ICommand<string> SelectMethodCommand
+		public ICommand<MethodOption> SelectMethodCommand
 		{
 			get => selectMethodCommand;
 			set => SetProperty(ref selectMethodCommand, value);
 		}
 
 		private UnityEngine.Object targetObject;
-		private string selectedMethod = NoFunction;
-		private List<string> methodOptions = new();
+		private MethodOption selectedMethod = MethodOption.NoFunction;
+		private HashSet<MethodOption> methodOptions = new();
 		private SerializableCallbackState? state;
-		private ICommand<string> selectMethodCommand;
+		private ICommand<MethodOption> selectMethodCommand;
 		private ObservableList<AnyValueViewModel> _params = new();
-		private Dictionary<Type, MethodInfo[]> methodsTable = new();
 
 
 		public SerializableCallbackViewModel()
 		{
-			SelectMethodCommand = new RelayCommand<string>(x =>
+			SelectMethodCommand = new RelayCommand<MethodOption>(x =>
 			{
 				EditorContext.Instance.Record("Changed Event Method");
 
-				if (x == NoFunction)
+				if (x == MethodOption.NoFunction)
 				{
 					model.MethodName = null;
 					model.Parameters = null;
 					return;
 				}
-
-				string[] parts = x.Split('/');
-				if (parts.Length != 2)
-				{
-					Debug.LogError("Event can't recognize type/method");
-					return;
-				}
-				var record = methodsTable.First(x => x.Key.FullName == parts[0]);
-				Type targetType = record.Key;
-				MethodInfo method = record.Value.FirstOrDefault(x => x.Name == parts[1]);
-
-				if (method == null)
-				{
-					Debug.LogError("Event can't change method, selected targe doesn't have such method");
-					return;
-				}
+				Type targetType = x.TargetType;
 
 				if (targetType != targetObject.GetType())
 				{
@@ -107,19 +89,27 @@ namespace Rails.Editor.ViewModel
 						var component = gameObject.GetComponent(targetType);
 						model.TargetObject = component;
 					}
+					else if (targetObject is UnityEngine.Component otherComponent)
+					{
+						if (targetType != typeof(GameObject))
+						{
+							var component = otherComponent.gameObject.GetComponent(targetType);
+							model.TargetObject = component;
+						}
+						else
+						{
+							model.TargetObject = otherComponent.gameObject;
+						}
+					}
 					else
 					{
-						Debug.LogError("Event can't change type, current targe is not GameObject");
+						Debug.LogError("Event can't change to this type");
 						return;
 					}
 				}
 
-				model.MethodName = method.Name;
-				var parametersInfo = method.GetParameters();
-				AnyValue[] parameters = new AnyValue[parametersInfo.Length];
-				for (int i = 0; i < parameters.Length; i++)
-					parameters[i].Type = AnyValue.ValueTypeOf(parametersInfo[i].ParameterType);
-				model.Parameters = parameters;
+				model.Parameters = x.Parameters;
+				model.MethodName = x.Method;
 			});
 		}
 
@@ -187,39 +177,55 @@ namespace Rails.Editor.ViewModel
 
 		private void UpdateMethods()
 		{
-			methodsTable.Clear();
+			methodOptions.Clear();
+			methodOptions.Add(MethodOption.NoFunction);
 
 			if (targetObject == null)
 			{
-				methodOptions.Clear();
-				methodOptions.Add(NoFunction);
 				NotifyPropertyChanged(nameof(MethodOptions));
 				return;
 			}
 
 			Type targetType = TargetObject.GetType();
-			methodsTable.Add(targetType, FindTargetMethods(targetType));
 
 			if (TargetObject is GameObject gameObject)
+			{
+				AddMethods(targetType, FindTargetMethods(targetType));
+				AddAllComponents(gameObject);
+			}
+			else if (TargetObject is UnityEngine.Component component)
+			{
+				targetType = typeof(GameObject);
+				AddMethods(targetType, FindTargetMethods(targetType));
+				AddAllComponents(component.gameObject);
+			}
+			else
+			{
+				AddMethods(targetType, FindTargetMethods(targetType));
+			}
+
+			NotifyPropertyChanged(nameof(MethodOptions));
+
+			void AddAllComponents(GameObject gameObject)
 			{
 				var components = gameObject.GetComponents<UnityEngine.Component>();
 				foreach (var component in components)
 				{
 					targetType = component.GetType();
-					methodsTable.Add(targetType, FindTargetMethods(targetType));
+					AddMethods(targetType, FindTargetMethods(targetType));
 				}
 			}
 
-			methodOptions.Clear();
-			methodOptions.Add(NoFunction);
-			methodsTable.ForEach(x => x.Value.ForEach(y => methodOptions.Add($"{x.Key.FullName}/{y.Name}")));
+			void AddMethods(Type targetType, IEnumerable<MethodOption> methods)
+			{
+				methods.ForEach(x => methodOptions.Add(x));
+			}
 
-			NotifyPropertyChanged(nameof(MethodOptions));
-
-			static MethodInfo[] FindTargetMethods(Type targetType)
+			static IEnumerable<MethodOption> FindTargetMethods(Type targetType)
 			{
 				var allMethods = targetType
 					.GetMethods(BindingFlags.Instance | BindingFlags.Public)
+					.Where(x => x.ReturnType == typeof(void))
 					.Where(x =>
 					{
 						if (x.IsSpecialName)
@@ -228,23 +234,23 @@ namespace Rails.Editor.ViewModel
 						if (parameters.Length == 0)
 							return true;
 						return parameters.All(x => AnyValue.IsSupported(x.ParameterType));
-					});
+					})
+					.Select(x => new MethodOption(targetType, x));
 
 				var allProperties = targetType
 					.GetProperties(BindingFlags.Instance | BindingFlags.Public)
-					.Select(x => x.GetSetMethod())
-					.Where(x => x != null && x.IsPublic)
 					.Where(x =>
 					{
-						ParameterInfo[] parameters = x.GetParameters();
-						if (parameters.Length == 0)
-							return true;
-						return parameters.All(x => AnyValue.IsSupported(x.ParameterType));
-					});
+						var setter = x.GetSetMethod();
+						if (setter == null || !setter.IsPublic)
+							return false;
+
+						return AnyValue.IsSupported(x.PropertyType);
+					})
+					.Select(x => new MethodOption(targetType, x));
 
 				return allProperties
-					.Union(allMethods)
-					.ToArray();
+					.Union(allMethods);
 			}
 		}
 
@@ -252,21 +258,33 @@ namespace Rails.Editor.ViewModel
 		{
 			if (targetObject == null)
 			{
-				selectedMethod = NoFunction;
+				selectedMethod = MethodOption.NoFunction;
 				NotifyPropertyChanged(nameof(SelectedMethod));
 				model.MethodName = null;
+				model.Parameters = null;
 				return;
 			}
 
 			Type targetType = TargetObject.GetType();
-			if (methodsTable[targetType].Any(x => x.Name == model.MethodName))
+
+			if (model.MethodName.IsNullOrEmpty())
 			{
-				selectedMethod = $"{targetType.FullName}/{model.MethodName}";
+				selectedMethod = MethodOption.NoFunction;
+				model.Parameters = null;
 			}
 			else
 			{
-				selectedMethod = NoFunction;
-				model.MethodName = null;
+				MethodOption searchToken = new MethodOption(targetType, model.MethodName, model.Parameters);
+				if (methodOptions.TryGetValue(searchToken, out MethodOption option))
+				{
+					selectedMethod = option;
+				}
+				else
+				{
+					selectedMethod = MethodOption.NoFunction;
+					model.MethodName = null;
+					model.Parameters = null;
+				}
 			}
 
 			NotifyPropertyChanged(nameof(SelectedMethod));

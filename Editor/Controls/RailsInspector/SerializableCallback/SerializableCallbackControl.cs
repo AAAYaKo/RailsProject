@@ -18,10 +18,10 @@ namespace Rails.Editor.Controls
 		public static readonly BindingId StateProperty = nameof(State);
 		public static readonly BindingId ParamsProperty = nameof(Params);
 		public static readonly BindingId SelectMethodCommandProperty = nameof(SelectMethodCommand);
-		private static readonly CollectionComparer<string> methodsComparer = new();
+		private static readonly CollectionComparer<MethodOption> methodsComparer = new();
 
 		[CreateProperty]
-		public List<string> MethodOptions
+		public List<MethodOption> MethodOptions
 		{
 			get => methodOptions;
 			set
@@ -33,7 +33,7 @@ namespace Rails.Editor.Controls
 			}
 		}
 		[CreateProperty]
-		public string SelectedMethod
+		public MethodOption SelectedMethod
 		{
 			get => selectedMethod;
 			set
@@ -87,14 +87,14 @@ namespace Rails.Editor.Controls
 		}
 
 		[CreateProperty]
-		public ICommand<string> SelectMethodCommand { get; set; }
+		public ICommand<MethodOption> SelectMethodCommand { get; set; }
 
-		private DropdownField methodField;
+		private MethodsField methodField;
 		private EnumField stateField;
 		private ObjectField targetField;
 		private ListView paramsContainer;
-		private List<string> methodOptions;
-		private string selectedMethod;
+		private List<MethodOption> methodOptions;
+		private MethodOption selectedMethod;
 		private Object targetObject;
 		private SerializableCallbackState state = SerializableCallbackState.RuntimeOnly;
 		private ObservableList<AnyValueViewModel> _params;
@@ -105,14 +105,7 @@ namespace Rails.Editor.Controls
 			VisualElement left = new();
 			VisualElement right = new();
 
-			methodField = new DropdownField();
-			methodField.formatSelectedValueCallback = x =>
-			{
-				if (x.IsNullOrEmpty())
-					return x;
-				string[] parts = x.Split('/');
-				return parts[^1];
-			};
+			methodField = new MethodsField();
 
 			paramsContainer = new ListView();
 			paramsContainer.virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight;
@@ -192,7 +185,7 @@ namespace Rails.Editor.Controls
 			TargetObject = evt.newValue;
 		}
 
-		private void OnMethodChanged(ChangeEvent<string> evt)
+		private void OnMethodChanged(ChangeEvent<MethodOption> evt)
 		{
 			SelectMethodCommand.Execute(evt.newValue);
 		}

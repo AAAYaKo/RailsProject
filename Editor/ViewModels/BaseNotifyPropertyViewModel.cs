@@ -56,6 +56,7 @@ namespace Rails.Editor.ViewModel
 			if (models == null)
 			{
 				ClearViewModels<VM, M>(viewModels, resetViewModel);
+				viewModels.NotifyListChanged();
 				return;
 			}
 
@@ -74,13 +75,13 @@ namespace Rails.Editor.ViewModel
 
 			for (int i = 0; i < models.Count; i++)
 			{
-				var track = models[i];
+				var model = models[i];
 				var viewModel = viewModels[i];
 
 				viewModel.UnbindModel();
 				resetViewModel?.Invoke(viewModel);
-				viewModel.BindModel(track);
-				viewModelBindCallback?.Invoke(viewModel, track);
+				viewModel.BindModel(model);
+				viewModelBindCallback?.Invoke(viewModel, model);
 			}
 
 			viewModels.NotifyListChanged();

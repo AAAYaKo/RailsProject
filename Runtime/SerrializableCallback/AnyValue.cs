@@ -255,6 +255,7 @@ namespace Rails.Runtime.Callback
 
 	public enum ValueType
 	{
+		None,
 		Int,
 		Float,
 		Bool,

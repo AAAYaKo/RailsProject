@@ -46,7 +46,7 @@ namespace Rails.Editor.ViewModel
 			get => keyFrameAddAtTimeCommand;
 			set => SetProperty(ref keyFrameAddAtTimeCommand, value);
 		}
-		public IEnumerable<IKeyViewModel> SelectedKeys => SelectedIndexes.Select(x => keys[x]);
+		public IEnumerable<IKeyViewModel> SelectedKeys => SelectedIndexes.Select(x => keys[x]).OrderBy(x => x.KeyIndex);
 
 		protected Action keysSelectionChanged;
 		protected ObservableList<TKeyViewModel> keys = new();

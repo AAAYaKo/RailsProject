@@ -38,16 +38,15 @@ namespace Rails.Editor.ViewModel
 			set => Callbacks[SelectedIndex].TargetObject = value;
 		}
 		[CreateProperty]
-		public string SelectedMethod
+		public MethodOption SelectedMethod
 		{
 			get => Callbacks[SelectedIndex].SelectedMethod;
 			set => Callbacks[SelectedIndex].SelectedMethod = value;
 		}
 		[CreateProperty]
-		public List<string> MethodOptions
+		public List<MethodOption> MethodOptions
 		{
 			get => Callbacks[SelectedIndex].MethodOptions;
-			set => Callbacks[SelectedIndex].MethodOptions = value;
 		}
 		[CreateProperty]
 		public SerializableCallbackState State
@@ -58,7 +57,7 @@ namespace Rails.Editor.ViewModel
 		[CreateProperty]
 		public ObservableList<AnyValueViewModel> Params => Callbacks[SelectedIndex].Params;
 		[CreateProperty]
-		public ICommand<string> SelectMethodCommand
+		public ICommand<MethodOption> SelectMethodCommand
 		{
 			get => Callbacks[SelectedIndex].SelectMethodCommand;
 			set => Callbacks[SelectedIndex].SelectMethodCommand = value;
