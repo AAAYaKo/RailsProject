@@ -212,7 +212,14 @@ namespace Rails.Editor.ViewModel
 
 		protected override AnimationKeyViewModel CreateKey(int index)
 		{
-			return new AnimationKeyViewModel(TrackClass, index)
+			return new AnimationKeyViewModel(TrackClass, index, new RelayCommand<AnimationTime>(x =>
+			{
+				Dictionary<int, int> keysFramesPositions = new()
+				{
+					{ index, x.Frames }
+				};
+				MoveKeys(keysFramesPositions);
+			}))
 			{
 				Reference = Reference,
 			};

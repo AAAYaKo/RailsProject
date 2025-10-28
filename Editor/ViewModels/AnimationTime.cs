@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Text;
+using Rails.Runtime;
 using UnityEngine;
 
 namespace Rails.Editor.ViewModel
 {
 	public struct AnimationTime : IComparable<AnimationTime>, IEquatable<AnimationTime>
 	{
-		public const int MaxFrameValue = 100/*hours*/* 60/*minutes*/ * 60/*seconds*/ * 60/*frames*/;
+		public const int MaxFrameValue = 100/*hours*/* 60/*minutes*/ * 60/*seconds*/ * /*frames*/RailsClip.Fps;
 		private const string format = "{0:00}";
 		private static readonly StringBuilder builder = new(8);
 		public int Frames

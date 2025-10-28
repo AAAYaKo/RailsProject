@@ -1,4 +1,5 @@
-﻿using Rails.Runtime;
+﻿using System.Collections.Generic;
+using Rails.Runtime;
 using Rails.Runtime.Tracks;
 
 namespace Rails.Editor.ViewModel
@@ -15,7 +16,14 @@ namespace Rails.Editor.ViewModel
 
 		protected override EventKeyViewModel CreateKey(int index)
 		{
-			return new(TrackClass, index);
+			return new(TrackClass, index, new RelayCommand<AnimationTime>(x =>
+			{
+				Dictionary<int, int> keysFramesPositions = new()
+				{
+					{ index, x.Frames }
+				};
+				MoveKeys(keysFramesPositions);
+			}));
 		}
 	}
 }

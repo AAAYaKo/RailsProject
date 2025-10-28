@@ -228,7 +228,7 @@ namespace Rails.Editor.Controls
 					label.text = time.FormatTime(fps);
 				}
 			}
-			private AnimationTime time;
+			private AnimationTime time= new() { Frames = -1 };
 			private int fps = 60;
 			private Label label;
 

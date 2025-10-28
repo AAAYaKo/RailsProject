@@ -10,7 +10,7 @@ using UnityEngine;
 namespace Rails.Runtime.Callback
 {
 	[Serializable]
-	public class SerializableEvent : INotifyPropertyChanged
+	public class SerializableEvent : INotifyPropertyChanged, IEquatable<SerializableEvent>
 #if UNITY_EDITOR
 		, ISerializationCallbackReceiver
 #endif
@@ -58,7 +58,37 @@ namespace Rails.Runtime.Callback
 			callbacksCopy.Clear();
 			callbacksCopy.AddRange(callbacks);
 		}
+
+		public void Copy(in SerializableEvent other)
+		{
+			Callbacks.Clear();
+			Callbacks.AddRange(other.Callbacks);
+		}
 #endif
+		public override bool Equals(object obj)
+		{
+			return Equals(obj as SerializableEvent);
+		}
+
+		public bool Equals(SerializableEvent other)
+		{
+			return other is not null && comparer.Equals(Callbacks, other.Callbacks);
+		}
+
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(Callbacks);
+		}
+
+		public static bool operator ==(SerializableEvent left, SerializableEvent right)
+		{
+			return EqualityComparer<SerializableEvent>.Default.Equals(left, right);
+		}
+
+		public static bool operator !=(SerializableEvent left, SerializableEvent right)
+		{
+			return !(left == right);
+		}
 
 		private void NotifyPropertyChanged([CallerMemberName] string property = "")
 		{

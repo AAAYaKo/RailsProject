@@ -1,15 +1,9 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
-    <ui:VisualElement name="AnimationKeyEditor" style="flex-grow: 1; padding-left: 10px; padding-right: 10px; padding-top: 8px;">
-        <ui:TextField label="Time" name="time">
-            <Bindings>
-                <ui:DataBinding property="value" data-source-path="TimePositionText" binding-mode="ToTarget" />
-            </Bindings>
-        </ui:TextField>
-        <ui:VisualElement name="value" style="flex-grow: 0; flex-direction: row; margin-bottom: 8px;">
-            <ui:FloatField value="42.2" label="Value" style="flex-grow: 1; margin-left: 2px;" />
-            <ui:Vector2Field label="Value" style="display: none;" />
-            <ui:Vector3Field label="Value" style="display: none; flex-grow: 1;" />
-            <ui:Toggle class="constrained-toggle" style="width: 16px; height: 16px; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 5px; align-self: center;" />
-        </ui:VisualElement>
+    <ui:TextField label="Time" name="time" />
+    <ui:VisualElement name="value" style="flex-grow: 0; flex-direction: row; margin-bottom: 8px;">
+        <ui:FloatField value="42.2" label="Value" style="flex-grow: 1; margin-left: 2px;" />
+        <ui:Vector2Field label="Value" style="display: none;" />
+        <ui:Vector3Field label="Value" style="display: none; flex-grow: 1;" />
+        <ui:Toggle class="constrained-toggle" style="width: 16px; height: 16px; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 5px; align-self: center;" />
     </ui:VisualElement>
 </ui:UXML>

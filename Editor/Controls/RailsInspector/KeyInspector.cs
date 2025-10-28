@@ -10,6 +10,7 @@ namespace Rails.Editor.Controls
 	{
 		public static readonly BindingId TrackClassProperty = nameof(TrackClass);
 		public static readonly BindingId ShowInspectorFoldoutProperty = nameof(ShowInspectorFoldout);
+		public static readonly BindingId TimePositionTextProperty = nameof(TimePositionText);
 
 		[UxmlAttribute("track-class"), CreateProperty]
 		public string TrackClass
@@ -36,7 +37,22 @@ namespace Rails.Editor.Controls
 				showInspectorFoldout = value;
 			}
 		}
-
+		[UxmlAttribute("time-position"), CreateProperty]
+		public string TimePositionText
+		{
+			get => timePositionText;
+			set
+			{
+				if (timePositionText == value)
+					return;
+				timePositionText = value;
+				if (timeField != null)
+				{
+					timeField.SetValueWithoutNotify(value);
+				}
+				NotifyPropertyChanged(TimePositionTextProperty);
+			}
+		}
 		private static readonly VisualTreeAsset templateMain;
 		private static readonly VisualTreeAsset templateAnimation;
 
@@ -45,6 +61,8 @@ namespace Rails.Editor.Controls
 		private new VisualElement contentContainer;
 		private VisualElement contentEvent;
 		private VisualElement contentAnimation;
+		private TextField timeField;
+		private string timePositionText;
 
 		static KeyInspector()
 		{
@@ -57,7 +75,8 @@ namespace Rails.Editor.Controls
 			templateMain.CloneTree(this);
 			SetBinding(TrackClassProperty, new ToTargetBinding(nameof(IKeyViewModel.TrackClass)));
 			SetBinding(ShowInspectorFoldoutProperty, new TwoWayBinding(nameof(IKeyViewModel.ShowInspectorFoldout)));
-			
+			SetBinding(TimePositionTextProperty, new TwoWayBinding(nameof(IKeyViewModel.TimePositionText)));
+
 			contentContainer = this.Q<VisualElement>("content");
 		}
 
@@ -83,6 +102,19 @@ namespace Rails.Editor.Controls
 				contentAnimation = templateAnimation.Instantiate();
 				contentContainer.Add(contentAnimation);
 			}
+
+			timeField?.UnregisterValueChangedCallback(OnTimeFieldValueChanged);
+			timeField = contentContainer.Q<TextField>("time");
+			if (timeField != null)
+			{
+				timeField.RegisterValueChangedCallback(OnTimeFieldValueChanged);
+				timeField.SetValueWithoutNotify(TimePositionText);
+			}
+		}
+
+		private void OnTimeFieldValueChanged(ChangeEvent<string> evt)
+		{
+			TimePositionText = evt.newValue;
 		}
 	}
 }

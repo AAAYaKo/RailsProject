@@ -42,7 +42,7 @@ namespace Rails.Editor.ViewModel
 		private EaseViewModel ease;
 
 
-		public AnimationKeyViewModel(string trackClass, int keyIndex) : base(trackClass, keyIndex)
+		public AnimationKeyViewModel(string trackClass, int keyIndex, ICommand<AnimationTime> moveKeyCommand) : base(trackClass, keyIndex, moveKeyCommand)
 		{
 		}
 

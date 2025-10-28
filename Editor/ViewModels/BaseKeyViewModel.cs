@@ -27,10 +27,7 @@ namespace Rails.Editor.ViewModel
 				if (AnimationTime.TryParse(value, RailsClip.Fps, out var timePosition))
 				{
 					if (TimePosition != timePosition)
-					{
-						EditorContext.Instance.Record("Clip Duration Changed");
-						TimePosition = timePosition;
-					}
+						MoveKeyCommand.Execute(timePosition);
 				}
 			}
 		}
@@ -46,15 +43,21 @@ namespace Rails.Editor.ViewModel
 			get => showInspectorFoldout;
 			set => SetProperty(ref showInspectorFoldout, value);
 		}
+		public ICommand<AnimationTime> MoveKeyCommand
+		{
+			get => moveKeyCommand;
+			set => SetProperty(ref moveKeyCommand, value);
+		}
 
-		private bool showInspectorFoldout;
+		private bool showInspectorFoldout = true;
 		private AnimationTime timePosition;
+		private ICommand<AnimationTime> moveKeyCommand;
 
-
-		public BaseKeyViewModel(string trackClass, int keyIndex)
+		public BaseKeyViewModel(string trackClass, int keyIndex, ICommand<AnimationTime> moveKeyCommand)
 		{
 			TrackClass = trackClass;
 			KeyIndex = keyIndex;
+			MoveKeyCommand = moveKeyCommand;
 		}
 
 		protected override void OnModelChanged()
@@ -67,7 +70,7 @@ namespace Rails.Editor.ViewModel
 
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(AnimationKey.TimePosition))
+			if (e.PropertyName == nameof(BaseKey.TimePosition))
 				TimePosition = new AnimationTime() { Frames = model.TimePosition };
 		}
 	}

@@ -1,4 +1,5 @@
-﻿using Rails.Runtime;
+﻿using System.ComponentModel;
+using Rails.Runtime;
 using Unity.Properties;
 
 namespace Rails.Editor.ViewModel
@@ -17,7 +18,7 @@ namespace Rails.Editor.ViewModel
 		private SerializableEventViewModel animationEvent = new();
 
 
-		public EventKeyViewModel(string trackClass, int keyIndex) : base(trackClass, keyIndex)
+		public EventKeyViewModel(string trackClass, int keyIndex, ICommand<AnimationTime> moveKeyCommand) : base(trackClass, keyIndex, moveKeyCommand)
 		{
 		}
 
@@ -31,6 +32,17 @@ namespace Rails.Editor.ViewModel
 		{
 			base.OnUnbind();
 			AnimationEvent.UnbindModel();
+		}
+
+		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
+		{
+			base.OnModelPropertyChanged(sender, e);
+			if (e.PropertyName == nameof(EventKey.AnimationEvent))
+			{
+				AnimationEvent.UnbindModel();
+				AnimationEvent.BindModel(model.AnimationEvent);
+			}
+
 		}
 	}
 }
