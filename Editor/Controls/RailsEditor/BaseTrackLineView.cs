@@ -140,6 +140,8 @@ namespace Rails.Editor.Controls
 			SelectedKeysFrames.Clear();
 			FirstSelectedKeyFrame = int.MaxValue;
 			LastSelectedKeyFrame = int.MinValue;
+			if (SelectedIndexes.IsNullOrEmpty())
+				return;
 			foreach (int key in SelectedIndexes)
 			{
 				if (key < 0 || key >= views.Count)
@@ -212,6 +214,7 @@ namespace Rails.Editor.Controls
 			if (SelectedIndexes.IsNullOrEmpty())
 			{
 				DeselectAllKeys();
+				UpdateSelectedKeyFrames();
 				return;
 			}
 			int[] toRemove = selectedViewKeys.Except(SelectedIndexes).ToArray();
