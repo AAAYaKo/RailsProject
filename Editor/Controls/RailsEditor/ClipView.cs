@@ -79,7 +79,7 @@ namespace Rails.Editor.Controls
 			eventsContainer = events.Q<VisualElement>("events-container");
 			selectionBoxContainer = events.Q<VisualElement>("selection-box-container");
 			selectionBoxManipulatorLayer = events.Q<VisualElement>("selection-box-manipulator");
-			selectionBoxManipulator = new SelectionBoxDragManipulator(selectionBoxContainer);
+			selectionBoxManipulator = new SelectionBoxDragManipulator(selectionBoxManipulatorLayer);
 			selectionBoxManipulatorLayer.AddManipulator(selectionBoxManipulator);
 
 			SetBinding(nameof(Duration), new ToTargetBinding("SelectedClip.Duration"));

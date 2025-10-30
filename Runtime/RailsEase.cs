@@ -446,11 +446,8 @@ namespace Rails.Runtime
 			get => easeType;
 			set
 			{
-				if (easeType == value)
-					return;
-				easeType = value;
-				CalculatePolynomial();
-				NotifyPropertyChanged();
+				if (SetProperty(ref easeType, value))
+					CalculatePolynomial();
 			}
 		}
 
@@ -462,11 +459,8 @@ namespace Rails.Runtime
 			get => controls;
 			set
 			{
-				if (Utils.Approximately(controls, value))
-					return;
-				controls = value;
-				CalculatePolynomial();
-				NotifyPropertyChanged();
+				if (SetProperty(ref controls, value, VectorComparer.Instance))
+					CalculatePolynomial();
 			}
 		}
 

@@ -37,7 +37,7 @@ namespace Rails.Editor.Controls
 		[UxmlAttribute("type"), CreateProperty]
 		public AnimationTrack.ValueType ValueType
 		{
-			get => type;
+			get => type ?? AnimationTrack.ValueType.Single;
 			set
 			{
 				if (type == value)
@@ -109,7 +109,7 @@ namespace Rails.Editor.Controls
 		private float? singleValue;
 		private Vector2? vector2Value;
 		private Vector3? vector3Value;
-		private AnimationTrack.ValueType type = AnimationTrack.ValueType.Single;
+		private AnimationTrack.ValueType? type;
 		private FloatField singleField;
 		private Vector2Field vector2Field;
 		private Vector3Field vector3Field;
@@ -212,6 +212,7 @@ namespace Rails.Editor.Controls
 			{
 				singleField.UnregisterValueChangedCallback(OnValueChanged);
 				hierarchy.Remove(singleField);
+				singleField = null;
 			}
 		}
 
@@ -221,6 +222,7 @@ namespace Rails.Editor.Controls
 			{
 				vector2Field.UnregisterValueChangedCallback(OnValueChanged);
 				hierarchy.Remove(vector2Field);
+				vector2Field = null;
 			}
 		}
 
@@ -230,6 +232,7 @@ namespace Rails.Editor.Controls
 			{
 				vector3Field.UnregisterValueChangedCallback(OnValueChanged);
 				hierarchy.Remove(vector3Field);
+				vector3Field = null;
 			}
 		}
 

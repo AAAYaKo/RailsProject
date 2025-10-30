@@ -78,28 +78,14 @@ namespace Rails.Editor.ViewModel
 		public bool HasHandles
 		{
 			get => hasHandles ?? false;
-			set
-			{
-				if (hasHandles != value)
-				{
-					hasHandles = value;
-					NotifyPropertyChanged();
-				}
-			}
+			set => SetProperty(ref hasHandles, value);
 		}
 
 		[CreateProperty]
 		public bool HasFunction
 		{
 			get => hasFunction ?? false;
-			set
-			{
-				if (hasFunction != value)
-				{
-					hasFunction = value;
-					NotifyPropertyChanged();
-				}
-			}
+			set => SetProperty(ref hasFunction, value);
 		}
 
 		[CreateProperty]

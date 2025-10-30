@@ -9,7 +9,7 @@
             <ui:VisualElement name="content-container" style="flex-grow: 1; flex-shrink: 0;">
                 <ui:VisualElement name="selection-box-manipulator" style="flex-grow: 1; width: 100%; height: 100%; position: absolute;" />
                 <ui:VisualElement name="tracks-container" picking-mode="Ignore" />
-                <ui:VisualElement name="spacer" style="flex-grow: 1; min-height: 52px;" />
+                <ui:VisualElement name="spacer" picking-mode="Ignore" style="flex-grow: 1; min-height: 52px;" />
                 <ui:VisualElement name="selection-box-container" picking-mode="Ignore" style="flex-grow: 1; position: absolute; width: 100%; height: 100%; overflow: hidden;" />
             </ui:VisualElement>
         </ui:ScrollView>
