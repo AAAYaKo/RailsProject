@@ -32,6 +32,32 @@ namespace Rails.Editor.ViewModel
 			get => ease;
 			set => SetProperty(ease, value, SetEaseWithoutNotify);
 		}
+		[CreateProperty]
+		public bool ConstrainedProportions
+		{
+			get => constrainedProportions;
+			set => SetProperty(ref constrainedProportions, value);
+		}
+		[CreateProperty]
+		public AnimationTrack.ValueType ValueType
+		{
+			get => valueType ?? AnimationTrack.ValueType.Single;
+			set => SetProperty(ref valueType, value);
+		}
+		[CreateProperty]
+		public ICommand<ValueEditArgs> ValueEditCommand
+		{
+			get => valueEditCommand;
+			set => SetProperty(ref valueEditCommand, value);
+		}
+		[CreateProperty]
+		public ICommand<bool> ConstrainedProportionsChangeCommand
+		{
+			get => constrainedProportionsChangeCommand;
+			set => SetProperty(ref constrainedProportionsChangeCommand, value);
+		}
+		private ICommand<ValueEditArgs> valueEditCommand;
+		private ICommand<bool> constrainedProportionsChangeCommand;
 
 		public override string TrackName => Reference == null ? "No Reference" : Reference.name;
 		public Object Reference { private get; set; }
@@ -40,10 +66,25 @@ namespace Rails.Editor.ViewModel
 		private Vector2? vector2Value;
 		private Vector3? vector3Value;
 		private EaseViewModel ease;
-
+		private bool constrainedProportions;
+		private AnimationTrack.ValueType? valueType;
 
 		public AnimationKeyViewModel(string trackClass, int keyIndex, ICommand<AnimationTime> moveKeyCommand) : base(trackClass, keyIndex, moveKeyCommand)
 		{
+			ValueEditCommand = new RelayCommand<ValueEditArgs>(args =>
+			{
+				EditorContext.Instance.Record("Key Value Changed");
+				model.SingleValue = args.SingleValue;
+				model.Vector2Value = args.Vector2Value;
+				model.Vector3Value = args.Vector3Value;
+			});
+
+			ConstrainedProportionsChangeCommand = new RelayCommand<bool>(x =>
+			{
+				string recordName = x ? "Key Constrained Proportions Enabled" : "Key Constrained Proportions Disabled";
+				EditorContext.Instance.Record(recordName);
+				model.ConstrainedProportions = x;
+			});
 		}
 
 		protected override void OnModelChanged()
@@ -55,6 +96,7 @@ namespace Rails.Editor.ViewModel
 			SingleValue = model.SingleValue;
 			Vector2Value = model.Vector2Value;
 			Vector3Value = model.Vector3Value;
+			ConstrainedProportions = model.ConstrainedProportions;
 		}
 
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -66,6 +108,8 @@ namespace Rails.Editor.ViewModel
 				Vector2Value = model.Vector2Value;
 			else if (e.PropertyName == nameof(AnimationKey.Vector3Value))
 				Vector3Value = model.Vector3Value;
+			else if (e.PropertyName == nameof(AnimationKey.ConstrainedProportions))
+				ConstrainedProportions = model.ConstrainedProportions;
 		}
 
 		protected override void OnBind()

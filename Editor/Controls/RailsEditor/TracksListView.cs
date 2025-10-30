@@ -58,7 +58,6 @@ namespace Rails.Editor.Controls
 		protected override AnimationTrackView CreateElement()
 		{
 			var view = new AnimationTrackView();
-			view.SetBinding(AnimationTrackView.ValueTypeProperty, new ToTargetBinding(nameof(AnimationTrackViewModel.ValueType)));
 			view.SetBinding(AnimationTrackView.TrackClassProperty, new ToTargetBinding(nameof(AnimationTrackViewModel.TrackClass)));
 			return view;
 		}

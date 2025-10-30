@@ -4,6 +4,10 @@
 	--rails-icon-play-head: resource('Icons/play_head');
 	--rails-icon-drag-handler: resource('Icons/drag_handler');
 	--rails-icon-drop-down: resource('Icons/drop_down_icon');
+	--rails-icon-constrained-enabled: resource('Icons/constrained_enabled');
+	--rails-icon-constrained-disabled: resource('Icons/constrained_disabled');
+	--rails-button-icon-color: #C4C4C4;
+	--rails-button-icon-hover-color: #F0F0F0;
 	--rails-ruler-background-color: #303030;
 	--rails-ruler-stroke-color: #717171;
 	--rails-ruler-text-color: #BEBEBE;
@@ -40,4 +44,58 @@
 .event{
 	--color-active: #E1E1E1;
 	--color-not-active: #ACACAC;
+}
+
+.constrained-toggle .unity-toggle__input {
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+}
+
+.constrained-toggle .unity-toggle__input .unity-toggle__checkmark {
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: var(--rails-icon-constrained-disabled);
+    -unity-background-image-tint-color: var(--rails-button-icon-color);
+}
+
+.constrained-toggle .unity-toggle__input:hover .unity-toggle__checkmark {
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    width: 100%;
+    height: 100%;
+    -unity-background-image-tint-color: var(--rails-button-icon-hover-color);
+}
+
+.constrained-toggle .unity-toggle__input:checked .unity-toggle__checkmark {
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: var(--rails-icon-constrained-enabled);
 }

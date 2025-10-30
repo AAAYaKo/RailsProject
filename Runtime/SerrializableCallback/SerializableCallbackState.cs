@@ -1,8 +1,11 @@
+using System;
+
 namespace Rails.Runtime.Callback
 {
 	/// <summary>
 	/// Controls the scope of UnityEvent callbacks.
 	/// </summary>
+	[Serializable]
 	public enum SerializableCallbackState
 	{
 		/// <summary>

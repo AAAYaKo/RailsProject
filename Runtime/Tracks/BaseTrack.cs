@@ -8,10 +8,7 @@ using UnityEngine;
 namespace Rails.Runtime
 {
 	[Serializable]
-	public abstract class BaseTrack<TKey> : INotifyPropertyChanged
-#if UNITY_EDITOR
-		, ISerializationCallbackReceiver
-#endif
+	public abstract class BaseTrack<TKey> : BaseSerializableNotifier
 		where TKey : BaseKey
 	{
 		public static readonly CollectionComparer<TKey> comparer = new();
@@ -21,20 +18,28 @@ namespace Rails.Runtime
 		public List<TKey> AnimationKeys
 		{
 			get => animationKeys;
-			set
-			{
-				if (comparer.Equals(animationKeys, value))
-					return;
-				animationKeys = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref animationKeys, value, comparer);
 		}
-
-		public event PropertyChangedEventHandler PropertyChanged;
 
 #if UNITY_EDITOR
 		private readonly List<TKey> animationKeysCopy = new();
 #endif
+
+
+		public override void OnBeforeSerialize()
+		{
+#if UNITY_EDITOR
+			CopyList(AnimationKeys, animationKeysCopy);
+#endif
+		}
+
+		public override void OnAfterDeserialize()
+		{
+#if UNITY_EDITOR
+			if (NotifyIfChanged(AnimationKeys, animationKeysCopy, nameof(AnimationKeys), comparer))
+				CopyList(AnimationKeys, animationKeysCopy);
+#endif
+		}
 
 		public abstract void InsertInSequence(Sequence sequence, float frameTime);
 
@@ -104,26 +109,5 @@ namespace Rails.Runtime
 		{
 			animationKeys.Remove(key);
 		}
-
-		protected void NotifyPropertyChanged([CallerMemberName] string property = "")
-		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
-		}
-
-#if UNITY_EDITOR
-		public virtual void OnBeforeSerialize()
-		{
-			animationKeysCopy.Clear();
-			animationKeysCopy.AddRange(AnimationKeys);
-		}
-
-		public virtual void OnAfterDeserialize()
-		{
-			if (!comparer.Equals(animationKeysCopy, AnimationKeys))
-				NotifyPropertyChanged(nameof(AnimationKeys));
-			animationKeysCopy.Clear();
-			animationKeysCopy.AddRange(AnimationKeys);
-		}
-#endif
 	}
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -8,9 +9,7 @@ namespace Rails.Runtime.Callback
 {
 	[Serializable]
 	public struct AnyValue : INotifyPropertyChanged, IEquatable<AnyValue>
-#if UNITY_EDITOR
 		, ISerializationCallbackReceiver
-#endif
 	{
 		[SerializeField] private ValueType type;
 
@@ -25,79 +24,37 @@ namespace Rails.Runtime.Callback
 		public ValueType Type
 		{
 			readonly get => type;
-			set
-			{
-				if (type == value)
-					return;
-				type = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref type, value);
 		}
 		public bool BoolValue
 		{
 			readonly get => boolValue;
-			set
-			{
-				if (boolValue == value)
-					return;
-				boolValue = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref boolValue, value);
 		}
 		public int IntValue
 		{
 			readonly get => intValue;
-			set
-			{
-				if (intValue == value)
-					return;
-				intValue = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref intValue, value);
 		}
 		public float FloatValue
 		{
 			readonly get => floatValue;
-			set
-			{
-				if (floatValue == value)
-					return;
-				floatValue = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref floatValue, value);
 		}
 		public string StringValue
 		{
 			readonly get => stringValue;
-			set
-			{
-				if (stringValue == value)
-					return;
-				stringValue = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref stringValue, value);
 		}
 		public Vector2 Vector2Value
 		{
 			readonly get => vector2Value;
-			set
-			{
-				if (vector2Value == value)
-					return;
-				vector2Value = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref vector2Value, value, VectorComparer.Instance);
 		}
 		public Vector3 Vector3Value
 		{
 			readonly get => vector3Value;
-			set
-			{
-				if (vector3Value == value)
-					return;
-				vector3Value = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref vector3Value, value, VectorComparer.Instance);
 		}
 
 		public event PropertyChangedEventHandler PropertyChanged;
@@ -124,6 +81,7 @@ namespace Rails.Runtime.Callback
 
 		public void OnBeforeSerialize()
 		{
+#if UNITY_EDITOR
 			typeCopy = Type;
 			boolValueCopy = BoolValue;
 			intValueCopy = IntValue;
@@ -131,32 +89,27 @@ namespace Rails.Runtime.Callback
 			stringValueCopy = StringValue;
 			vector2ValueCopy = Vector2Value;
 			vector3ValueCopy = Vector3Value;
+#endif
 		}
 
 		public void OnAfterDeserialize()
 		{
-			if (typeCopy != Type)
-				NotifyPropertyChanged(nameof(Type));
-			if (boolValueCopy != BoolValue)
-				NotifyPropertyChanged(nameof(BoolValue));
-			if (intValueCopy != IntValue)
-				NotifyPropertyChanged(nameof(IntValue));
-			if (floatValueCopy != FloatValue)
-				NotifyPropertyChanged(nameof(FloatValue));
-			if (stringValueCopy != StringValue)
-				NotifyPropertyChanged(nameof(StringValue));
-			if (vector2ValueCopy != Vector2Value)
-				NotifyPropertyChanged(nameof(Vector3Value));
-			if (vector3ValueCopy != Vector3Value)
-				NotifyPropertyChanged(nameof(Vector3Value));
-
-			typeCopy = Type;
-			boolValueCopy = BoolValue;
-			intValueCopy = IntValue;
-			floatValueCopy = FloatValue;
-			stringValueCopy = StringValue;
-			vector2ValueCopy = Vector2Value;
-			vector3ValueCopy = Vector3Value;
+#if UNITY_EDITOR
+			if (NotifyIfChanged(Type, typeCopy, nameof(Type)))
+				typeCopy = Type;
+			if (NotifyIfChanged(BoolValue, boolValueCopy, nameof(BoolValue)))
+				BoolValue = boolValueCopy;
+			if (NotifyIfChanged(IntValue, intValueCopy, nameof(IntValue)))
+				IntValue = intValueCopy;
+			if (NotifyIfChanged(FloatValue, floatValueCopy, nameof(FloatValue)))
+				FloatValue = floatValueCopy;
+			if (NotifyIfChanged(StringValue, stringValueCopy, nameof(StringValue)))
+				StringValue = stringValueCopy;
+			if (NotifyIfChanged(Vector2Value, vector2ValueCopy, nameof(Vector2Value)))
+				Vector2Value = Vector2Value;
+			if (NotifyIfChanged(Vector3Value, vector3ValueCopy, nameof(Vector3Value)))
+				Vector3Value = Vector3Value;
+#endif
 		}
 
 		public readonly T ConvertValue<T>() => type switch
@@ -250,6 +203,32 @@ namespace Rails.Runtime.Callback
 		private readonly void NotifyPropertyChanged([CallerMemberName] string property = "")
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
+		}
+
+#nullable enable
+		private bool SetProperty<T>(ref T field, T value, IEqualityComparer<T> comparer, [CallerMemberName] string? propertyName = "")
+		{
+			comparer ??= EqualityComparer<T>.Default;
+			if (comparer.Equals(field, value))
+				return false;
+			field = value;
+			if (!string.IsNullOrEmpty(propertyName))
+				NotifyPropertyChanged(propertyName);
+			return true;
+		}
+
+		private bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = "")
+		{
+			return SetProperty(ref field, value, EqualityComparer<T>.Default, propertyName);
+		}
+#nullable disable
+		private bool NotifyIfChanged<T>(in T original, in T copy, string propertyName, IEqualityComparer<T> comparer = null)
+		{
+			comparer ??= EqualityComparer<T>.Default;
+			if (comparer.Equals(copy, original))
+				return false;
+			NotifyPropertyChanged(propertyName);
+			return true;
 		}
 	}
 

@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using Unity.Properties;
 using UnityEngine;
 
@@ -10,32 +8,22 @@ using UnityEngine;
 namespace Rails.Runtime.Callback
 {
 	[Serializable]
-	public class SerializableEvent : INotifyPropertyChanged, IEquatable<SerializableEvent>
-#if UNITY_EDITOR
-		, ISerializationCallbackReceiver
-#endif
+	public class SerializableEvent : BaseSerializableNotifier, IEquatable<SerializableEvent>
+
 	{
 		private static readonly CollectionComparer<SerializableCallback> comparer = new();
 
-		[SerializeField] private List<SerializableCallback> callbacks;
+		[SerializeField] private List<SerializableCallback> callbacks = new();
 
 		[CreateProperty]
 		public List<SerializableCallback> Callbacks
 		{
 			get => callbacks;
-			set
-			{
-				if (comparer.Equals(value, callbacks))
-					return;
-				callbacks = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref callbacks, value, comparer);
 		}
 
-		public event PropertyChangedEventHandler PropertyChanged;
-
 #if UNITY_EDITOR
-		private List<SerializableCallback> callbacksCopy = new();
+		private readonly List<SerializableCallback> callbacksCopy = new();
 #endif
 
 
@@ -45,18 +33,15 @@ namespace Rails.Runtime.Callback
 		}
 
 #if UNITY_EDITOR
-		public void OnBeforeSerialize()
+		public override void OnBeforeSerialize()
 		{
-			callbacksCopy.Clear();
-			callbacksCopy.AddRange(callbacks);
+			CopyList(Callbacks, callbacksCopy);
 		}
 
-		public void OnAfterDeserialize()
+		public override void OnAfterDeserialize()
 		{
-			if (!comparer.Equals(callbacks, callbacksCopy))
-				NotifyPropertyChanged(nameof(Callbacks));
-			callbacksCopy.Clear();
-			callbacksCopy.AddRange(callbacks);
+			if (NotifyIfChanged(Callbacks, callbacksCopy, nameof(Callbacks), comparer))
+				CopyList(Callbacks, callbacksCopy);
 		}
 
 		public void Copy(in SerializableEvent other)
@@ -88,11 +73,6 @@ namespace Rails.Runtime.Callback
 		public static bool operator !=(SerializableEvent left, SerializableEvent right)
 		{
 			return !(left == right);
-		}
-
-		private void NotifyPropertyChanged([CallerMemberName] string property = "")
-		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
 		}
 	}
 }

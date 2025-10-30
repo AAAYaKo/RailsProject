@@ -1,3 +1,15 @@
+.constrained-toggle {
+    width: 16px;
+    height: 16px;
+    flex-grow: 0;
+    flex-shrink: 0;
+    margin-top: 1px;
+    margin-bottom: 1px;
+    margin-right: 0;
+    margin-left: 3px;
+    align-self: center;
+}
+
 .constrained-toggle .unity-toggle__input {
     margin-top: 0;
     margin-right: 0;
@@ -20,8 +32,8 @@
     padding-left: 0;
     width: 100%;
     height: 100%;
-    background-image: resource('Icons/constrained_disabled');
-    -unity-background-image-tint-color: rgb(196, 196, 196);
+    background-image: var(--rails-icon-constrained-disabled);
+    -unity-background-image-tint-color: var(--rails-button-icon-color);
 }
 
 .constrained-toggle .unity-toggle__input:hover .unity-toggle__checkmark {
@@ -35,7 +47,7 @@
     padding-left: 0;
     width: 100%;
     height: 100%;
-    -unity-background-image-tint-color: rgb(240, 240, 240);
+    -unity-background-image-tint-color: var(--rails-button-icon-hover-color);
 }
 
 .constrained-toggle .unity-toggle__input:checked .unity-toggle__checkmark {
@@ -49,7 +61,7 @@
     padding-left: 0;
     width: 100%;
     height: 100%;
-    background-image: resource('Icons/constrained_enabled');
+    background-image: var(--rails-icon-constrained-enabled);
 }
 
 .driver-button {
@@ -67,5 +79,5 @@
 
 .key-index {
     -unity-text-align: middle-left;
-    color: var(--color-active)
+    color: var(--color-active);
 }

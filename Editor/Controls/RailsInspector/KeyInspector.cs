@@ -53,8 +53,7 @@ namespace Rails.Editor.Controls
 				NotifyPropertyChanged(TimePositionTextProperty);
 			}
 		}
-		private static readonly VisualTreeAsset templateMain;
-		private static readonly VisualTreeAsset templateAnimation;
+		private static readonly VisualTreeAsset template;
 
 		private string trackClass;
 		private bool? showInspectorFoldout;
@@ -66,13 +65,12 @@ namespace Rails.Editor.Controls
 
 		static KeyInspector()
 		{
-			templateMain = Resources.Load<VisualTreeAsset>("KeyEditor");
-			templateAnimation = Resources.Load<VisualTreeAsset>("AnimationKeyEditor");
+			template = Resources.Load<VisualTreeAsset>("KeyEditor");
 		}
 
 		public KeyInspector()
 		{
-			templateMain.CloneTree(this);
+			template.CloneTree(this);
 			SetBinding(TrackClassProperty, new ToTargetBinding(nameof(IKeyViewModel.TrackClass)));
 			SetBinding(ShowInspectorFoldoutProperty, new TwoWayBinding(nameof(IKeyViewModel.ShowInspectorFoldout)));
 			SetBinding(TimePositionTextProperty, new TwoWayBinding(nameof(IKeyViewModel.TimePositionText)));
@@ -99,7 +97,7 @@ namespace Rails.Editor.Controls
 					contentContainer.Remove(contentEvent);
 					contentEvent = null;
 				}
-				contentAnimation = templateAnimation.Instantiate();
+				contentAnimation = new AnimationKeyInspector();
 				contentContainer.Add(contentAnimation);
 			}
 

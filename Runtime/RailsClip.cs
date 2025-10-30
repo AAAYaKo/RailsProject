@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using DG.Tweening;
 using Rails.Runtime.Tracks;
 using UnityEngine;
@@ -9,44 +7,27 @@ using UnityEngine;
 namespace Rails.Runtime
 {
 	[Serializable]
-	public class RailsClip : INotifyPropertyChanged
-#if UNITY_EDITOR
-		, ISerializationCallbackReceiver
-#endif
+	public class RailsClip : BaseSerializableNotifier
 	{
 		public const float FrameTime = 1f / 60;
 		public const int Fps = 60;
 		private static readonly CollectionComparer<AnimationTrack> comparer = new();
 
-		[SerializeField] private List<AnimationTrack> tracks = new();
+		[SerializeReference] private List<AnimationTrack> tracks = new();
 		[SerializeField] private EventsTrack eventTrack = new();
 		[SerializeField] private int duration; //in frames
 		[SerializeField] private string name;
 
-		public event PropertyChangedEventHandler PropertyChanged;
-
 		public List<AnimationTrack> Tracks
 		{
 			get => tracks;
-			set
-			{
-				if (comparer.Equals(tracks, value))
-					return;
-				tracks = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref tracks, value);
 		}
 		public EventsTrack EventTrack => eventTrack;
 		public int Duration
 		{
 			get => duration;
-			set
-			{
-				if (duration == value)
-					return;
-				duration = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref duration, value);
 		}
 		public string Name { get => name; set => name = value; }
 
@@ -78,34 +59,25 @@ namespace Rails.Runtime
 			NotifyPropertyChanged(nameof(Tracks));
 		}
 
-		protected void NotifyPropertyChanged([CallerMemberName] string property = "")
+		public override void OnBeforeSerialize()
 		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
-		}
-
 #if UNITY_EDITOR
-		public void OnBeforeSerialize()
-		{
-			tracksCopy.Clear();
-			tracksCopy.AddRange(Tracks);
+			CopyList(tracks, tracksCopy);
 			durationCopy = Duration;
 			nameCopy = Name;
-		}
-
-		public void OnAfterDeserialize()
-		{
-			if (!comparer.Equals(tracksCopy, Tracks))
-				NotifyPropertyChanged(nameof(Tracks));
-			if (durationCopy != Duration)
-				NotifyPropertyChanged(nameof(Duration));
-			if (nameCopy != Name)
-				NotifyPropertyChanged(nameof(Name));
-
-			tracksCopy.Clear();
-			tracksCopy.AddRange(Tracks);
-			durationCopy = Duration;
-			nameCopy = Name;
-		}
 #endif
+		}
+
+		public override void OnAfterDeserialize()
+		{
+#if UNITY_EDITOR
+			if (NotifyIfChanged(Tracks, tracksCopy, nameof(Tracks), comparer))
+				CopyList(tracks, tracksCopy);
+			if (NotifyIfChanged(Duration, durationCopy, nameof(Duration)))
+				durationCopy = Duration;
+			if (NotifyIfChanged(Name, nameCopy, nameof(Name)))
+				nameCopy = Name;
+#endif
+		}
 	}
 }

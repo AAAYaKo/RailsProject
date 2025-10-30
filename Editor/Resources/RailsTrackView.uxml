@@ -1,11 +1,15 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
     <Style src="project://database/Assets/Rails/Editor/Resources/RailsEditor.uss?fileID=7433441132597879392&amp;guid=a52f72ccd09932d4795d5bf54f12136c&amp;type=3#RailsEditor" />
-    <ui:VisualElement class="tween-lines-background" style="flex-grow: 1; height: 100%; width: 100%;">
-        <ui:ScrollView touch-scroll-type="Clamped" horizontal-scroller-visibility="Hidden" style="width: 100%; position: absolute; max-height: 100%;">
-            <ui:VisualElement name="tracks-back" class="track-lines-background" style="flex-grow: 1; padding-bottom: 52px; position: absolute; width: 100%; height: 100%;" />
+    <ui:VisualElement class="tracks-view" style="flex-grow: 1; height: 100%; width: 100%;">
+        <ui:ScrollView touch-scroll-type="Clamped" horizontal-scroller-visibility="Hidden" style="width: 100%; position: absolute; max-height: 100%; height: 100%;">
+            <ui:VisualElement name="background" class="track-lines-background" style="position: absolute; width: 100%; flex-shrink: 0; flex-grow: 1; flex-basis: 100%; min-height: 100%;">
+                <ui:VisualElement name="tracks-back" style="flex-grow: 1;" />
+                <ui:VisualElement name="spacer" style="flex-grow: 1; min-height: 52px;" />
+            </ui:VisualElement>
             <ui:VisualElement name="content-container" style="flex-grow: 1; flex-shrink: 0;">
                 <ui:VisualElement name="selection-box-manipulator" style="flex-grow: 1; width: 100%; height: 100%; position: absolute;" />
-                <ui:VisualElement name="tracks-container" picking-mode="Ignore" style="padding-bottom: 52px;" />
+                <ui:VisualElement name="tracks-container" picking-mode="Ignore" />
+                <ui:VisualElement name="spacer" style="flex-grow: 1; min-height: 52px;" />
                 <ui:VisualElement name="selection-box-container" picking-mode="Ignore" style="flex-grow: 1; position: absolute; width: 100%; height: 100%; overflow: hidden;" />
             </ui:VisualElement>
         </ui:ScrollView>

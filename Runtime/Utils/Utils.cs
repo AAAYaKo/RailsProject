@@ -1,22 +1,21 @@
-﻿using System.Collections.Generic;
-using Unity.Mathematics;
+﻿using Unity.Mathematics;
 using UnityEngine;
 
 namespace Rails.Runtime
 {
 	public static class Utils
 	{
-		public static bool Approximately(Vector2 first, Vector2 second)
+		public static bool Approximately(in Vector2 first, in Vector2 second)
 		{
 			return Mathf.Approximately(first.x, second.x) && Mathf.Approximately(first.y, second.y);
 		}
 
-		public static bool Approximately(Vector3 first, Vector3 second)
+		public static bool Approximately(in Vector3 first, in Vector3 second)
 		{
 			return Mathf.Approximately(first.x, second.x) && Mathf.Approximately(first.y, second.y) && Mathf.Approximately(first.z, second.z);
 		}
 
-		public static bool Approximately(float4 a, float4 b)
+		public static bool Approximately(in float4 a, in float4 b)
 		{
 			for (int i = 0; i < 4; i++)
 			{

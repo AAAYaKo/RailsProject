@@ -14,13 +14,7 @@ namespace Rails.Runtime.Tracks
 		public UnityEngine.Object SceneReference
 		{
 			get => sceneReference;
-			set
-			{
-				if (sceneReference == value)
-					return;
-				sceneReference = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref sceneReference, value);
 		}
 
 #if UNITY_EDITOR
@@ -196,28 +190,29 @@ namespace Rails.Runtime.Tracks
 		protected abstract Tween CreateTween(AnimationKey keyStart, AnimationKey keyEnd, float frameTime);
 		protected abstract void InstantChange(AnimationKey key);
 
-#if UNITY_EDITOR
 		public override void OnBeforeSerialize()
 		{
+#if UNITY_EDITOR
 			base.OnBeforeSerialize();
 			sceneReferenceCopy = sceneReference;
+#endif
 		}
 
 		public override void OnAfterDeserialize()
 		{
+#if UNITY_EDITOR
 			try
 			{
 				base.OnAfterDeserialize();
-				if (sceneReferenceCopy != sceneReference)
-					NotifyPropertyChanged(nameof(SceneReference));
-				sceneReferenceCopy = sceneReference;
+				if (NotifyIfChanged(SceneReference, sceneReferenceCopy, nameof(SceneReference)))
+					sceneReferenceCopy = sceneReference;
 			}
 			catch
 			{
 
 			}
-		}
 #endif
+		}
 
 		public enum ValueType
 		{

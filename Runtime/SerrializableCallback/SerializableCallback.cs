@@ -1,9 +1,7 @@
 using System;
-using System.ComponentModel;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using Unity.Properties;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -14,7 +12,7 @@ namespace Rails.Runtime.Callback
 {
 
 	[Serializable]
-	public class SerializableCallback : ISerializationCallbackReceiver, INotifyPropertyChanged
+	public class SerializableCallback : BaseSerializableNotifier
 	{
 		private static readonly CollectionComparer<AnyValue> comparer = new();
 
@@ -27,54 +25,34 @@ namespace Rails.Runtime.Callback
 		public Object TargetObject
 		{
 			get => targetObject;
-			set
-			{
-				if (targetObject == value)
-					return;
-				targetObject = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref targetObject, value);
 		}
 		[CreateProperty]
 		public string MethodName
 		{
 			get => methodName;
-			set
-			{
-				if (methodName == value)
-					return;
-				methodName = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref methodName, value);
 		}
 		[CreateProperty]
 		public SerializableCallbackState State
 		{
 			get => state;
-			set
-			{
-				if (state == value)
-					return;
-				state = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref state, value);
 		}
 		[CreateProperty]
 		public AnyValue[] Parameters
 		{
 			get => parameters;
-			set
-			{
-				if (comparer.Equals(parameters, value))
-					return;
-				parameters = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref parameters, value, comparer);
 		}
-		public event PropertyChangedEventHandler PropertyChanged;
 
 		private Delegate cachedDelegate;
-
+#if UNITY_EDITOR
+		private Object targetObjectCopy;
+		private string methodNameCopy;
+		private SerializableCallbackState stateCopy;
+		private AnyValue[] parametersCopy;
+#endif
 
 		public void Invoke() => Invoke(parameters);
 
@@ -98,14 +76,25 @@ namespace Rails.Runtime.Callback
 			return;
 		}
 
-		public void OnBeforeSerialize()
+		public override void OnBeforeSerialize()
 		{
-
+			targetObjectCopy = TargetObject;
+			methodNameCopy = MethodName;
+			stateCopy = State;
+			CopyArray(Parameters, ref parametersCopy);
 		}
 
-		public void OnAfterDeserialize()
+		public override void OnAfterDeserialize()
 		{
 			cachedDelegate = null;
+			if (NotifyIfChanged(TargetObject, targetObjectCopy, nameof(TargetObject)))
+				targetObjectCopy = TargetObject;
+			if (NotifyIfChanged(MethodName, methodNameCopy, nameof(MethodName)))
+				methodNameCopy = MethodName;
+			if (NotifyIfChanged(State, stateCopy, nameof(State)))
+				stateCopy = State;
+			if (NotifyIfChanged(Parameters, parametersCopy, nameof(Parameters), comparer))
+				CopyArray(Parameters, ref parametersCopy);
 		}
 
 		private object[] ConvertParameters(AnyValue[] args)
@@ -152,14 +141,9 @@ namespace Rails.Runtime.Callback
 			Type delegateType = Expression.GetDelegateType(parameterTypes.Append(methodInfo.ReturnType).ToArray());
 			cachedDelegate = methodInfo.CreateDelegate(delegateType, targetObject);
 		}
-
-		private void NotifyPropertyChanged([CallerMemberName] string property = "")
-		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
-		}
 	}
 
-	[Serializable]
+	[Serializable] //Not full realized
 	public class SerializableCallback<TReturn> : ISerializationCallbackReceiver
 	{
 		[SerializeField] private Object targetObject;

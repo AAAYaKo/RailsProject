@@ -1,6 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace Rails.Runtime.Tracks
@@ -12,50 +10,32 @@ namespace Rails.Runtime.Tracks
 		[SerializeField] private float singleValue;
 		[SerializeField] private Vector3 vector3Value;
 		[SerializeField] private Vector2 vector2Value;
+		[SerializeField] private bool constrainedProportions;
 
 		public RailsEase Ease
 		{
 			get => ease;
-			set
-			{
-				if (ease == value)
-					return;
-				ease = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref ease, value);
 		}
 		public float SingleValue
 		{
 			get => singleValue;
-			set
-			{
-				if (singleValue == value)
-					return;
-				singleValue = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref singleValue, value);
 		}
 		public Vector3 Vector3Value
 		{
 			get => vector3Value;
-			set
-			{
-				if (vector3Value == value)
-					return;
-				vector3Value = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref vector3Value, value);
 		}
 		public Vector2 Vector2Value
 		{
 			get => vector2Value;
-			set
-			{
-				if (vector2Value == value)
-					return;
-				vector2Value = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref vector2Value, value);
+		}
+		public bool ConstrainedProportions
+		{
+			get => constrainedProportions;
+			set => SetProperty(ref constrainedProportions, value);
 		}
 
 #if UNITY_EDITOR
@@ -63,33 +43,36 @@ namespace Rails.Runtime.Tracks
 		private float singleValueCopy;
 		private Vector3 vector3ValueCopy;
 		private Vector2 vector2ValueCopy;
+		private bool constrainedProportionsCopy;
+#endif
 
 		public override void OnBeforeSerialize()
 		{
+#if UNITY_EDITOR
 			base.OnBeforeSerialize();
 			easeCopy = Ease;
 			singleValueCopy = SingleValue;
 			vector2ValueCopy = Vector2Value;
 			vector3ValueCopy = Vector3Value;
+			constrainedProportionsCopy = ConstrainedProportions;
+#endif
 		}
 
 		public override void OnAfterDeserialize()
 		{
+#if UNITY_EDITOR
 			base.OnAfterDeserialize();
-			if (easeCopy != Ease)
-				NotifyPropertyChanged(nameof(Ease));
-			if (singleValueCopy != SingleValue)
-				NotifyPropertyChanged(nameof(SingleValue));
-			if (vector2ValueCopy != Vector2Value)
-				NotifyPropertyChanged(nameof(Vector2Value));
-			if (vector3ValueCopy != Vector3Value)
-				NotifyPropertyChanged(nameof(Vector3Value));
-
-			easeCopy = Ease;
-			singleValueCopy = SingleValue;
-			vector2ValueCopy = Vector2Value;
-			vector3ValueCopy = Vector3Value;
-		}
+			if (NotifyIfChanged(Ease, easeCopy, nameof(Ease)))
+				easeCopy = Ease;
+			if (NotifyIfChanged(SingleValue, singleValueCopy, nameof(SingleValue)))
+				singleValueCopy = SingleValue;
+			if (NotifyIfChanged(Vector3Value, vector3ValueCopy, nameof(Vector3Value)))
+				vector3ValueCopy = Vector3Value;
+			if (NotifyIfChanged(Vector2Value, vector2ValueCopy, nameof(Vector2Value)))
+				vector2ValueCopy = Vector2Value;
+			if (NotifyIfChanged(ConstrainedProportions, constrainedProportionsCopy, nameof(ConstrainedProportions)))
+				constrainedProportionsCopy = ConstrainedProportions;
 #endif
+		}
 	}
 }

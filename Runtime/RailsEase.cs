@@ -4,8 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using DG.Tweening;
 using Unity.Mathematics;
 using UnityEngine;
@@ -13,7 +11,7 @@ using UnityEngine;
 namespace Rails.Runtime
 {
 	[Serializable]
-	public class RailsEase : INotifyPropertyChanged, ISerializationCallbackReceiver
+	public class RailsEase : BaseSerializableNotifier
 	{
 		#region Ease Preview Spline Curves
 		private static readonly Dictionary<Ease, Vector2[]> _easeSplines = new()
@@ -443,8 +441,6 @@ namespace Rails.Runtime
 		[SerializeField] private float4 controls = new(1 / 3f, 1 / 6f, 0, 1);
 		[SerializeField] private Ease ease = Ease.Linear;
 
-		public event PropertyChangedEventHandler PropertyChanged;
-
 		public EaseType Type
 		{
 			get => easeType;
@@ -477,16 +473,15 @@ namespace Rails.Runtime
 		public Ease EaseFunc
 		{
 			get => ease;
-			set
-			{
-				if (ease == value)
-					return;
-				ease = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref ease, value);
 		}
 
 		private float3x2? polynomial;
+#if UNITY_EDITOR
+		private EaseType easeTypeCopy;
+		private float4 controlsCopy;
+		private Ease easeFuncCopy;
+#endif
 
 
 		public Vector2[] GetEaseSpline() => easeType switch
@@ -512,16 +507,7 @@ namespace Rails.Runtime
 
 		public float Eased(float t)
 		{
-			if (Type is EaseType.NoAnimation)
-				return 0;
-			if (Type is EaseType.EaseCurve)
-			{
-				if (polynomial == null)
-					CalculatePolynomial();
-				float y = BezierUtils.GetBezierYbyX(t, polynomial ?? float3x2.zero);
-				return math.lerp(0, 1, y);
-			}
-			return DOVirtual.EasedValue(0, 1, t, EaseFunc);
+			return EasedValue(0, 1, t);
 		}
 
 		public float EasedValue(float from, float to, float t)
@@ -566,20 +552,25 @@ namespace Rails.Runtime
 			return DOVirtual.EasedValue(from, to, t, EaseFunc);
 		}
 
-		public void OnBeforeSerialize()
+		public override void OnBeforeSerialize()
 		{
+#if UNITY_EDITOR
+			easeTypeCopy = Type;
+			controlsCopy = Controls;
+			easeFuncCopy = EaseFunc;
+#endif
 		}
 
-		public void OnAfterDeserialize()
+		public override void OnAfterDeserialize()
 		{
-			NotifyPropertyChanged(nameof(Type));
-			NotifyPropertyChanged(nameof(Controls));
-			NotifyPropertyChanged(nameof(EaseFunc));
-		}
-
-		private void NotifyPropertyChanged([CallerMemberName] string property = "")
-		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
+#if UNITY_EDITOR
+			if (NotifyIfChanged(Type, easeTypeCopy, nameof(Type)))
+				easeTypeCopy = Type;
+			if (NotifyIfChanged(Controls, controlsCopy, nameof(Controls), VectorComparer.Instance))
+				controlsCopy = Controls;
+			if (NotifyIfChanged(EaseFunc, easeFuncCopy, nameof(EaseFunc)))
+				easeFuncCopy = EaseFunc;
+#endif
 		}
 
 		private void CalculatePolynomial()

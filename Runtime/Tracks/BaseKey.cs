@@ -1,15 +1,10 @@
 ﻿using System;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace Rails.Runtime
 {
 	[Serializable]
-	public abstract class BaseKey : INotifyPropertyChanged
-#if UNITY_EDITOR
-		, ISerializationCallbackReceiver
-#endif
+	public abstract class BaseKey : BaseSerializableNotifier
 	{
 		[SerializeField] private int timePosition;
 
@@ -19,14 +14,8 @@ namespace Rails.Runtime
 		public int TimePosition
 		{
 			get => timePosition;
-			set
-			{
-				SetTimePositionWithoutNotify(value);
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref timePosition, value);
 		}
-
-		public event PropertyChangedEventHandler PropertyChanged;
 
 #if UNITY_EDITOR
 		private int timePositionCopy;
@@ -35,30 +24,22 @@ namespace Rails.Runtime
 
 		public void SetTimePositionWithoutNotify(int value)
 		{
-			if (timePosition == value)
-				return;
 			timePosition = value;
 		}
 
-		protected void NotifyPropertyChanged([CallerMemberName] string property = "")
+		public override void OnBeforeSerialize()
 		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
-		}
-
-
 #if UNITY_EDITOR
-		public virtual void OnBeforeSerialize()
-		{
 			timePositionCopy = TimePosition;
-		}
-
-		public virtual void OnAfterDeserialize()
-		{
-			if (timePositionCopy != TimePosition)
-				NotifyPropertyChanged(nameof(TimePosition));
-
-			timePositionCopy = TimePosition;
-		}
 #endif
+		}
+
+		public override void OnAfterDeserialize()
+		{
+#if UNITY_EDITOR
+			if (NotifyIfChanged(TimePosition, timePositionCopy, nameof(TimePosition)))
+				timePositionCopy = TimePosition;
+#endif
+		}
 	}
 }

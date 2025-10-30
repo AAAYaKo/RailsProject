@@ -48,6 +48,12 @@ namespace Rails.Editor.ViewModel
 			set => SetProperty(ref currentVector3Value, value);
 		}
 		[CreateProperty]
+		public bool CurrentConstrainedProportions
+		{
+			get => constrainedProportions ?? false;
+			set => SetProperty(ref constrainedProportions, value);
+		}
+		[CreateProperty]
 		public ICommand RemoveCommand
 		{
 			get => removeCommand;
@@ -71,17 +77,24 @@ namespace Rails.Editor.ViewModel
 			get => valueEditCommand;
 			set => SetProperty(ref valueEditCommand, value);
 		}
+		[CreateProperty]
+		public ICommand<bool> ConstrainedProportionsChangeCommand
+		{
+			get => constrainedProportionsChangeCommand;
+			set => SetProperty(ref constrainedProportionsChangeCommand, value);
+		}
 
 		private UnityEngine.Object reference;
 		private TrackData trackData;
 		private float? currentSingleValue;
 		private Vector2? currentVector2Value;
 		private Vector3? currentVector3Value;
+		private bool? constrainedProportions;
 		private ICommand removeCommand;
 		private ICommand keyFrameAddCommand;
 		private ICommand keyFrameRemoveCommand;
 		private ICommand<ValueEditArgs> valueEditCommand;
-
+		private ICommand<bool> constrainedProportionsChangeCommand;
 
 		public AnimationTrackViewModel(int trackIndex) : base()
 		{
@@ -106,6 +119,17 @@ namespace Rails.Editor.ViewModel
 					model.InsertNewKeyAt(currentFrame, args.SingleValue, args.Vector2Value, args.Vector3Value);
 				}
 			});
+
+			ConstrainedProportionsChangeCommand = new RelayCommand<bool>(x =>
+			{
+				int keyIndex = Keys.FindIndex(x => x.TimePosition == currentFrame);
+				if (keyIndex >= 0)
+				{
+					string recordName = x ? "Key Constrained Proportions Enabled" : "Key Constrained Proportions Disabled";
+					EditorContext.Instance.Record(recordName);
+					model.AnimationKeys[keyIndex].ConstrainedProportions = x;
+				}
+			});
 		}
 
 		public override void OnTimeHeadPositionChanged(int frame)
@@ -118,21 +142,21 @@ namespace Rails.Editor.ViewModel
 			if (previousIndex == -1)
 			{
 				IsKeyFrame = false;
+				CurrentConstrainedProportions = false;
 				UpdateCurrentValue(null, null, frame);
 				return;
 			}
 			IsKeyFrame = Keys[previousIndex].TimePosition == frame;
+			CurrentConstrainedProportions = IsKeyFrame && Keys[previousIndex].ConstrainedProportions;
 			int nextIndex = previousIndex + 1;
-			if (nextIndex >= Keys.Count)
-			{
-				UpdateCurrentValue(Keys[previousIndex], null, frame);
-				return;
-			}
-			UpdateCurrentValue(Keys[previousIndex], Keys[nextIndex], frame);
+			UpdateCurrentValue(Keys[previousIndex], nextIndex >= Keys.Count ? null : Keys[nextIndex], frame);
 		}
 
 		protected override void OnModelChanged()
 		{
+			if (model != null)
+				trackData = TrackTypes[model.GetType()];
+			
 			base.OnModelChanged();
 
 			if (model == null)
@@ -140,7 +164,6 @@ namespace Rails.Editor.ViewModel
 
 			Reference = model.SceneReference;
 
-			trackData = TrackTypes[model.GetType()];
 			keys.ForEach(x => x.TrackClass = trackData.TrackClass);
 
 			NotifyPropertyChanged(nameof(Type));
@@ -222,6 +245,7 @@ namespace Rails.Editor.ViewModel
 			}))
 			{
 				Reference = Reference,
+				ValueType = ValueType,
 			};
 		}
 

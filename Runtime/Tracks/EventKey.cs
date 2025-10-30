@@ -15,21 +15,21 @@ namespace Rails.Runtime
 		private SerializableEvent animationEventCopy = new();
 #endif
 
-#if UNITY_EDITOR
 		public override void OnBeforeSerialize()
 		{
+#if UNITY_EDITOR
 			base.OnBeforeSerialize();
 			animationEventCopy.Copy(AnimationEvent);
+#endif
 		}
 
 		public override void OnAfterDeserialize()
 		{
+#if UNITY_EDITOR
 			base.OnAfterDeserialize();
-			if (animationEventCopy != AnimationEvent)
-				NotifyPropertyChanged(nameof(AnimationEvent));
-
-			animationEventCopy.Copy(AnimationEvent);
-		}
+			if (NotifyIfChanged(AnimationEvent, animationEventCopy, nameof(AnimationEvent)))
+				animationEventCopy.Copy(AnimationEvent);
 #endif
+		}
 	}
 }

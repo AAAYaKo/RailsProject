@@ -134,6 +134,7 @@ namespace Rails.Editor.ViewModel
 			}
 
 			UpdateKeys();
+			OnTimeHeadPositionChanged(currentFrame);
 
 			if (!storedSelectedIndexes.Value.IsNullOrEmpty())
 			{
