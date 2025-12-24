@@ -82,16 +82,99 @@ namespace Rails.Runtime
 			result[1].x = 1 - result[1].y - result[1].z;
 		}
 
+		/// <summary>
+		/// For Normalized Bezier
+		/// </summary>
+		/// <param name="t"></param>
+		/// <param name="polynomial"></param>
+		/// <param name="result"></param>
 		[BurstCompile(FloatMode = FloatMode.Fast)]
-		public static void SampleValueAtT(in float t, in float3 polinomial, out float result)
+		public static void SampleValueAtT(in float t, in float3 polynomial, out float result)
 		{
-			result = ((t * polinomial.x + polinomial.y) * t + polinomial.z) * t;
+			result = ((t * polynomial.x + polynomial.y) * t + polynomial.z) * t;
+		}
+		/// <summary>
+		/// For generic Bezier
+		/// </summary>
+		/// <param name="t"></param>
+		/// <param name="polynomial"></param>
+		/// <param name="result"></param>
+		[BurstCompile(FloatMode = FloatMode.Fast)]
+		public static void SampleValueAtT(in float t, in float4 polynomial, out float result)
+		{
+			result = ((t * polynomial.x + polynomial.y) * t + polynomial.z) * t + polynomial.w;
 		}
 
 		[BurstCompile(FloatMode = FloatMode.Fast)]
-		public static void SampleDerivativeAtT(in float t, in float3 polinomial, out float result)
+		public static void SampleDerivativeAtT(in float t, in float3 polynomial, out float result)
 		{
-			result = (3 * polinomial.x * t + 2 * polinomial.y) * t + polinomial.z;
+			result = (3 * polynomial.x * t + 2 * polynomial.y) * t + polynomial.z;
+		}
+
+		/// <summary>
+		/// Solve Full Cubic Bezier and Find Min, Max Y
+		/// </summary>
+		/// <param name="point0Y"></param>
+		/// <param name="point1Y"></param>
+		/// <param name="point2Y"></param>
+		/// <param name="point3Y"></param>
+		/// <param name="min"></param>
+		/// <param name="max"></param>
+		[BurstCompile(FloatMode = FloatMode.Fast)]
+		public static void SolveMinMaxY(in float point0Y, in float point1Y, in float point2Y, in float point3Y, out float min, out float max)
+		{
+			float4 polynomial = new(
+				-point0Y + 3 * point1Y - 3 * point2Y + point3Y,
+				3 * point0Y - 6 * point1Y + 3 * point2Y,
+				-3 * point0Y + 3 * point1Y,
+				point0Y
+			);
+
+			min = math.min(point0Y, point3Y);
+			max = math.max(point0Y, point3Y);
+
+			float3 derivative = new (
+				3 * polynomial.x,
+				2 * polynomial.y,
+				polynomial.z
+				);
+
+			if (math.abs(derivative.x - 0) < epsilon)
+			{
+				if (math.abs(derivative.y - 0) > epsilon)
+				{
+					float t = -derivative.z / derivative.y;
+					if (t >= 0 && t <= 1)
+					{
+						SampleValueAtT(t, polynomial, out float y);
+						min = math.min(min, y);
+						max = math.max(max, y);
+					}
+				}
+			}
+			else
+			{
+				float discriminant = math.square(derivative.y) - 4 * derivative.x * derivative.z;
+				if (discriminant >= 0)
+				{
+					float sqrtDiscriminant = math.sqrt(discriminant);
+					float t1 = (-derivative.y + sqrtDiscriminant) / (2 * derivative.x);
+					float t2 = (-derivative.y - sqrtDiscriminant) / (2 * derivative.x);
+
+					if (t1 >= 0 && t1 <= 1)
+					{
+						SampleValueAtT(t1, polynomial, out float y);
+						min = math.min(min, y);
+						max = math.max(max, y);
+					}
+					if (t2 >= 0 && t2 <= 1)
+					{
+						SampleValueAtT(t2, polynomial, out float y);
+						min = math.min(min, y);
+						max = math.max(max, y);
+					}
+				}
+			}
 		}
 	}
 }

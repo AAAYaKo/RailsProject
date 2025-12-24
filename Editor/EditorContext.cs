@@ -47,11 +47,15 @@ namespace Rails.Editor
 
 		public void Record(string undoRecordName)
 		{
+			if (CurrentTarget == null)
+				return;
 			Undo.RecordObject(CurrentTarget, $"Rails({CurrentTarget.name}) " + undoRecordName);
 		}
 
 		public void Record(UnityEngine.Object target, string undoRecordName)
 		{
+			if (CurrentTarget == null)
+				return;
 			Undo.RecordObjects(new UnityEngine.Object[] { CurrentTarget, target }, $"Rails({CurrentTarget.name}) " + undoRecordName);
 		}
 
@@ -73,23 +77,6 @@ namespace Rails.Editor
 
 		private void RegisterConverters()
 		{
-			ConverterGroups.RegisterGlobalConverter((ref ToggleButtonGroupState x) =>
-			{
-				for (int i = 0; i < x.length; i++)
-				{
-					if (x[i])
-						return (RailsEase.EaseType)i;
-				}
-				return RailsEase.EaseType.NoAnimation;
-			});
-			ConverterGroups.RegisterGlobalConverter((ref RailsEase.EaseType x) =>
-			{
-				int length = Enum.GetNames(typeof(RailsEase.EaseType)).Length;
-				ToggleButtonGroupState result = new(0, length);
-				result.ResetAllOptions();
-				result[(int)x] = true;
-				return result;
-			});
 			ConverterGroups.RegisterGlobalConverter((ref bool x) =>
 			{
 				return x ? new StyleEnum<DisplayStyle>(DisplayStyle.Flex) : new StyleEnum<DisplayStyle>(DisplayStyle.None);

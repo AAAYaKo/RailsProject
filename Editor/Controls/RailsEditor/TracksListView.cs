@@ -50,7 +50,7 @@ namespace Rails.Editor.Controls
 				foreach (var type in AnimationTrackViewModel.TrackTypes.Keys)
 					menu.AddItem(type.Name, false, () => OnAddClicked(type));
 
-				menu.DropDown(button.worldBound, button, true);
+				menu.DropDown(button.worldBound, button, DropdownMenuSizeMode.Auto);
 			};
 			SetBinding(AddTrackCommandProperty, new CommandBinding(nameof(RailsClipViewModel.AddTrackCommand)));
 		}

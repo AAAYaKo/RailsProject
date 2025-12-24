@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using DG.Tweening;
 using Rails.Runtime;
+using Unity.Mathematics;
 using Unity.Properties;
 using UnityEngine;
 
@@ -10,56 +12,52 @@ namespace Rails.Editor.ViewModel
 {
 	public class EaseViewModel : BaseNotifyPropertyViewModel<RailsEase>
 	{
-		private static readonly DG.Tweening.Ease[] easeVariants;
+		private static readonly Ease[] easeVariants;
+		private static readonly HashSet<Ease> notSupportedList = new()
+		{
+			Ease.Unset,
+			Ease.INTERNAL_Custom,
+			Ease.INTERNAL_Zero,
+			Ease.Flash,
+			Ease.InFlash,
+			Ease.OutFlash,
+			Ease.InOutFlash,
+		};
 
 		[CreateProperty]
 		public Vector2 FirstPoint
 		{
-			get => firstPoint;
+			get => firstPoint ?? Vector2.zero;
 			set
 			{
-				if (Utils.Approximately(value, firstPoint))
+				if (Utils.Approximately(value, FirstPoint))
 					return;
-				//EditorContext.Instance.Record("");
-				Vector4 controls = model.Controls;
-				controls.x = Mathf.Clamp(value.x, 0, 1);
-				controls.z = value.y;
 				firstPoint = value;
-				model.Controls = controls;
 				NotifyPropertyChanged();
 				NotifyPropertyChanged(nameof(Spline));
 			}
 		}
-
 		[CreateProperty]
 		public Vector2 SecondPoint
 		{
-			get => secondPoint;
+			get => secondPoint ?? Vector2.one;
 			set
 			{
-				if (Utils.Approximately(value, secondPoint))
+				if (Utils.Approximately(value, SecondPoint))
 					return;
-				//EditorContext.Instance.Record("");
-				Vector4 controls = model.Controls;
-				controls.y = Mathf.Clamp(value.x, 0, 1);
-				controls.w = value.y;
 				secondPoint = value;
-				model.Controls = controls;
 				NotifyPropertyChanged();
 				NotifyPropertyChanged(nameof(Spline));
 			}
 		}
-
 		[CreateProperty]
 		public RailsEase.EaseType EaseType
 		{
-			get => easeType;
+			get => easeType ?? RailsEase.EaseType.NoAnimation;
 			set
 			{
 				if (easeType == value)
 					return;
-				//EditorContext.Instance.Record("");
-				model.Type = value;
 				easeType = value;
 				NotifyPropertyChanged();
 				NotifyPropertyChanged(nameof(Spline));
@@ -67,70 +65,96 @@ namespace Rails.Editor.ViewModel
 				HasFunction = model.Type is RailsEase.EaseType.EaseFunction;
 			}
 		}
-
 		[CreateProperty]
 		public Vector2[] Spline
 		{
 			get => model.GetEaseSpline();
 		}
-
 		[CreateProperty]
 		public bool HasHandles
 		{
 			get => hasHandles ?? false;
 			set => SetProperty(ref hasHandles, value);
 		}
-
 		[CreateProperty]
 		public bool HasFunction
 		{
 			get => hasFunction ?? false;
 			set => SetProperty(ref hasFunction, value);
 		}
-
 		[CreateProperty]
-		public List<string> EaseVariants
+		public List<Ease> EaseVariants
 		{
-			get => easeVariants.Select(x => x.ToString()).ToList();
+			get => easeVariants.ToList();
 		}
-
 		[CreateProperty]
-		public int SelectedVariant
+		public Ease SelectedVariant
 		{
-			get => selectedVariant;
+			get => selectedVariant ?? Ease.Linear;
 			set
 			{
-				if (selectedVariant != value)
-				{
-					selectedVariant = value;
-					model.EaseFunc = easeVariants[selectedVariant];
-					NotifyPropertyChanged();
+				if (SetProperty(ref selectedVariant, value))
 					NotifyPropertyChanged(nameof(Spline));
-				}
 			}
 		}
 
+		[CreateProperty]
+		public ICommand<Ease> EaseFunctionChangeCommand { get; set; }
+		[CreateProperty]
+		public ICommand<RailsEase.EaseType> EaseTypeChangeCommand { get; set; }
+		[CreateProperty]
+		public ICommand<Vector2> FirstPointChangeCommand { get; set; }
+		[CreateProperty]
+		public ICommand<Vector2> SecondPointChangeCommand { get; set; }
+
 		private bool? hasHandles;
 		private bool? hasFunction;
-		private Vector2 firstPoint;
-		private Vector2 secondPoint;
-		private RailsEase.EaseType easeType;
-		private int selectedVariant;
+		private Vector2? firstPoint;
+		private Vector2? secondPoint;
+		private RailsEase.EaseType? easeType;
+		private Ease? selectedVariant;
 
 
 		static EaseViewModel()
 		{
 			easeVariants = Enum
-				.GetValues(typeof(DG.Tweening.Ease))
-				.Cast<DG.Tweening.Ease>()
-				.Where(x => x is not DG.Tweening.Ease.Unset
-				and not DG.Tweening.Ease.INTERNAL_Custom
-				and not DG.Tweening.Ease.INTERNAL_Zero
-				and not DG.Tweening.Ease.Flash
-				and not DG.Tweening.Ease.InFlash
-				and not DG.Tweening.Ease.OutFlash
-				and not DG.Tweening.Ease.InOutFlash)
+				.GetValues(typeof(Ease))
+				.Cast<Ease>()
+				.Where(x => !notSupportedList.Contains(x))
 				.ToArray();
+		}
+
+		public EaseViewModel()
+		{
+			EaseFunctionChangeCommand = new RelayCommand<Ease>(x =>
+			{
+				EditorContext.Instance.Record("Key Ease Function Changed");
+				model.EaseFunc = x;
+			});
+
+			EaseTypeChangeCommand = new RelayCommand<RailsEase.EaseType>(x =>
+			{
+				EditorContext.Instance.Record("Key Ease Type Changed");
+				model.Type = x;
+			});
+
+			FirstPointChangeCommand = new RelayCommand<Vector2>(x =>
+			{
+				EditorContext.Instance.Record("Key Ease First Control Changed");
+				float4 controls = model.Controls;
+				controls.x = Mathf.Clamp(x.x, 0, 1);
+				controls.z = x.y;
+				model.Controls = controls;
+			});
+
+			SecondPointChangeCommand = new RelayCommand<Vector2>(x =>
+			{
+				EditorContext.Instance.Record("Key Second Control Changed");
+				float4 controls = model.Controls;
+				controls.y = Mathf.Clamp(x.x, 0, 1); ;
+				controls.w = x.y;
+				model.Controls = controls;
+			});
 		}
 
 		public float EasedValue(float from, float to, float t) => model.EasedValue(from, to, t);
@@ -150,9 +174,9 @@ namespace Rails.Editor.ViewModel
 			{
 				EaseType = model.Type;
 			}
-			else if (e.PropertyName != nameof(RailsEase.EaseFunc))
+			else if (e.PropertyName == nameof(RailsEase.EaseFunc))
 			{
-				SelectedVariant = Array.IndexOf(easeVariants, model.EaseFunc);
+				SelectedVariant = model.EaseFunc;
 			}
 		}
 
@@ -161,7 +185,7 @@ namespace Rails.Editor.ViewModel
 			FirstPoint = model.Controls.xz;
 			SecondPoint = model.Controls.yw;
 			EaseType = model.Type;
-			SelectedVariant = Array.IndexOf(easeVariants, model.EaseFunc);
+			SelectedVariant = model.EaseFunc;
 		}
 	}
 }

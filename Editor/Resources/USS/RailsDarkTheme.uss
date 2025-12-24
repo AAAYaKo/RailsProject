@@ -29,6 +29,9 @@
 	--rails-time-scroller-stroke-color: #242424;
 	--rails-selection-box-background-color: rgba(71, 158, 255, 0.15);
 	--rails-selection-box-stroke-color: rgba(71, 158, 255, 0.5);
+	--rails-ease-stroke-start-color: #47F4E0;
+	--rails-ease-stroke-center-color: #6D6D6D;
+	--rails-ease-stroke-end-color: #3E85EE;
 }
 
 .move-anchor{

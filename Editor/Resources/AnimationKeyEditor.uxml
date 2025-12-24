@@ -1,12 +1,13 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
-    <ui:TextField label="Time" name="time" is-delayed="true" />
+    <ui:TextField label="Time" name="time" is-delayed="true"/>
     <Rails.Editor.Controls.AnimationValueControl label="Value">
         <Bindings>
-            <ui:DataBinding property="ValueType" data-source-path="ValueType" binding-mode="ToTarget" />
-            <ui:DataBinding property="SingleValue" data-source-path="SingleValue" binding-mode="ToTarget" />
-            <ui:DataBinding property="Vector2Value" data-source-path="Vector2Value" binding-mode="ToTarget" />
-            <ui:DataBinding property="Vector3Value" data-source-path="Vector3Value" binding-mode="ToTarget" />
-            <ui:DataBinding property="ConstrainedProportions" data-source-path="ConstrainedProportions" binding-mode="ToTarget" />
+            <ui:DataBinding property="ValueType" data-source-path="ValueType" binding-mode="ToTarget"/>
+            <ui:DataBinding property="SingleValue" data-source-path="SingleValue" binding-mode="ToTarget"/>
+            <ui:DataBinding property="Vector2Value" data-source-path="Vector2Value" binding-mode="ToTarget"/>
+            <ui:DataBinding property="Vector3Value" data-source-path="Vector3Value" binding-mode="ToTarget"/>
+            <ui:DataBinding property="ConstrainedProportions" data-source-path="ConstrainedProportions" binding-mode="ToTarget"/>
         </Bindings>
     </Rails.Editor.Controls.AnimationValueControl>
+    <Rails.Editor.Controls.EaseControl data-source-path="Ease"/>
 </ui:UXML>

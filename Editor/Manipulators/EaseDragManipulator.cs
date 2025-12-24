@@ -1,5 +1,4 @@
 using System;
-using Rails.Editor.Controls;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -20,8 +19,6 @@ namespace Rails.Editor.Manipulator
 
 		protected override void RegisterCallbacksOnTarget()
 		{
-			if (target is not DragHandler)
-				return;
 			target.RegisterCallback<MouseDownEvent>(OnMouseDown);
 			target.RegisterCallback<MouseMoveEvent>(OnMouseMove);
 			target.RegisterCallback<MouseUpEvent>(OnMouseUp);
@@ -29,8 +26,6 @@ namespace Rails.Editor.Manipulator
 
 		protected override void UnregisterCallbacksFromTarget()
 		{
-			if (target is not DragHandler)
-				return;
 			target.UnregisterCallback<MouseDownEvent>(OnMouseDown);
 			target.UnregisterCallback<MouseMoveEvent>(OnMouseMove);
 			target.UnregisterCallback<MouseUpEvent>(OnMouseUp);
@@ -52,7 +47,7 @@ namespace Rails.Editor.Manipulator
 				return;
 
 			Vector2 delta = evt.localMousePosition - startPosition;
-			Vector2 position = target.layout.position + (Vector2)target.transform.position + delta;
+			Vector2 position = target.layout.position + (Vector2)target.resolvedStyle.translate + delta;
 
 			updateValue(position);
 			target.MarkDirtyRepaint();
