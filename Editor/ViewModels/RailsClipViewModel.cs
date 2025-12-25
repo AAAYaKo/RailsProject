@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Linq;
 using Rails.Runtime;
 using Rails.Runtime.Tracks;
 using Unity.Properties;
@@ -216,6 +217,17 @@ namespace Rails.Editor.ViewModel
 						EditorContext.Instance.Record($"Removed {m.GetType().Name} from {name}");
 						model.RemoveTrack(m);
 					});
+					vm.CheckReference = x =>
+					{
+						foreach(var track in Tracks)
+						{
+							if (track == vm)
+								continue;
+							if (track.Reference == x)
+								return false;
+						}
+						return true;
+					};
 				}
 			);
 		}

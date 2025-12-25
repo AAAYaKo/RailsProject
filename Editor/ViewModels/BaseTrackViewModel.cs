@@ -268,7 +268,7 @@ namespace Rails.Editor.ViewModel
 			keysSelectionChanged?.Invoke();
 		}
 
-		private void OnKeyPropertyChanged(object sender, BindablePropertyChangedEventArgs e)
+		protected virtual void OnKeyPropertyChanged(object sender, BindablePropertyChangedEventArgs e)
 		{
 			OnTimeHeadPositionChanged(currentFrame);
 		}

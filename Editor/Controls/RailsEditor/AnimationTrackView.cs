@@ -1,5 +1,6 @@
 ﻿using Rails.Editor.ViewModel;
 using Unity.Properties;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -14,6 +15,8 @@ namespace Rails.Editor.Controls
 		public static readonly BindingId KeyFrameAddCommandProperty = nameof(KeyFrameAddCommand);
 		public static readonly BindingId KeyFrameRemoveCommandProperty = nameof(KeyFrameRemoveCommand);
 		public static readonly BindingId TrackClassProperty = nameof(TrackClass);
+		public static readonly BindingId ReferenceProperty = nameof(Reference);
+		public static readonly BindingId ChangeReferenceCommandProperty = nameof(ChangeReferenceCommand);
 
 		[UxmlAttribute("trackClass"), CreateProperty]
 		public string TrackClass
@@ -46,17 +49,32 @@ namespace Rails.Editor.Controls
 			}
 		}
 		[CreateProperty]
+		public Object Reference
+		{
+			get => reference;
+			set
+			{
+				if (reference == value)
+					return;
+				reference = value;
+				referenceField.SetValueWithoutNotify(value);
+			}
+		}
+		[CreateProperty]
 		public ICommand RemoveCommand { get; set; }
 		[CreateProperty]
 		public ICommand KeyFrameAddCommand { get; set; }
 		[CreateProperty]
 		public ICommand KeyFrameRemoveCommand { get; set; }
+		[CreateProperty]
+		public ICommand<Object> ChangeReferenceCommand { get; set; }
 
 		private static VisualTreeAsset templateMain;
 		private VisualElement keyToggle;
+		private ObjectField referenceField;
 		private string trackClass;
 		private bool? isKeyFrame;
-
+		private Object reference;
 
 		static AnimationTrackView()
 		{
@@ -73,6 +91,8 @@ namespace Rails.Editor.Controls
 			SetBinding(RemoveCommandProperty, new CommandBinding(nameof(AnimationTrackViewModel.RemoveCommand)));
 			SetBinding(KeyFrameAddCommandProperty, new CommandBinding(nameof(AnimationTrackViewModel.KeyFrameAddCommand)));
 			SetBinding(KeyFrameRemoveCommandProperty, new CommandBinding(nameof(AnimationTrackViewModel.KeyFrameRemoveCommand)));
+			SetBinding(ReferenceProperty, new ToTargetBinding(nameof(AnimationTrackViewModel.Reference)));
+			SetBinding(ChangeReferenceCommandProperty, new CommandBinding(nameof(AnimationTrackViewModel.ChangeReferenceCommand)));
 			
 			AnimationValueControl valueControl = this.Q<AnimationValueControl>();
 			valueControl.SetBinding(AnimationValueControl.ValueEditCommandProperty, new CommandBinding(nameof(AnimationTrackViewModel.ValueEditCommand)));
@@ -85,6 +105,8 @@ namespace Rails.Editor.Controls
 					RemoveCommand.Execute();
 				}, DropdownMenuAction.Status.Normal);
 			}));
+			referenceField = this.Q<ObjectField>();
+			referenceField.RegisterValueChangedCallback(ReferenceChanged);
 		}
 
 		protected override void OnAttach(AttachToPanelEvent evt)
@@ -108,6 +130,17 @@ namespace Rails.Editor.Controls
 				else
 					KeyFrameAddCommand.Execute();
 			}
+		}
+
+		private void ReferenceChanged(ChangeEvent<Object> evt)
+		{
+			if (!ChangeReferenceCommand.Validate(evt.newValue))
+			{
+				Debug.LogWarning("Cannot add multiple references to an Object!");
+				referenceField.SetValueWithoutNotify(evt.previousValue);
+				return;
+			}
+			ChangeReferenceCommand.Execute(evt.newValue);
 		}
 	}
 }

@@ -29,6 +29,9 @@ namespace Rails.Editor.Controls
 			this.end = end;
 			start.TimePositionChanged += OnStartPositionChanged;
 			end.TimePositionChanged += OnEndPositionChanged;
+			startTimePosition = start.TimePosition;
+			endTimePosition = end.TimePosition;
+			OnStartPositionChanged(start.TimePosition);
 		}
 
 		public void Unbind()

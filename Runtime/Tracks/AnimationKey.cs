@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using UnityEngine;
 
 namespace Rails.Runtime.Tracks
@@ -15,7 +16,14 @@ namespace Rails.Runtime.Tracks
 		public RailsEase Ease
 		{
 			get => ease;
-			set => SetProperty(ref ease, value);
+			set
+			{
+				if (ease != null)
+					ease.PropertyChanged -= OnEaseChanged;
+				SetProperty(ref ease, value);
+				if (ease != null)
+					ease.PropertyChanged += OnEaseChanged;
+			}
 		}
 		public float SingleValue
 		{
@@ -46,6 +54,12 @@ namespace Rails.Runtime.Tracks
 		private bool constrainedProportionsCopy;
 #endif
 
+
+		public AnimationKey()
+		{
+			ease.PropertyChanged += OnEaseChanged;
+		}
+
 		public override void OnBeforeSerialize()
 		{
 #if UNITY_EDITOR
@@ -73,6 +87,11 @@ namespace Rails.Runtime.Tracks
 			if (NotifyIfChanged(ConstrainedProportions, constrainedProportionsCopy, nameof(ConstrainedProportions)))
 				constrainedProportionsCopy = ConstrainedProportions;
 #endif
+		}
+
+		private void OnEaseChanged(object sender, PropertyChangedEventArgs e)
+		{
+			NotifyPropertyChanged(nameof(Ease));
 		}
 	}
 }

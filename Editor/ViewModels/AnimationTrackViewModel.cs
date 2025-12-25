@@ -5,6 +5,7 @@ using Rails.Runtime.Tracks;
 using Unity.Mathematics;
 using Unity.Properties;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Rails.Editor.ViewModel
 {
@@ -17,10 +18,7 @@ namespace Rails.Editor.ViewModel
 			set
 			{
 				if (SetProperty(ref reference, value))
-				{
-					model.SceneReference = reference;
 					Keys.ForEach(x => x.Reference = reference);
-				}
 			}
 		}
 		[CreateProperty]
@@ -83,6 +81,13 @@ namespace Rails.Editor.ViewModel
 			get => constrainedProportionsChangeCommand;
 			set => SetProperty(ref constrainedProportionsChangeCommand, value);
 		}
+		[CreateProperty]
+		public ICommand<UnityEngine.Object> ChangeReferenceCommand
+		{
+			get => changeReferenceCommand;
+			set => SetProperty(ref changeReferenceCommand, value);
+		}
+		public Predicate<UnityEngine.Object> CheckReference { get; set; }
 
 		private UnityEngine.Object reference;
 		private TrackData trackData;
@@ -93,6 +98,7 @@ namespace Rails.Editor.ViewModel
 		private ICommand removeCommand;
 		private ICommand keyFrameAddCommand;
 		private ICommand keyFrameRemoveCommand;
+		private ICommand<UnityEngine.Object> changeReferenceCommand;
 		private ICommand<ValueEditArgs> valueEditCommand;
 		private ICommand<bool> constrainedProportionsChangeCommand;
 
@@ -130,6 +136,12 @@ namespace Rails.Editor.ViewModel
 					model.AnimationKeys[keyIndex].ConstrainedProportions = x;
 				}
 			});
+
+			ChangeReferenceCommand = new RelayCommand<UnityEngine.Object>(x =>
+			{
+				EditorContext.Instance.Record("Track Reference Changed");
+				model.SceneReference = x;
+			}, x => x != null && CheckReference(x));
 		}
 
 		public override void OnTimeHeadPositionChanged(int frame)
@@ -156,7 +168,7 @@ namespace Rails.Editor.ViewModel
 		{
 			if (model != null)
 				trackData = TrackTypes[model.GetType()];
-			
+
 			base.OnModelChanged();
 
 			if (model == null)
@@ -247,6 +259,12 @@ namespace Rails.Editor.ViewModel
 				Reference = Reference,
 				ValueType = ValueType,
 			};
+		}
+
+		protected override void OnKeyPropertyChanged(object sender, BindablePropertyChangedEventArgs e)
+		{
+			base.OnKeyPropertyChanged(sender, e);
+			UpdateKeys();
 		}
 
 		public static readonly Dictionary<Type, TrackData> TrackTypes = new()
