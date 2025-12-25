@@ -1,3 +1,4 @@
+using System;
 using Rails.Editor.ViewModel;
 using Unity.Properties;
 using UnityEngine;
@@ -35,6 +36,7 @@ namespace Rails.Editor.Controls
 				if (showInspectorFoldout == value)
 					return;
 				showInspectorFoldout = value;
+				NotifyPropertyChanged(ShowInspectorFoldoutProperty);
 			}
 		}
 		[UxmlAttribute("time-position"), CreateProperty]
@@ -58,6 +60,7 @@ namespace Rails.Editor.Controls
 		private string trackClass;
 		private bool? showInspectorFoldout;
 		private new VisualElement contentContainer;
+		private VisualElement topContainer;
 		private VisualElement contentEvent;
 		private VisualElement contentAnimation;
 		private TextField timeField;
@@ -75,7 +78,9 @@ namespace Rails.Editor.Controls
 			SetBinding(ShowInspectorFoldoutProperty, new TwoWayBinding(nameof(IKeyViewModel.ShowInspectorFoldout)));
 			SetBinding(TimePositionTextProperty, new TwoWayBinding(nameof(IKeyViewModel.TimePositionText)));
 
+			topContainer = this.Q<VisualElement>("title");
 			contentContainer = this.Q<VisualElement>("content");
+			topContainer.RegisterCallback<ClickEvent>(OnClickTop);
 		}
 
 		public void ChangeKeyInspector()
@@ -113,6 +118,14 @@ namespace Rails.Editor.Controls
 		private void OnTimeFieldValueChanged(ChangeEvent<string> evt)
 		{
 			TimePositionText = evt.newValue;
+		}
+
+		private void OnClickTop(ClickEvent evt)
+		{
+			if (evt.button == 0)
+			{
+				ShowInspectorFoldout = !ShowInspectorFoldout;
+			}
 		}
 	}
 }

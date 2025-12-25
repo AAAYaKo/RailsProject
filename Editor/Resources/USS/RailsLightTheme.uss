@@ -6,6 +6,9 @@
 	--rails-icon-drop-down: resource('Icons/drop_down_icon');
 	--rails-icon-constrained-enabled: resource('Icons/constrained_enabled');
 	--rails-icon-constrained-disabled: resource('Icons/constrained_disabled');
+	--rails-icon-ease-no-animation: resource('Icons/no-animation.png');
+	--rails-icon-ease-curve: resource('Icons/curve.png');
+	--rails-icon-ease-function: resource('Icons/function.png');
 	--rails-button-icon-color: #555555;
 	--rails-button-icon-hover-color: #787878;
 	--rails-ruler-background-color: #C8C8C8;
@@ -29,9 +32,17 @@
 	--rails-time-scroller-stroke-color: #AAAAAA;
 	--rails-selection-box-background-color: rgba(6, 96, 195, 0.15);
 	--rails-selection-box-stroke-color: rgba(6, 96, 195, 0.5);
-	--rails-ease-stroke-start-color: #47F4E0;
-	--rails-ease-stroke-center-color: #6D6D6D;
-	--rails-ease-stroke-end-color: #3E85EE;
+	--rails-key-inspector-top-background-color: #CBCBCB;
+	--rails-key-inspector-top-background-hover-color: #D6D6D6;
+	--rails-key-inspector-top-border-color: #BABABA;
+	--rails-key-inspector-border-color: #7F7F7F;
+	--rails-key-inspector-background-color: #C8C8C8;
+	--rails-ease-stroke-start-color: #286FD8;
+	--rails-ease-stroke-center-color: #939393;
+	--rails-ease-stroke-end-color: #2CB9A9;
+	--rails-ease-background-color: #F3F3F3;
+	--rails-ease-axes-color: #656565;
+	--rails-ease-border-color: #565656;
 }
 
 .move-anchor{

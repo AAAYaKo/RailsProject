@@ -116,8 +116,6 @@ namespace Rails.Editor.Controls
 			if (spline == null || spline.Length < 4)
 				return;
 
-			//FindMinMaxY(spline, out float2 min, out float2 max);
-
 			splineGradient.start = new Vector2(0, ConvertToViewPoint(new float2(0, 0)).y);
 			splineGradient.end = new Vector2(0, ConvertToViewPoint(new float2(0, 1)).y);
 			var painter2D = context.painter2D;
@@ -141,20 +139,5 @@ namespace Rails.Editor.Controls
 			float2 rectMin = new(layout.xMax - lineWidth / 2, layout.yMin);
 			return math.remap(MinSplineBound, MaxSplineBound, rectMax, rectMin, point);
 		}
-
-		//private void FindMinMaxY(Vector2[] spline, out float2 min, out float2 max)
-		//{
-		//	min = MinSplineBound;
-		//	max = MaxSplineBound;
-
-		//	for (int i = 0; i < spline.Length - 1; i += 3)
-		//	{
-		//		BezierUtils.SolveMinMaxY(spline[i].y, spline[i + 1].y, spline[i + 2].y, spline[i + 3].y, out float partMin, out float partMax);
-		//		min.y = math.min(partMin, min.y);
-		//		max.y = math.max(partMax, max.y);
-		//		min.x = Mathf.Min(spline[i].x, spline[i + 1].x, spline[i + 2].x, spline[i + 3].x, min.x);
-		//		max.x = Mathf.Max(spline[i].x, spline[i + 1].x, spline[i + 2].x, spline[i + 3].x, max.x);
-		//	}
-		//}
 	}
 }

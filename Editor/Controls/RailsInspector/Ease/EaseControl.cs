@@ -164,7 +164,9 @@ namespace Rails.Editor.Controls
 				if (showEaseFoldout == value)
 					return;
 				showEaseFoldout = value;
+				foldoutToggle.SetValueWithoutNotify(value);
 				content.style.display = ShowEaseFoldout ? DisplayStyle.Flex : DisplayStyle.None;
+				NotifyPropertyChanged(ShowEaseFoldoutProperty);
 			}
 		}
 		[CreateProperty]
@@ -236,6 +238,7 @@ namespace Rails.Editor.Controls
 			SetBinding(SplineProperty, new ToTargetBinding(nameof(EaseViewModel.Spline)));
 			SetBinding(FirstPointProperty, new TwoWayBinding(nameof(EaseViewModel.FirstPoint)));
 			SetBinding(SecondPointProperty, new TwoWayBinding(nameof(EaseViewModel.SecondPoint)));
+			SetBinding(ShowEaseFoldoutProperty, new TwoWayBinding(nameof(EaseViewModel.ShowEaseFoldout)));
 
 			SetBinding(EaseFunctionChangeCommandProperty, new CommandBinding(nameof(EaseViewModel.EaseFunctionChangeCommand)));
 			SetBinding(EaseTypeChangeCommandProperty, new CommandBinding(nameof(EaseViewModel.EaseTypeChangeCommand)));

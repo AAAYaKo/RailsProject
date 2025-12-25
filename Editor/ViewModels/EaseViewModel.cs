@@ -97,6 +97,12 @@ namespace Rails.Editor.ViewModel
 					NotifyPropertyChanged(nameof(Spline));
 			}
 		}
+		[CreateProperty]
+		public bool ShowEaseFoldout
+		{
+			get => showEaseFoldout;
+			set => SetProperty(ref showEaseFoldout, value);
+		}
 
 		[CreateProperty]
 		public ICommand<Ease> EaseFunctionChangeCommand { get; set; }
@@ -113,6 +119,7 @@ namespace Rails.Editor.ViewModel
 		private Vector2? secondPoint;
 		private RailsEase.EaseType? easeType;
 		private Ease? selectedVariant;
+		private bool showEaseFoldout = true;
 
 
 		static EaseViewModel()
