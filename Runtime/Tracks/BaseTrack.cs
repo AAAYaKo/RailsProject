@@ -22,7 +22,7 @@ namespace Rails.Runtime
 		}
 
 #if UNITY_EDITOR
-		private readonly List<TKey> animationKeysCopy = new();
+		[NonSerialized] private readonly List<TKey> animationKeysCopy = new();
 #endif
 
 

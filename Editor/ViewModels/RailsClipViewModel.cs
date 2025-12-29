@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using DG.Tweening;
 using Rails.Runtime;
 using Rails.Runtime.Tracks;
+using Unity.Mathematics;
 using Unity.Properties;
 using UnityEngine.UIElements;
 
@@ -15,7 +18,11 @@ namespace Rails.Editor.ViewModel
 			CanEdit = false,
 		};
 		private static readonly CollectionComparer<AnimationTrackViewModel> tracksComparer = new();
-		private static readonly CollectionComparer<IKeyViewModel> keysComparer = new();
+		private static readonly Dictionary<LoopType, string> styles = new()
+		{
+			{ LoopType.Restart, "loop-icon-cycle" },
+			{ LoopType.Yoyo, "loop-icon-ping-pong" },
+		};
 
 		[CreateProperty]
 		public string Name
@@ -105,6 +112,47 @@ namespace Rails.Editor.ViewModel
 			}
 		}
 		[CreateProperty]
+		public LoopType LoopType
+		{
+			get => loopType ?? LoopType.Restart;
+			set
+			{
+				if (SetProperty(ref loopType, value))
+				{
+					if (LoopType != model.LoopType)
+					{
+						EditorContext.Instance.Record("Changed Clip Loop Type");
+						model.LoopType = LoopType;
+					}
+					NotifyPropertyChanged(nameof(LoopIconStyle));
+				}
+			}
+		}
+		[CreateProperty]
+		public readonly List<LoopType> LoopTypes = new() { LoopType.Restart, LoopType.Yoyo };
+		[CreateProperty]
+		public int LoopCount
+		{
+			get => loopCount ?? 1;
+			set
+			{
+				if (value < -1)
+					value = -1;
+				else if (value == 0)
+					value = 1;
+				if (SetProperty(ref loopCount, value))
+				{
+					if (LoopCount != model.LoopCount)
+					{
+						EditorContext.Instance.Record("Changed Clip Loop Count");
+						model.LoopCount = LoopCount;
+					}
+				}
+			}
+		}
+		[CreateProperty]
+		public string LoopIconStyle => styles[LoopType];
+		[CreateProperty]
 		public ICommand<Type> AddTrackCommand
 		{
 			get => addTrackCommand;
@@ -126,6 +174,8 @@ namespace Rails.Editor.ViewModel
 		private AnimationTime duration;
 		private AnimationTime timeHeadPosition;
 		private string name;
+		private LoopType? loopType;
+		private int? loopCount;
 		private EventTrackViewModel eventTrack = new();
 		private ObservableList<IKeyViewModel> selectedKeys = new();
 		private ObservableList<AnimationTrackViewModel> tracks = new();
@@ -178,6 +228,8 @@ namespace Rails.Editor.ViewModel
 
 			Duration = new() { Frames = model.Duration };
 			TimeHeadPosition = new AnimationTime() { Frames = 0 };
+			LoopType = model.LoopType;
+			LoopCount = model.LoopCount;
 		}
 
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -188,6 +240,10 @@ namespace Rails.Editor.ViewModel
 				UpdateTracks();
 			else if (e.PropertyName == nameof(RailsClip.Duration))
 				Duration = new() { Frames = model.Duration };
+			else if (e.PropertyName == nameof(RailsClip.LoopType))
+				LoopType = model.LoopType;
+			else if (e.PropertyName == nameof(RailsClip.LoopCount))
+				LoopCount = model.LoopCount;
 		}
 
 		protected override void OnUnbind()
@@ -219,7 +275,7 @@ namespace Rails.Editor.ViewModel
 					});
 					vm.CheckReference = x =>
 					{
-						foreach(var track in Tracks)
+						foreach (var track in Tracks)
 						{
 							if (track == vm)
 								continue;

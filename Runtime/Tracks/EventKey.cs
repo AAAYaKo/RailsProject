@@ -12,7 +12,7 @@ namespace Rails.Runtime
 		public SerializableEvent AnimationEvent => animationEvent;
 
 #if UNITY_EDITOR
-		private SerializableEvent animationEventCopy = new();
+		[NonSerialized] private SerializableEvent animationEventCopy = new();
 #endif
 
 		public override void OnBeforeSerialize()

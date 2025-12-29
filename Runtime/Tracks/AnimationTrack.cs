@@ -18,7 +18,7 @@ namespace Rails.Runtime.Tracks
 		}
 
 #if UNITY_EDITOR
-		private UnityEngine.Object sceneReferenceCopy;
+		[NonSerialized] private UnityEngine.Object sceneReferenceCopy;
 #endif
 
 

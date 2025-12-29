@@ -4,7 +4,6 @@ using UnityEngine.UIElements;
 
 namespace Rails.Editor.Controls
 {
-	[UxmlElement]
 	public partial class AnimationKeyInspector : BaseView
 	{
 		private static readonly VisualTreeAsset template;

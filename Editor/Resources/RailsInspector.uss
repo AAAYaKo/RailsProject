@@ -217,3 +217,7 @@
     border-bottom-color: var(--rails-key-inspector-top-border-color);
     border-top-color: var(--rails-key-inspector-border-color);
 }
+
+
+
+

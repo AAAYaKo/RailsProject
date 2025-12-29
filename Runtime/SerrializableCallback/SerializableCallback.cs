@@ -48,10 +48,10 @@ namespace Rails.Runtime.Callback
 
 		private Delegate cachedDelegate;
 #if UNITY_EDITOR
-		private Object targetObjectCopy;
-		private string methodNameCopy;
-		private SerializableCallbackState stateCopy;
-		private AnyValue[] parametersCopy;
+		[NonSerialized] private Object targetObjectCopy;
+		[NonSerialized] private string methodNameCopy;
+		[NonSerialized] private SerializableCallbackState stateCopy;
+		[NonSerialized] private AnyValue[] parametersCopy;
 #endif
 
 		public void Invoke() => Invoke(parameters);

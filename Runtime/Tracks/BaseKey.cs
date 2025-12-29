@@ -18,7 +18,7 @@ namespace Rails.Runtime
 		}
 
 #if UNITY_EDITOR
-		private int timePositionCopy;
+		[NonSerialized] private int timePositionCopy;
 #endif
 
 

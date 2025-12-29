@@ -47,11 +47,11 @@ namespace Rails.Runtime.Tracks
 		}
 
 #if UNITY_EDITOR
-		private RailsEase easeCopy;
-		private float singleValueCopy;
-		private Vector3 vector3ValueCopy;
-		private Vector2 vector2ValueCopy;
-		private bool constrainedProportionsCopy;
+		[NonSerialized] private RailsEase easeCopy;
+		[NonSerialized] private float singleValueCopy;
+		[NonSerialized] private Vector3 vector3ValueCopy;
+		[NonSerialized] private Vector2 vector2ValueCopy;
+		[NonSerialized] private bool constrainedProportionsCopy;
 #endif
 
 

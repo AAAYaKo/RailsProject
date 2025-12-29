@@ -19,11 +19,25 @@ namespace Rails.Editor.Controls
 				controls.enabledSelf = value;
 			}
 		}
+		[UxmlAttribute("loop-icon-style"), CreateProperty]
+		public string LoopIconStyle
+		{
+			get => loopIconStyle;
+			set
+			{
+				if (loopIconStyle == value)
+					return;
+				loopIcon.RemoveFromClassList(loopIconStyle);
+				loopIconStyle = value;
+				loopIcon.AddToClassList(loopIconStyle);
+			}
+		}
 
 		private static VisualTreeAsset templateMain;
 		private VisualElement controls;
+		private VisualElement loopIcon;
 		private bool? canEdit;
-
+		private string loopIconStyle;
 
 		static ClipControl()
 		{
@@ -36,14 +50,25 @@ namespace Rails.Editor.Controls
 			controls = this.Q<VisualElement>("controls");
 
 			VisualElement time = controls.Q<VisualElement>("time");
-			RailsClipPopupContent windowContent = new();
+			VisualElement loop = controls.Q<VisualElement>("loop");
+			loopIcon = loop.Q<Image>("loop-icon");
+			RailsClipTimePopupContent timeContent = new();
+			RailsClipLoopPopupContent loopContent = new();
 
 			time.RegisterCallback<ClickEvent>(x =>
 			{
-				if (x.clickCount == 1 && x.button == 0)
+				if (x is { clickCount: 1, button: 0 })
 				{
-					windowContent.DataSource = EditorContext.Instance.SelectedClip;
-					UnityEditor.PopupWindow.Show(time.worldBound, windowContent);
+					timeContent.DataSource = EditorContext.Instance.SelectedClip;
+					UnityEditor.PopupWindow.Show(time.worldBound, timeContent);
+				}
+			});
+			loop.RegisterCallback<ClickEvent>(x =>
+			{
+				if (x is { clickCount: 1, button: 0 })
+				{
+					loopContent.DataSource = EditorContext.Instance.SelectedClip;
+					UnityEditor.PopupWindow.Show(loop.worldBound, loopContent);
 				}
 			});
 		}

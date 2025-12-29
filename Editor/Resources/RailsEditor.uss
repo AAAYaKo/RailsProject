@@ -47,19 +47,11 @@
 }
 
 .rails_key_toggle {
-    margin-bottom: 0;
-    margin-right: 0;
-    margin-left: 1px;
-    margin-top: 0;
-    width: 10px;
-    height: 10px;
-}
-
-.rails_key_toggle {
     background-image: var(--rails-icon-gem-stroke);
     -unity-background-image-tint-color: var(--color-active);
     width: 10px;
     height: 10px;
+    margin-left: 1px;
 }
 
 .rails_key_toggle.key_frame {
@@ -77,13 +69,13 @@
     padding-left: 5px;
 }
 
-.time-field > Label {
+.popup-field > Label {
     font-size: 14px;
     -unity-text-align: middle-left;
     min-width: 90px;
 }
 
-.time-field {
+.popup-field {
     height: 25px;
 }
 
@@ -324,60 +316,119 @@
     flex-shrink: 0;
 }
 
-.constrained-toggle .unity-toggle__input {
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    margin-left: 0;
-    padding-top: 0;
-    padding-right: 0;
-    padding-bottom: 0;
-    padding-left: 0;
-}
-
-.constrained-toggle .unity-toggle__input .unity-toggle__checkmark {
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    margin-left: 0;
-    padding-top: 0;
-    padding-right: 0;
-    padding-bottom: 0;
-    padding-left: 0;
-    width: 100%;
-    height: 100%;
+.constrained-toggle > .unity-toggle__input > .unity-toggle__checkmark {
     background-image: var(--rails-icon-constrained-disabled);
-    -unity-background-image-tint-color: var(--rails-button-icon-color);
 }
 
-.constrained-toggle .unity-toggle__input:hover .unity-toggle__checkmark {
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    margin-left: 0;
-    padding-top: 0;
-    padding-right: 0;
-    padding-bottom: 0;
-    padding-left: 0;
-    width: 100%;
-    height: 100%;
-    -unity-background-image-tint-color: var(--rails-button-icon-hover-color);
-}
-
-.constrained-toggle .unity-toggle__input:checked .unity-toggle__checkmark {
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    margin-left: 0;
-    padding-top: 0;
-    padding-right: 0;
-    padding-bottom: 0;
-    padding-left: 0;
-    width: 100%;
-    height: 100%;
+.constrained-toggle > .unity-toggle__input:checked > .unity-toggle__checkmark {
     background-image: var(--rails-icon-constrained-enabled);
 }
 
 .tracks-view * .unity-scroll-view__content-container {
     flex-grow: 1;
+}
+
+.icon-toggle > .unity-toggle__input {
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+}
+
+.icon-toggle > .unity-toggle__input > .unity-toggle__checkmark {
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    width: 100%;
+    height: 100%;
+    -unity-background-image-tint-color: var(--rails-button-icon-color);
+}
+
+.icon-toggle > .unity-toggle__input:hover > .unity-toggle__checkmark {
+    -unity-background-image-tint-color: var(--rails-button-icon-hover-color);
+}
+
+.play-toggle {
+    flex-shrink: 0;
+    flex-grow: 0;
+    aspect-ratio: 1;
+    height: 100%;
+}
+
+.play-toggle > .unity-toggle__input > .unity-toggle__checkmark {
+    background-image: var(--rails-icon-play);
+}
+
+.play-toggle > .unity-toggle__input:checked > .unity-toggle__checkmark {
+    background-image: var(--rails-icon-pause);
+}
+
+.icon-button {
+    padding-top: 0;
+    padding-left: 0;
+    padding-bottom: 0;
+    padding-right: 0;
+    margin-bottom: 0;
+    margin-top: 0;
+    margin-left: 0;
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+    aspect-ratio: 1;
+    background-color: rgba(0, 0, 0, 0);
+    -unity-background-image-tint-color: var(--rails-button-icon-color);
+}
+
+.icon-button:hover {
+    -unity-background-image-tint-color: var(--rails-button-icon-hover-color);
+}
+
+.next {
+    background-image: var(--rails-icon-next);
+}
+
+.loop-icon {
+    --unity-image-size: scale-to-fit;
+    --unity-image-tint-color: var(--rails-button-icon-color);
+}
+
+.loop-icon-cycle {
+    --unity-image: var(--rails-icon-loop-cycle);
+}
+
+.loop-icon-ping-pong {
+    --unity-image: var(--rails-icon-loop-ping-pong);
+}
+
+.loop-drop-down {
+    flex-direction: row;
+    align-self: center;
+    align-items: center;
+    align-content: stretch;
+    padding-top: 2px;
+    padding-right: 5px;
+    padding-bottom: 2px;
+    padding-left: 0px;
+}
+
+.loop-drop-down:hover {
+    background-color: var(--rails-time-drop-down-color);
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    border-bottom-left-radius: 3px;
 }

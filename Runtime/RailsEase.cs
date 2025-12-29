@@ -472,9 +472,9 @@ namespace Rails.Runtime
 
 		private float3x2? polynomial;
 #if UNITY_EDITOR
-		private EaseType easeTypeCopy;
-		private float4 controlsCopy;
-		private Ease easeFuncCopy;
+		[NonSerialized] private EaseType easeTypeCopy;
+		[NonSerialized] private float4 controlsCopy;
+		[NonSerialized] private Ease easeFuncCopy;
 #endif
 
 

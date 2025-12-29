@@ -23,7 +23,7 @@ namespace Rails.Runtime.Callback
 		}
 
 #if UNITY_EDITOR
-		private readonly List<SerializableCallback> callbacksCopy = new();
+		[NonSerialized] private readonly List<SerializableCallback> callbacksCopy = new();
 #endif
 
 

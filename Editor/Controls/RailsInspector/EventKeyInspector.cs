@@ -3,7 +3,6 @@ using UnityEngine.UIElements;
 
 namespace Rails.Editor.Controls
 {
-	[UxmlElement]
 	public partial class EventKeyInspector : BaseView
 	{
 		private static VisualTreeAsset template;

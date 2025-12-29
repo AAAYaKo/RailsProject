@@ -4,7 +4,7 @@ using UnityEngine.UIElements;
 
 namespace Rails.Editor
 {
-	public class RailsClipPopupContent : PopupWindowContent
+	public class RailsClipTimePopupContent : PopupWindowContent
 	{
 		public object DataSource
 		{
@@ -16,29 +16,24 @@ namespace Rails.Editor
 					root.dataSource = dataSource;
 			}
 		}
+		private static VisualTreeAsset mainTree;
 		private VisualElement root;
 		private object dataSource;
 
 
-		public override void OnOpen()
+		static RailsClipTimePopupContent()
 		{
-			Debug.Log("Popup opened: " + this);
+			mainTree = Resources.Load<VisualTreeAsset>("RailsTimePopup");
 		}
 
 		public override VisualElement CreateGUI()
 		{
 			if (root == null)
 			{
-				var visualTreeAsset = Resources.Load<VisualTreeAsset>("RailsPopup");
-				root = visualTreeAsset.CloneTree();
+				root = mainTree.CloneTree();
 				root.dataSource = DataSource;
 			}
 			return root;
-		}
-
-		public override void OnClose()
-		{
-			Debug.Log("Popup closed: " + this);
 		}
 	}
 }

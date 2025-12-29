@@ -123,6 +123,7 @@ namespace Rails.Editor.Controls
 			style.flexDirection = FlexDirection.RowReverse;
 
 			constrainedToggle = new Toggle();
+			constrainedToggle.AddToClassList("icon-toggle");
 			constrainedToggle.AddToClassList("constrained-toggle");
 			constrainedToggle.style.display = DisplayStyle.None;
 

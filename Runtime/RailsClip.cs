@@ -17,6 +17,8 @@ namespace Rails.Runtime
 		[SerializeField] private EventsTrack eventTrack = new();
 		[SerializeField] private int duration; //in frames
 		[SerializeField] private string name;
+		[SerializeField] private LoopType loopType = LoopType.Restart;
+		[SerializeField] private int loopCount = 1;
 
 		public List<AnimationTrack> Tracks
 		{
@@ -30,11 +32,23 @@ namespace Rails.Runtime
 			set => SetProperty(ref duration, value);
 		}
 		public string Name { get => name; set => name = value; }
+		public LoopType LoopType
+		{
+			get => loopType;
+			set => SetProperty(ref loopType, value);
+		}
+		public int LoopCount
+		{
+			get => loopCount;
+			set => SetProperty(ref loopCount, value);
+		}
 
 #if UNITY_EDITOR
-		private readonly List<AnimationTrack> tracksCopy = new();
-		private int durationCopy;
-		private string nameCopy;
+		[NonSerialized] private readonly List<AnimationTrack> tracksCopy = new();
+		[NonSerialized] private int durationCopy;
+		[NonSerialized] private string nameCopy;
+		[NonSerialized] private LoopType loopTypeCopy;
+		[NonSerialized] private int loopCountCopy;
 #endif
 
 
@@ -44,6 +58,7 @@ namespace Rails.Runtime
 			foreach (var track in Tracks)
 				track.InsertInSequence(sequence, FrameTime);
 			EventTrack.InsertInSequence(sequence, FrameTime);
+			sequence.SetLoops(LoopCount, LoopType);
 			return sequence;
 		}
 
@@ -65,6 +80,8 @@ namespace Rails.Runtime
 			CopyList(tracks, tracksCopy);
 			durationCopy = Duration;
 			nameCopy = Name;
+			loopTypeCopy = LoopType;
+			loopCountCopy = LoopCount;
 #endif
 		}
 
@@ -77,6 +94,10 @@ namespace Rails.Runtime
 				durationCopy = Duration;
 			if (NotifyIfChanged(Name, nameCopy, nameof(Name)))
 				nameCopy = Name;
+			if (NotifyIfChanged(LoopType, loopTypeCopy, nameof(LoopType)))
+				loopTypeCopy = LoopType;
+			if (NotifyIfChanged(LoopCount, loopCountCopy, nameof(LoopCount)))
+				loopCountCopy = LoopCount;
 #endif
 		}
 	}
