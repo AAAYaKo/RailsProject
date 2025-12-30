@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Rails.Editor.Context;
 using Rails.Editor.ViewModel;
 using Rails.Runtime;
 using Unity.Mathematics;

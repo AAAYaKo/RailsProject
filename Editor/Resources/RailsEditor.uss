@@ -328,6 +328,11 @@
     flex-grow: 1;
 }
 
+.icon-toggle{
+    height: 100%;
+    aspect-ratio: 1;
+}
+
 .icon-toggle > .unity-toggle__input {
     margin-top: 0;
     margin-right: 0;
@@ -431,4 +436,12 @@
     border-top-right-radius: 3px;
     border-bottom-right-radius: 3px;
     border-bottom-left-radius: 3px;
+}
+
+.preview-toggle > .unity-toggle__input > .unity-toggle__checkmark  {
+    background-image: var(--rails-icon-preview);
+}
+
+.preview-toggle > .unity-toggle__input:checked > .unity-toggle__checkmark  {
+    background-image: var(--rails-icon-stop);
 }

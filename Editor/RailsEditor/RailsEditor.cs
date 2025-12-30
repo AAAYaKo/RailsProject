@@ -1,3 +1,4 @@
+using Rails.Editor.Context;
 using Rails.Editor.Controls;
 using Rails.Editor.ViewModel;
 using Rails.Runtime;

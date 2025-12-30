@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Rails.Editor
+namespace Rails.Editor.Context
 {
 	public class StoredValue<TTable, TValue> where TTable : DataTable<TValue>
 	{

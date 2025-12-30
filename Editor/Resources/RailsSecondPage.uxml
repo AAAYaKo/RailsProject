@@ -4,6 +4,8 @@
         <Bindings>
             <ui:DataBinding property="CanEdit" data-source-path="CanEdit" binding-mode="ToTarget"/>
             <ui:DataBinding property="LoopIconStyle" data-source-path="LoopIconStyle" binding-mode="ToTarget"/>
+            <ui:DataBinding property="IsPreview" data-source-path="IsPreview" binding-mode="TwoWay"/>
+            <ui:DataBinding property="IsPlay" data-source-path="IsPlay" binding-mode="TwoWay"/>
         </Bindings>
     </Rails.Editor.Controls.ClipControl>
     <Rails.Editor.Controls.TracksListView data-source-path="SelectedClip" style="flex-grow: 1; flex-basis: 100%; margin-bottom: 16px;">

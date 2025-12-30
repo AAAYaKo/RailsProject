@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Rails.Editor.Context;
 using Rails.Editor.Manipulator;
 using Rails.Editor.ViewModel;
 using Rails.Runtime;

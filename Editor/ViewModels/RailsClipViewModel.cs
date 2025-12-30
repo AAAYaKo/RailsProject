@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using DG.Tweening;
+using Rails.Editor.Context;
 using Rails.Runtime;
 using Rails.Runtime.Tracks;
 using Unity.Mathematics;
 using Unity.Properties;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Rails.Editor.ViewModel
@@ -153,6 +155,52 @@ namespace Rails.Editor.ViewModel
 		[CreateProperty]
 		public string LoopIconStyle => styles[LoopType];
 		[CreateProperty]
+		public bool IsPreview
+		{
+			get => isPreview;
+			set
+			{
+				if (SetProperty(ref isPreview, value))
+				{
+					if (IsPreview)
+					{
+						preview = model.BuildSequence();
+						EditorPreviewer.PrepareTweenForPreview(preview, model.Tracks.Select(x => x.SceneReference).Where(x => x != null));
+						EditorPreviewer.Start(RailsClip.FrameTime, x =>
+						{
+							float currentPosition = preview.ElapsedDirectionalPercentage();
+							int frames = Mathf.RoundToInt(Duration.Frames * currentPosition);
+							var position = TimeHeadPosition;
+							position.Frames = frames;
+							TimeHeadPosition = position;
+						});
+						preview.OnStepComplete(() => isBackward = !isBackward);
+						isBackward = false;
+					}
+					else
+					{
+						EditorPreviewer.Stop();
+					}
+					IsPlay = IsPreview;
+				}
+			}
+		}
+		[CreateProperty]
+		public bool IsPlay
+		{
+			get => isPlay;
+			set
+			{
+				if (SetProperty(ref isPlay, value))
+				{
+					if (!isPlay)
+						preview.Pause();
+					else
+						preview.Play();
+				}
+			}
+		}
+		[CreateProperty]
 		public ICommand<Type> AddTrackCommand
 		{
 			get => addTrackCommand;
@@ -170,6 +218,12 @@ namespace Rails.Editor.ViewModel
 			get => removeSelectedKeysCommand;
 			set => SetProperty(ref removeSelectedKeysCommand, value);
 		}
+		[CreateProperty]
+		public ICommand GotoNextFrameCommand
+		{
+			get => gotoNextFrameCommand;
+			set => SetProperty(ref gotoNextFrameCommand, value);
+		}
 
 		private AnimationTime duration;
 		private AnimationTime timeHeadPosition;
@@ -179,12 +233,16 @@ namespace Rails.Editor.ViewModel
 		private EventTrackViewModel eventTrack = new();
 		private ObservableList<IKeyViewModel> selectedKeys = new();
 		private ObservableList<AnimationTrackViewModel> tracks = new();
+		private Tween preview;
 		private bool canEdit = true;
 		private bool selected = false;
+		private bool isPreview;
+		private bool isPlay;
+		private bool isBackward;
 		private ICommand<Type> addTrackCommand;
 		private ICommand removeCommand;
 		private ICommand removeSelectedKeysCommand;
-
+		private ICommand gotoNextFrameCommand;
 
 		public RailsClipViewModel()
 		{
@@ -201,6 +259,7 @@ namespace Rails.Editor.ViewModel
 				}
 			});
 			RemoveSelectedKeysCommand = new RelayCommand(RemoveKeys);
+			GotoNextFrameCommand = new RelayCommand(GotoNextFrame);
 		}
 
 		public void Select(EventHandler<BindablePropertyChangedEventArgs> propertyChangedCallback)
@@ -230,6 +289,9 @@ namespace Rails.Editor.ViewModel
 			TimeHeadPosition = new AnimationTime() { Frames = 0 };
 			LoopType = model.LoopType;
 			LoopCount = model.LoopCount;
+			IsPreview = false;
+			IsPlay = false;
+			isBackward = false;
 		}
 
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -319,6 +381,15 @@ namespace Rails.Editor.ViewModel
 			foreach (var track in tracks)
 				selectedKeys.AddRangeWithoutNotify(track.SelectedKeys);
 			selectedKeys.NotifyListChanged();
+		}
+
+		private void GotoNextFrame()
+		{
+			if (IsPlay)
+				IsPlay = false;
+
+			float next = preview.Elapsed() + RailsClip.FrameTime;
+			preview.Goto(next);
 		}
 	}
 }

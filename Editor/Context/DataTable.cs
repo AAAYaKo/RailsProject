@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Rails.Editor
+namespace Rails.Editor.Context
 {
 	public class DataTable<T> : ISerializationCallbackReceiver
 	{

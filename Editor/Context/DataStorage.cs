@@ -4,7 +4,7 @@ using System.Linq;
 using Rails.Runtime;
 using UnityEngine;
 
-namespace Rails.Editor
+namespace Rails.Editor.Context
 {
 	[Serializable]
 	public class DataStorage

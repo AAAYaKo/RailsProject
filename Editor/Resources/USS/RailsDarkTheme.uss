@@ -13,6 +13,8 @@
 	--rails-icon-pause: resource('Icons/pause');
 	--rails-icon-prev: resource('Icons/prev');
 	--rails-icon-next: resource('Icons/next');
+	--rails-icon-preview: resource('Icons/preview');
+	--rails-icon-stop: resource('Icons/stop');
 	--rails-icon-loop-cycle: resource('Icons/cycle');
 	--rails-icon-loop-ping-pong: resource('Icons/ping_pong');
 	--rails-button-icon-color: #C4C4C4;

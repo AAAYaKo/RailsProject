@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Rails.Editor
+namespace Rails.Editor.Context
 {
 	public static class EventBus
 	{

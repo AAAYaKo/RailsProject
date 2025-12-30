@@ -1,4 +1,6 @@
-﻿using Unity.Properties;
+﻿using Rails.Editor.Context;
+using Rails.Editor.ViewModel;
+using Unity.Properties;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -7,6 +9,10 @@ namespace Rails.Editor.Controls
 	[UxmlElement]
 	public partial class ClipControl : VisualElement
 	{
+		private static readonly BindingId IsPreviewProperty = nameof(IsPreview);
+		private static readonly BindingId IsPlayProperty = nameof(IsPlay);
+		private static readonly BindingId GotoNextFrameCommandProperty = nameof(GotoNextFrameCommand);
+
 		[UxmlAttribute("can-edit"), CreateProperty]
 		public bool CanEdit
 		{
@@ -32,12 +38,46 @@ namespace Rails.Editor.Controls
 				loopIcon.AddToClassList(loopIconStyle);
 			}
 		}
+		[UxmlAttribute("is-preview"), CreateProperty]
+		public bool IsPreview
+		{
+			get => isPreview;
+			set
+			{
+				if (isPreview == value)
+					return;
+				isPreview = value;
+				playControls.enabledSelf = value;
+				preview.SetValueWithoutNotify(value);
+				NotifyPropertyChanged(IsPreviewProperty);
+			}
+		}
+		[UxmlAttribute("is-play"), CreateProperty]
+		public bool IsPlay
+		{
+			get => isPlay;
+			set
+			{
+				if (isPlay == value)
+					return;
+				isPlay = value;
+				play.SetValueWithoutNotify(value);
+				NotifyPropertyChanged(IsPlayProperty);
+			}
+		}
+		[CreateProperty]
+		public ICommand GotoNextFrameCommand { get; set; }
 
 		private static VisualTreeAsset templateMain;
 		private VisualElement controls;
+		private VisualElement playControls;
 		private VisualElement loopIcon;
+		private Toggle preview;
+		private Toggle play;
 		private bool? canEdit;
 		private string loopIconStyle;
+		private bool isPreview;
+		private bool isPlay;
 
 		static ClipControl()
 		{
@@ -48,10 +88,13 @@ namespace Rails.Editor.Controls
 		{
 			templateMain.CloneTree(this);
 			controls = this.Q<VisualElement>("controls");
-
+			playControls = this.Q<VisualElement>("play-controls");
 			VisualElement time = controls.Q<VisualElement>("time");
 			VisualElement loop = controls.Q<VisualElement>("loop");
 			loopIcon = loop.Q<Image>("loop-icon");
+			preview = this.Q<Toggle>("preview");
+			play = this.Q<Toggle>("play");
+			Button next = this.Q<Button>("next");
 			RailsClipTimePopupContent timeContent = new();
 			RailsClipLoopPopupContent loopContent = new();
 
@@ -71,6 +114,20 @@ namespace Rails.Editor.Controls
 					UnityEditor.PopupWindow.Show(loop.worldBound, loopContent);
 				}
 			});
+			preview.RegisterValueChangedCallback(x =>
+			{
+				IsPreview = x.newValue;
+			});
+			play.RegisterValueChangedCallback(x =>
+			{
+				IsPlay = x.newValue;
+			});
+			next.clicked += () =>
+			{
+				GotoNextFrameCommand.Execute();
+			};
+
+			SetBinding(GotoNextFrameCommandProperty, new CommandBinding(nameof(RailsClipViewModel.GotoNextFrameCommand)));
 		}
 	}
 }

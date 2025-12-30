@@ -4,7 +4,7 @@ using Rails.Runtime;
 using UnityEditor;
 using UnityEngine.UIElements;
 
-namespace Rails.Editor
+namespace Rails.Editor.Context
 {
 	public class EditorContext
 	{

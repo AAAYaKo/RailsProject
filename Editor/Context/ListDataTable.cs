@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Rails.Runtime;
 
-namespace Rails.Editor
+namespace Rails.Editor.Context
 {
 	[Serializable]
 	public class IntListDataTable : DataTable<List<int>>

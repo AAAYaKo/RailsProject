@@ -52,7 +52,7 @@ namespace Rails.Runtime
 #endif
 
 
-		public Sequence BuildSequence()
+		public Tween BuildSequence()
 		{
 			var sequence = DOTween.Sequence();
 			foreach (var track in Tracks)
