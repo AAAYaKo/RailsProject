@@ -29,7 +29,7 @@ namespace Rails.Editor.Controls
 				Repaint();
 			}
 		}
-		[UxmlAttribute("timePosition"), CreateProperty]
+		[UxmlAttribute("time-position"), CreateProperty]
 		public int TimeHeadPosition
 		{
 			get => timeHeadPosition;

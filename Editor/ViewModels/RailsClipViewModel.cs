@@ -6,7 +6,6 @@ using DG.Tweening;
 using Rails.Editor.Context;
 using Rails.Runtime;
 using Rails.Runtime.Tracks;
-using Unity.Mathematics;
 using Unity.Properties;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -96,7 +95,6 @@ namespace Rails.Editor.ViewModel
 					NotifyPropertyChanged(nameof(DurationText));
 					TimeHeadPosition = ClampTimeHeadPosition(TimeHeadPosition);
 				}
-
 			}
 		}
 		[CreateProperty]
@@ -105,14 +103,23 @@ namespace Rails.Editor.ViewModel
 			get => timeHeadPosition;
 			set
 			{
-				value = ClampTimeHeadPosition(value);
-				if (SetProperty(ref timeHeadPosition, value))
+				if (IsPreview)
 				{
-					NotifyPropertyChanged(nameof(TimeHeadPositionText));
-					Tracks.ForEach(x => x.OnTimeHeadPositionChanged(value.Frames));
+					var duration = GetLoopDuration();
+					if (!IsFullDuration && value > duration)
+						value.Frames = duration.Frames;
+					if (timeHeadPosition != value)
+					{
+						int delta = value.Frames - timeHeadPosition.Frames;
+						if (preview.IsLoopingOrExecutingBackwards())
+							delta = -delta;
+						Goto(delta);
+					}
 				}
+				SetTimeHeadPosition(value);
 			}
 		}
+
 		[CreateProperty]
 		public LoopType LoopType
 		{
@@ -158,7 +165,7 @@ namespace Rails.Editor.ViewModel
 			get => isFullDuration ?? false;
 			set
 			{
-				if(SetProperty(ref isFullDuration, value))
+				if (SetProperty(ref isFullDuration, value))
 				{
 					EditorContext.Instance.Record("Changed Clip Looping Duration");
 					model.IsFullDuration = IsFullDuration;
@@ -182,10 +189,10 @@ namespace Rails.Editor.ViewModel
 						EditorPreviewer.Start(RailsClip.FrameTime, x =>
 						{
 							float currentPosition = preview.ElapsedDirectionalPercentage();
-							int frames = Mathf.RoundToInt((IsFullDuration ? Duration.Frames : Tracks.Max(x => x.LastFrame)) * currentPosition);
+							int frames = Mathf.RoundToInt(GetLoopDuration() * currentPosition);
 							var position = TimeHeadPosition;
 							position.Frames = frames;
-							TimeHeadPosition = position;
+							SetTimeHeadPosition(position);
 						});
 						preview.OnStepComplete(() => isBackward = !isBackward);
 						isBackward = false;
@@ -198,6 +205,7 @@ namespace Rails.Editor.ViewModel
 				}
 			}
 		}
+
 		[CreateProperty]
 		public bool IsPlay
 		{
@@ -375,6 +383,16 @@ namespace Rails.Editor.ViewModel
 			);
 		}
 
+		private void SetTimeHeadPosition(AnimationTime value)
+		{
+			value = ClampTimeHeadPosition(value);
+			if (SetProperty(ref timeHeadPosition, value, nameof(TimeHeadPosition)))
+			{
+				NotifyPropertyChanged(nameof(TimeHeadPositionText));
+				Tracks.ForEach(x => x.OnTimeHeadPositionChanged(value.Frames));
+			}
+		}
+
 		private AnimationTime ClampTimeHeadPosition(AnimationTime value)
 		{
 			if (value.Frames < 0)
@@ -408,12 +426,22 @@ namespace Rails.Editor.ViewModel
 			selectedKeys.NotifyListChanged();
 		}
 
+		private AnimationTime GetLoopDuration()
+		{
+			return IsFullDuration ? Duration : Tracks.Max(x => x.LastFrame);
+		}
+
 		private void GotoNextFrame()
+		{
+			Goto(1);
+		}
+
+		private void Goto(int frames)
 		{
 			if (IsPlay)
 				IsPlay = false;
 
-			float next = preview.Elapsed() + RailsClip.FrameTime;
+			float next = preview.Elapsed() + frames * RailsClip.FrameTime;
 			preview.Goto(next);
 		}
 	}
