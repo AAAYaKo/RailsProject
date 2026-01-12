@@ -67,3 +67,13 @@
 	--color-active: #E1E1E1;
 	--color-not-active: #ACACAC;
 }
+
+.scale{
+	--color-active: #AE42D1;
+	--color-not-active: #7F4C91;
+}
+
+.rotate{
+	--color-active: #E26161;
+	--color-not-active: #8F6565;
+}

@@ -6,11 +6,16 @@
                 <ui:DataBinding property="value" data-source-path="LoopType" binding-mode="TwoWay"/>
             </Bindings>
         </Rails.Editor.Controls.LoopTypeField>
-        <ui:IntegerField label="Count" value="-1" class="popup-field">
+        <ui:IntegerField label="Count" value="-1" name="IntegerField" class="popup-field">
             <Bindings>
                 <ui:DataBinding property="value" data-source-path="LoopCount" binding-mode="TwoWay"/>
             </Bindings>
         </ui:IntegerField>
+        <ui:Toggle label="Full Duration" value="true" class="popup-field">
+            <Bindings>
+                <ui:DataBinding property="value" data-source-path="IsFullDuration" binding-mode="TwoWay"/>
+            </Bindings>
+        </ui:Toggle>
         <ui:HelpBox text="Setting &lt;b&gt;Count&lt;/b&gt; to &lt;b&gt;-1&lt;/b&gt; will make the clip loop infinitely" message-type="Info" name="info"/>
     </ui:VisualElement>
 </ui:UXML>

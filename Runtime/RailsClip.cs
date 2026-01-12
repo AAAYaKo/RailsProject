@@ -19,6 +19,7 @@ namespace Rails.Runtime
 		[SerializeField] private string name;
 		[SerializeField] private LoopType loopType = LoopType.Restart;
 		[SerializeField] private int loopCount = 1;
+		[SerializeField] private bool isFullDuration = true;
 
 		public List<AnimationTrack> Tracks
 		{
@@ -42,6 +43,11 @@ namespace Rails.Runtime
 			get => loopCount;
 			set => SetProperty(ref loopCount, value);
 		}
+		public bool IsFullDuration
+		{
+			get => isFullDuration;
+			set => SetProperty(ref isFullDuration, value);
+		}
 
 #if UNITY_EDITOR
 		[NonSerialized] private readonly List<AnimationTrack> tracksCopy = new();
@@ -49,12 +55,15 @@ namespace Rails.Runtime
 		[NonSerialized] private string nameCopy;
 		[NonSerialized] private LoopType loopTypeCopy;
 		[NonSerialized] private int loopCountCopy;
+		[NonSerialized] private bool isFullDurationCopy;
 #endif
 
 
 		public Tween BuildSequence()
 		{
 			var sequence = DOTween.Sequence();
+			if (isFullDuration)
+				sequence.AppendInterval(Duration * FrameTime);
 			foreach (var track in Tracks)
 				track.InsertInSequence(sequence, FrameTime);
 			EventTrack.InsertInSequence(sequence, FrameTime);
@@ -82,6 +91,7 @@ namespace Rails.Runtime
 			nameCopy = Name;
 			loopTypeCopy = LoopType;
 			loopCountCopy = LoopCount;
+			isFullDurationCopy = IsFullDuration;
 #endif
 		}
 
@@ -98,6 +108,8 @@ namespace Rails.Runtime
 				loopTypeCopy = LoopType;
 			if (NotifyIfChanged(LoopCount, loopCountCopy, nameof(LoopCount)))
 				loopCountCopy = LoopCount;
+			if (NotifyIfChanged(IsFullDuration, isFullDurationCopy, nameof(IsFullDuration)))
+				isFullDurationCopy = IsFullDuration;
 #endif
 		}
 	}

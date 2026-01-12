@@ -153,6 +153,19 @@ namespace Rails.Editor.ViewModel
 			}
 		}
 		[CreateProperty]
+		public bool IsFullDuration
+		{
+			get => isFullDuration ?? false;
+			set
+			{
+				if(SetProperty(ref isFullDuration, value))
+				{
+					EditorContext.Instance.Record("Changed Clip Looping Duration");
+					model.IsFullDuration = IsFullDuration;
+				}
+			}
+		}
+		[CreateProperty]
 		public string LoopIconStyle => styles[LoopType];
 		[CreateProperty]
 		public bool IsPreview
@@ -169,7 +182,7 @@ namespace Rails.Editor.ViewModel
 						EditorPreviewer.Start(RailsClip.FrameTime, x =>
 						{
 							float currentPosition = preview.ElapsedDirectionalPercentage();
-							int frames = Mathf.RoundToInt(Duration.Frames * currentPosition);
+							int frames = Mathf.RoundToInt((IsFullDuration ? Duration.Frames : Tracks.Max(x => x.LastFrame)) * currentPosition);
 							var position = TimeHeadPosition;
 							position.Frames = frames;
 							TimeHeadPosition = position;
@@ -230,6 +243,7 @@ namespace Rails.Editor.ViewModel
 		private string name;
 		private LoopType? loopType;
 		private int? loopCount;
+		private bool? isFullDuration;
 		private EventTrackViewModel eventTrack = new();
 		private ObservableList<IKeyViewModel> selectedKeys = new();
 		private ObservableList<AnimationTrackViewModel> tracks = new();
@@ -256,6 +270,14 @@ namespace Rails.Editor.ViewModel
 				else if (trackType == typeof(FadeTrack))
 				{
 					model.AddTrack(new FadeTrack());
+				}
+				else if (trackType == typeof(RotateTrack))
+				{
+					model.AddTrack(new RotateTrack());
+				}
+				else if (trackType == typeof(ScaleTrack))
+				{
+					model.AddTrack(new ScaleTrack());
 				}
 			});
 			RemoveSelectedKeysCommand = new RelayCommand(RemoveKeys);
@@ -289,6 +311,7 @@ namespace Rails.Editor.ViewModel
 			TimeHeadPosition = new AnimationTime() { Frames = 0 };
 			LoopType = model.LoopType;
 			LoopCount = model.LoopCount;
+			IsFullDuration = model.IsFullDuration;
 			IsPreview = false;
 			IsPlay = false;
 			isBackward = false;
@@ -306,6 +329,8 @@ namespace Rails.Editor.ViewModel
 				LoopType = model.LoopType;
 			else if (e.PropertyName == nameof(RailsClip.LoopCount))
 				LoopCount = model.LoopCount;
+			else if (e.PropertyName == nameof(RailsClip.IsFullDuration))
+				IsFullDuration = model.IsFullDuration;
 		}
 
 		protected override void OnUnbind()
@@ -341,7 +366,7 @@ namespace Rails.Editor.ViewModel
 						{
 							if (track == vm)
 								continue;
-							if (track.Reference == x)
+							if (track.TrackType == vm.TrackType && track.Reference == x)
 								return false;
 						}
 						return true;

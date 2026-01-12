@@ -25,6 +25,8 @@ namespace Rails.Editor.ViewModel
 		[CreateProperty]
 		public Type Type => trackData?.AnimationComponentType;
 		[CreateProperty]
+		public Type TrackType => trackData?.Type;
+		[CreateProperty]
 		public AnimationTrack.ValueType ValueType => trackData?.ValueType ?? AnimationTrack.ValueType.Single;
 		[CreateProperty]
 		public override string TrackClass => trackData?.TrackClass;
@@ -272,6 +274,8 @@ namespace Rails.Editor.ViewModel
 		{
 			{ typeof(MoveAnchorTrack), new TrackData(typeof(MoveAnchorTrack), AnimationTrack.ValueType.Vector2, typeof(RectTransform), "move-anchor") },
 			{ typeof(FadeTrack),       new TrackData(typeof(FadeTrack),       AnimationTrack.ValueType.Single,  typeof(CanvasGroup),   "fade")        },
+			{ typeof(RotateTrack),     new TrackData(typeof(RotateTrack),     AnimationTrack.ValueType.Vector3,  typeof(Transform),    "rotate")      },
+			{ typeof(ScaleTrack),      new TrackData(typeof(ScaleTrack),      AnimationTrack.ValueType.Vector3,  typeof(Transform),    "scale")       },
 		};
 
 		public class TrackData

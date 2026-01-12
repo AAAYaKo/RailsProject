@@ -48,6 +48,7 @@ namespace Rails.Editor.ViewModel
 			set => SetProperty(ref keyFrameAddAtTimeCommand, value);
 		}
 		public IEnumerable<IKeyViewModel> SelectedKeys => SelectedIndexes.Select(x => keys[x]).OrderBy(x => x.KeyIndex);
+		public AnimationTime LastFrame => Keys.IsNullOrEmpty() ? new AnimationTime() : Keys[^1].TimePosition;
 
 		protected Action keysSelectionChanged;
 		protected ObservableList<TKeyViewModel> keys = new();
