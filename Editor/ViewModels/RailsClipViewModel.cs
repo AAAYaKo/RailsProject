@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -6,6 +7,7 @@ using DG.Tweening;
 using Rails.Editor.Context;
 using Rails.Runtime;
 using Rails.Runtime.Tracks;
+using Unity.EditorCoroutines.Editor;
 using Unity.Properties;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -183,24 +185,9 @@ namespace Rails.Editor.ViewModel
 				if (SetProperty(ref isPreview, value))
 				{
 					if (IsPreview)
-					{
-						preview = model.BuildSequence();
-						EditorPreviewer.PrepareTweenForPreview(preview, model.Tracks.Select(x => x.SceneReference).Where(x => x != null));
-						EditorPreviewer.Start(RailsClip.FrameTime, x =>
-						{
-							float currentPosition = preview.ElapsedDirectionalPercentage();
-							int frames = Mathf.RoundToInt(GetLoopDuration() * currentPosition);
-							var position = TimeHeadPosition;
-							position.Frames = frames;
-							SetTimeHeadPosition(position);
-						});
-						preview.OnStepComplete(() => isBackward = !isBackward);
-						isBackward = false;
-					}
+						StartPreview();
 					else
-					{
-						EditorPreviewer.Stop();
-					}
+						StopPreview();
 					IsPlay = IsPreview;
 				}
 			}
@@ -260,11 +247,12 @@ namespace Rails.Editor.ViewModel
 		private bool selected = false;
 		private bool isPreview;
 		private bool isPlay;
-		private bool isBackward;
 		private ICommand<Type> addTrackCommand;
 		private ICommand removeCommand;
 		private ICommand removeSelectedKeysCommand;
 		private ICommand gotoNextFrameCommand;
+		private EditorCoroutine reloadRoutine;
+
 
 		public RailsClipViewModel()
 		{
@@ -298,6 +286,7 @@ namespace Rails.Editor.ViewModel
 			propertyChanged += propertyChangedCallback;
 			eventTrack.OnClipSelect(OnKeysSelectionChanged);
 			tracks.ForEach(x => x.OnClipSelect(OnKeysSelectionChanged));
+			EventBus.Subscribe<ClipChangedEvent>(OnClipChanged);
 		}
 
 		public void Deselect(EventHandler<BindablePropertyChangedEventArgs> propertyChangedCallback)
@@ -306,6 +295,7 @@ namespace Rails.Editor.ViewModel
 			propertyChanged += propertyChangedCallback;
 			eventTrack.OnClipDeselect();
 			tracks.ForEach(x => x.OnClipDeselect());
+			EventBus.Unsubscribe<ClipChangedEvent>(OnClipChanged);
 		}
 
 		protected override void OnModelChanged()
@@ -322,13 +312,16 @@ namespace Rails.Editor.ViewModel
 			IsFullDuration = model.IsFullDuration;
 			IsPreview = false;
 			IsPlay = false;
-			isBackward = false;
 		}
 
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
+			bool mustReload = true;
 			if (e.PropertyName == nameof(RailsClip.Name))
+			{
+				mustReload = false;
 				Name = model.Name;
+			}
 			else if (e.PropertyName == nameof(RailsClip.Tracks))
 				UpdateTracks();
 			else if (e.PropertyName == nameof(RailsClip.Duration))
@@ -339,6 +332,11 @@ namespace Rails.Editor.ViewModel
 				LoopCount = model.LoopCount;
 			else if (e.PropertyName == nameof(RailsClip.IsFullDuration))
 				IsFullDuration = model.IsFullDuration;
+			else
+				mustReload = false;
+
+			if (mustReload)
+				EventBus.Publish(new ClipChangedEvent());
 		}
 
 		protected override void OnUnbind()
@@ -381,6 +379,50 @@ namespace Rails.Editor.ViewModel
 					};
 				}
 			);
+		}
+
+		private void OnClipChanged(ClipChangedEvent evt)
+		{
+			if (!IsPreview)
+				return;
+			if (reloadRoutine != null)
+				return;
+			reloadRoutine = EditorCoroutineUtility.StartCoroutineOwnerless(Routine());
+			IEnumerator Routine()
+			{
+				yield return null;
+				if (!IsPreview)
+					yield break;
+				ReloadPreview();
+				reloadRoutine = null;
+			}
+		}
+
+		private void StartPreview()
+		{
+			preview = model.BuildSequence();
+			EditorPreviewer.PrepareTweenForPreview(preview, model.Tracks.Select(x => x.SceneReference).Where(x => x != null));
+			EditorPreviewer.Start(RailsClip.FrameTime, x =>
+			{
+				float currentPosition = preview.ElapsedDirectionalPercentage();
+				int frames = Mathf.RoundToInt(GetLoopDuration() * currentPosition);
+				var position = TimeHeadPosition;
+				position.Frames = frames;
+				SetTimeHeadPosition(position);
+			});
+		}
+
+		private void StopPreview()
+		{
+			EditorPreviewer.Stop();
+		}
+
+		private void ReloadPreview()
+		{
+			float elapsed = preview.Elapsed();
+			StopPreview(); //Restart Preview
+			StartPreview();
+			preview.GotoWithCallbacks(elapsed, IsPlay);
 		}
 
 		private void SetTimeHeadPosition(AnimationTime value)
@@ -442,7 +484,7 @@ namespace Rails.Editor.ViewModel
 				IsPlay = false;
 
 			float next = preview.Elapsed() + frames * RailsClip.FrameTime;
-			preview.Goto(next);
+			preview.GotoWithCallbacks(next);
 		}
 	}
 }

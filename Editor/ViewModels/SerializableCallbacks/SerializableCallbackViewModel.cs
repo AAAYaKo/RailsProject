@@ -148,26 +148,32 @@ namespace Rails.Editor.ViewModel
 
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
+			bool changed = false;
 			if (e.PropertyName == nameof(SerializableCallback.TargetObject))
 			{
 				targetObject = model.TargetObject;
 				UpdateMethods();
 				NotifyPropertyChanged(nameof(TargetObject));
+				changed = true;
 			}
 			else if (e.PropertyName == nameof(SerializableCallback.State))
 			{
 				state = model.State;
 				NotifyPropertyChanged(nameof(State));
+				changed = true;
 			}
 			else if (e.PropertyName == nameof(SerializableCallback.Parameters))
 			{
 				UpdateParams();
+				changed = true;
 			}
 			else if (e.PropertyName == nameof(SerializableCallback.MethodName))
 			{
 				UpdateSelectedMethod();
+				changed = true;
 			}
-
+			if (changed)
+				EventBus.Publish(new ClipChangedEvent());
 		}
 
 		private void UpdateParams()

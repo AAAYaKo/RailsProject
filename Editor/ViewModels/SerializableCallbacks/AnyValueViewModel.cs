@@ -144,20 +144,44 @@ namespace Rails.Editor.ViewModel
 
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
+			bool changed = false;
 			if (e.PropertyName == nameof(AnyValue.Type))
+			{
 				Type = model.Type;
+				changed = true;
+			}
 			else if (e.PropertyName == nameof(AnyValue.BoolValue))
+			{
 				BoolValue = model.BoolValue;
+				changed = true;
+			}
 			else if (e.PropertyName == nameof(AnyValue.IntValue))
+			{
 				IntValue = model.IntValue;
+				changed = true;
+			}
 			else if (e.PropertyName == nameof(AnyValue.FloatValue))
+			{
 				FloatValue = model.FloatValue;
+				changed = true;
+			}
 			else if (e.PropertyName == nameof(AnyValue.StringValue))
+			{
 				StringValue = model.StringValue;
+				changed = true;
+			}
 			else if (e.PropertyName == nameof(AnyValue.Vector2Value))
+			{
 				Vector2Value = model.Vector2Value;
+				changed = true;
+			}
 			else if (e.PropertyName == nameof(AnyValue.Vector3Value))
+			{
 				Vector3Value = model.Vector3Value;
+				changed = true;
+			}
+			if (changed)
+				EventBus.Publish(new ClipChangedEvent());
 		}
 	}
 }

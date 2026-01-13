@@ -45,6 +45,7 @@ namespace Rails.Editor.Context
 		{
 			IsPreviewing = false;
 			uiGraphics.Clear();
+			EditorCoroutineUtility.StopCoroutine(updateRoutine);
 			updateRoutine = null;
 			onPreviewUpdated = null;
 

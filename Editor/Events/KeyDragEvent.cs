@@ -1,6 +1,6 @@
 ﻿namespace Rails.Editor
 {
-	public struct KeyDragEvent
+	public readonly struct KeyDragEvent
 	{
 		public int DragFrames { get; }
 

@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using Rails.Editor.Context;
 using Rails.Runtime;
 using Rails.Runtime.Tracks;
 using Unity.Properties;
@@ -71,7 +72,10 @@ namespace Rails.Editor.ViewModel
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(BaseKey.TimePosition))
+			{
 				TimePosition = new AnimationTime() { Frames = model.TimePosition };
+				EventBus.Publish(new ClipChangedEvent());
+			}
 		}
 	}
 

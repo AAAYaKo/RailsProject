@@ -103,14 +103,29 @@ namespace Rails.Editor.ViewModel
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 			base.OnModelPropertyChanged(sender, e);
+			bool changed = false;
 			if (e.PropertyName == nameof(AnimationKey.SingleValue))
+			{
 				SingleValue = model.SingleValue;
+				changed = true;
+			}
 			else if (e.PropertyName == nameof(AnimationKey.Vector2Value))
+			{
 				Vector2Value = model.Vector2Value;
+				changed = true;
+			}
 			else if (e.PropertyName == nameof(AnimationKey.Vector3Value))
+			{
 				Vector3Value = model.Vector3Value;
+				changed = true;
+			}
 			else if (e.PropertyName == nameof(AnimationKey.ConstrainedProportions))
+			{
 				ConstrainedProportions = model.ConstrainedProportions;
+				changed = true;
+			}
+			if (changed)
+				EventBus.Publish(new ClipChangedEvent());
 		}
 
 		protected override void OnBind()

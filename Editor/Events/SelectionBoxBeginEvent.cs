@@ -2,7 +2,7 @@
 
 namespace Rails.Editor
 {
-	public struct SelectionBoxBeginEvent
+	public readonly struct SelectionBoxBeginEvent
 	{
 		public Rect SelectionWorldRect { get; }
 		public bool ActionKey { get; }

@@ -173,19 +173,25 @@ namespace Rails.Editor.ViewModel
 
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
+			bool changed = false;
 			if (e.PropertyName == nameof(RailsEase.Controls))
 			{
 				FirstPoint = model.Controls.xz;
 				SecondPoint = model.Controls.yw;
+				changed = true;
 			}
 			else if (e.PropertyName == nameof(RailsEase.Type))
 			{
 				EaseType = model.Type;
+				changed = true;
 			}
 			else if (e.PropertyName == nameof(RailsEase.EaseFunc))
 			{
 				SelectedVariant = model.EaseFunc;
+				changed = true;
 			}
+			if (changed)
+				EventBus.Publish(new ClipChangedEvent());
 		}
 
 		protected override void OnModelChanged()

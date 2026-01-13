@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using Rails.Editor.Context;
 using Rails.Runtime;
 using Unity.Properties;
 
@@ -41,6 +42,7 @@ namespace Rails.Editor.ViewModel
 			{
 				AnimationEvent.UnbindModel();
 				AnimationEvent.BindModel(model.AnimationEvent);
+				EventBus.Publish(new ClipChangedEvent());
 			}
 
 		}

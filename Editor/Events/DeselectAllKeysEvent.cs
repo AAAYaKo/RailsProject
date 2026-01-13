@@ -2,7 +2,7 @@
 
 namespace Rails.Editor
 {
-	public struct DeselectAllKeysEvent
+	public readonly struct DeselectAllKeysEvent
 	{
 		public TrackKeyView Key { get; }
 

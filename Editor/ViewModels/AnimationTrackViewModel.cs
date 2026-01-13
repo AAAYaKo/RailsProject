@@ -189,7 +189,10 @@ namespace Rails.Editor.ViewModel
 		{
 			base.OnModelPropertyChanged(sender, e);
 			if (e.PropertyName == nameof(AnimationTrack.SceneReference))
+			{
 				Reference = model.SceneReference;
+				EventBus.Publish(new ClipChangedEvent());
+			}
 		}
 
 		private void UpdateCurrentValue(AnimationKeyViewModel previousKey, AnimationKeyViewModel nextKey, int frame)

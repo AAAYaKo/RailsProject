@@ -1,6 +1,6 @@
 ﻿namespace Rails.Editor
 {
-	public struct TimePositionChangedEvent
+	public readonly struct TimePositionChangedEvent
 	{
 		public float TimePosition { get; }
 

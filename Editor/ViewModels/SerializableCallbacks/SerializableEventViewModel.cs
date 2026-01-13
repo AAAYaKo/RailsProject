@@ -128,9 +128,10 @@ namespace Rails.Editor.ViewModel
 
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(AnimationEvent))
+			if (e.PropertyName == nameof(SerializableEvent.Callbacks))
 			{
 				UpdateCallbacks();
+				EventBus.Publish(new ClipChangedEvent());
 			}
 		}
 

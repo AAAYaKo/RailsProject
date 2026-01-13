@@ -2,7 +2,7 @@
 
 namespace Rails.Editor
 {
-	public struct ClipClickEvent
+	public readonly struct ClipClickEvent
 	{
 		public ClipItemView Clip { get; }
 

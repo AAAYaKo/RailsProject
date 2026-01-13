@@ -1,6 +1,6 @@
 ﻿namespace Rails.Editor
 {
-	public struct FramePixelSizeChangedEvent
+	public readonly struct FramePixelSizeChangedEvent
 	{
 		public float FramePixelSize { get; }
 

@@ -155,6 +155,7 @@ namespace Rails.Editor.ViewModel
 			{
 				UpdateKeys();
 				OnTimeHeadPositionChanged(currentFrame);
+				EventBus.Publish(new ClipChangedEvent());
 			}
 		}
 
