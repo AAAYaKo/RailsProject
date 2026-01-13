@@ -296,6 +296,7 @@ namespace Rails.Editor.ViewModel
 			eventTrack.OnClipDeselect();
 			tracks.ForEach(x => x.OnClipDeselect());
 			EventBus.Unsubscribe<ClipChangedEvent>(OnClipChanged);
+			IsPreview = false;
 		}
 
 		protected override void OnModelChanged()
