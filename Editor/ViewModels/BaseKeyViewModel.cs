@@ -7,7 +7,7 @@ using Unity.Properties;
 namespace Rails.Editor.ViewModel
 {
 	public abstract class BaseKeyViewModel<TKey> : BaseNotifyPropertyViewModel<TKey>, IKeyViewModel
-		where TKey : BaseKey
+		where TKey : IKey
 	{
 		[CreateProperty]
 		public AnimationTime TimePosition

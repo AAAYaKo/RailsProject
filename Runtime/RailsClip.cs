@@ -11,9 +11,9 @@ namespace Rails.Runtime
 	{
 		public const float FrameTime = 1f / 60;
 		public const int Fps = 60;
-		private static readonly CollectionComparer<AnimationTrack> comparer = new();
+		private static readonly CollectionComparer<IAnimationTrack> comparer = new();
 
-		[SerializeReference] private List<AnimationTrack> tracks = new();
+		[SerializeReference] private List<IAnimationTrack> tracks = new();
 		[SerializeField] private EventsTrack eventTrack = new();
 		[SerializeField] private int duration; //in frames
 		[SerializeField] private string name;
@@ -21,7 +21,7 @@ namespace Rails.Runtime
 		[SerializeField] private int loopCount = 1;
 		[SerializeField] private bool isFullDuration = true;
 
-		public List<AnimationTrack> Tracks
+		public List<IAnimationTrack> Tracks
 		{
 			get => tracks;
 			set => SetProperty(ref tracks, value);
@@ -50,7 +50,7 @@ namespace Rails.Runtime
 		}
 
 #if UNITY_EDITOR
-		[NonSerialized] private readonly List<AnimationTrack> tracksCopy = new();
+		[NonSerialized] private readonly List<IAnimationTrack> tracksCopy = new();
 		[NonSerialized] private int durationCopy;
 		[NonSerialized] private string nameCopy;
 		[NonSerialized] private LoopType loopTypeCopy;
@@ -71,13 +71,13 @@ namespace Rails.Runtime
 			return sequence;
 		}
 
-		public void AddTrack(AnimationTrack track)
+		public void AddTrack(IAnimationTrack track)
 		{
 			Tracks.Add(track);
 			NotifyPropertyChanged(nameof(Tracks));
 		}
 
-		public void RemoveTrack(AnimationTrack track)
+		public void RemoveTrack(IAnimationTrack track)
 		{
 			Tracks.Remove(track);
 			NotifyPropertyChanged(nameof(Tracks));

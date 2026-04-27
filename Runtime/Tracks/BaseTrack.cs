@@ -8,12 +8,12 @@ using UnityEngine;
 namespace Rails.Runtime
 {
 	[Serializable]
-	public abstract class BaseTrack<TKey> : BaseSerializableNotifier
-		where TKey : BaseKey
+	public abstract class BaseTrack<TKey> : BaseSerializableNotifier, IBaseTrack<TKey>
+		where TKey : IKey
 	{
 		public static readonly CollectionComparer<TKey> comparer = new();
 
-		[SerializeField] private List<TKey> animationKeys = new();
+		[SerializeReference] private List<TKey> animationKeys = new();
 
 		public List<TKey> AnimationKeys
 		{
@@ -70,7 +70,7 @@ namespace Rails.Runtime
 			List<TKey> keysToRemove = new();
 			foreach (var request in keysFramePositions)
 			{
-				var otherKey = animationKeys.Find(x => x != animationKeys[request.Key] && x.TimePosition == request.Value);
+				var otherKey = animationKeys.Find(x => !x.Equals(animationKeys[request.Key]) && x.TimePosition == request.Value);
 				if (otherKey != null)
 					keysToRemove.Add(otherKey);
 			}
@@ -109,5 +109,17 @@ namespace Rails.Runtime
 		{
 			animationKeys.Remove(key);
 		}
+	}
+
+	public interface IBaseTrack<TKey> : INotifyPropertyChanged
+		where TKey : IKey
+	{
+		public List<TKey> AnimationKeys { get; set; }
+		public void InsertInSequence(Sequence sequence, float frameTime);
+		public void AddKey(TKey key);
+		public void RemoveKey(TKey key);
+		public void RemoveKeys(IEnumerable<TKey> toRemove);
+		public void MoveMultipleKeys(Dictionary<int, int> keysFramePositions);
+		public void InsertNewKeyAt(int frame);
 	}
 }

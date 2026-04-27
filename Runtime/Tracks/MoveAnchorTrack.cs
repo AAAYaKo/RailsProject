@@ -5,22 +5,18 @@ using UnityEngine;
 namespace Rails.Runtime.Tracks
 {
 	[Serializable]
-	public class MoveAnchorTrack : AnimationTrack
+	public class MoveAnchorTrack : AnimationTrack<RectTransform, Vector2>
 	{
-		public RectTransform Reference => (RectTransform)SceneReference;
-
-
-		protected override Tween CreateTween(AnimationKey keyStart, AnimationKey keyEnd, float frameTime)
+		protected override Tween CreateTween(Vector2 start, Vector2 end, float duration)
 		{
-			float duration = (keyEnd.TimePosition - keyStart.TimePosition) * frameTime;
 			return Reference
-				.DOAnchorPos(keyEnd.Vector2Value, duration)
-				.From(keyStart.Vector2Value);
+				.DOAnchorPos(start, duration)
+				.From(end);
 		}
 
-		protected override void InstantChange(AnimationKey key)
+		protected override void InstantChange(Vector2 value)
 		{
-			Reference.anchoredPosition = key.Vector2Value;
+			Reference.anchoredPosition = value;
 		}
 	}
 }

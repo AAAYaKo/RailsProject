@@ -10,7 +10,7 @@ using UnityEngine.UIElements;
 
 namespace Rails.Editor.ViewModel
 {
-	public class AnimationTrackViewModel : BaseTrackViewModel<AnimationTrack, AnimationKey, AnimationKeyViewModel>
+	public class AnimationTrackViewModel : BaseTrackViewModel<IAnimationTrack, IAnimationKey, AnimationKeyViewModel>
 	{
 		[CreateProperty]
 		public UnityEngine.Object Reference
@@ -27,7 +27,7 @@ namespace Rails.Editor.ViewModel
 		[CreateProperty]
 		public Type TrackType => trackData?.Type;
 		[CreateProperty]
-		public AnimationTrack.ValueType ValueType => trackData?.ValueType ?? AnimationTrack.ValueType.Single;
+		public IAnimationTrack.ValueType ValueType => trackData?.ValueType ?? IAnimationTrack.ValueType.Single;
 		[CreateProperty]
 		public override string TrackClass => trackData?.TrackClass;
 		[CreateProperty]
@@ -118,14 +118,22 @@ namespace Rails.Editor.ViewModel
 				if (keyIndex >= 0)
 				{
 					EditorContext.Instance.Record("Key Value Changed");
-					model.AnimationKeys[keyIndex].SingleValue = args.SingleValue;
-					model.AnimationKeys[keyIndex].Vector2Value = args.Vector2Value;
-					model.AnimationKeys[keyIndex].Vector3Value = args.Vector3Value;
+					if (ValueType is IAnimationTrack.ValueType.Single)
+						model.AnimationKeys[keyIndex].Value = args.SingleValue;
+					else if (ValueType is IAnimationTrack.ValueType.Vector2)
+						model.AnimationKeys[keyIndex].Value = args.Vector2Value;
+					else if (ValueType is IAnimationTrack.ValueType.Vector3)
+						model.AnimationKeys[keyIndex].Value = args.Vector3Value;
 				}
 				else
 				{
 					EditorContext.Instance.Record("Key Frame Added");
-					model.InsertNewKeyAt(currentFrame, args.SingleValue, args.Vector2Value, args.Vector3Value);
+					if (ValueType is IAnimationTrack.ValueType.Single)
+						model.InsertNewKeyAt(currentFrame, args.SingleValue);
+					else if (ValueType is IAnimationTrack.ValueType.Vector2)
+						model.InsertNewKeyAt(currentFrame, args.Vector2Value);
+					else if (ValueType is IAnimationTrack.ValueType.Vector3)
+						model.InsertNewKeyAt(currentFrame, args.Vector3Value);
 				}
 			});
 
@@ -188,7 +196,7 @@ namespace Rails.Editor.ViewModel
 		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 			base.OnModelPropertyChanged(sender, e);
-			if (e.PropertyName == nameof(AnimationTrack.SceneReference))
+			if (e.PropertyName == nameof(IAnimationTrack.SceneReference))
 			{
 				Reference = model.SceneReference;
 				EventBus.Publish(new ClipChangedEvent());
@@ -199,7 +207,7 @@ namespace Rails.Editor.ViewModel
 		{
 			switch (ValueType)
 			{
-				case AnimationTrack.ValueType.Single:
+				case IAnimationTrack.ValueType.Single:
 					if (previousKey == null)
 					{
 						CurrentSingleValue = 0;
@@ -212,7 +220,7 @@ namespace Rails.Editor.ViewModel
 					}
 					CurrentSingleValue = previousKey.Ease.EasedValue(previousKey.SingleValue, nextKey.SingleValue, T());
 					return;
-				case AnimationTrack.ValueType.Vector2:
+				case IAnimationTrack.ValueType.Vector2:
 					if (previousKey == null)
 					{
 						CurrentVector2Value = Vector2.zero;
@@ -225,7 +233,7 @@ namespace Rails.Editor.ViewModel
 					}
 					CurrentVector2Value = previousKey.Ease.EasedValue(previousKey.Vector2Value, nextKey.Vector2Value, T());
 					return;
-				case AnimationTrack.ValueType.Vector3:
+				case IAnimationTrack.ValueType.Vector3:
 					if (previousKey == null)
 					{
 						CurrentVector3Value = Vector3.zero;
@@ -275,21 +283,21 @@ namespace Rails.Editor.ViewModel
 
 		public static readonly Dictionary<Type, TrackData> TrackTypes = new()
 		{
-			{ typeof(MoveAnchorTrack), new TrackData(typeof(MoveAnchorTrack), AnimationTrack.ValueType.Vector2, typeof(RectTransform), "move-anchor") },
-			{ typeof(FadeTrack),       new TrackData(typeof(FadeTrack),       AnimationTrack.ValueType.Single,  typeof(CanvasGroup),   "fade")        },
-			{ typeof(RotateTrack),     new TrackData(typeof(RotateTrack),     AnimationTrack.ValueType.Vector3,  typeof(Transform),    "rotate")      },
-			{ typeof(ScaleTrack),      new TrackData(typeof(ScaleTrack),      AnimationTrack.ValueType.Vector3,  typeof(Transform),    "scale")       },
+			{ typeof(MoveAnchorTrack), new TrackData(typeof(MoveAnchorTrack), IAnimationTrack.ValueType.Vector2, typeof(RectTransform), "move-anchor") },
+			{ typeof(FadeTrack),       new TrackData(typeof(FadeTrack),       IAnimationTrack.ValueType.Single,  typeof(CanvasGroup),   "fade")        },
+			{ typeof(RotateTrack),     new TrackData(typeof(RotateTrack),     IAnimationTrack.ValueType.Vector3,  typeof(Transform),    "rotate")      },
+			{ typeof(ScaleTrack),      new TrackData(typeof(ScaleTrack),      IAnimationTrack.ValueType.Vector3,  typeof(Transform),    "scale")       },
 		};
 
 		public class TrackData
 		{
 			public Type Type { get; }
-			public AnimationTrack.ValueType ValueType { get; }
+			public IAnimationTrack.ValueType ValueType { get; }
 			public Type AnimationComponentType { get; }
 			public string TrackClass { get; }
 
 
-			public TrackData(Type type, AnimationTrack.ValueType valueType, Type animationComponentType, string trackClass)
+			public TrackData(Type type, IAnimationTrack.ValueType valueType, Type animationComponentType, string trackClass)
 			{
 				Type = type;
 				ValueType = valueType;

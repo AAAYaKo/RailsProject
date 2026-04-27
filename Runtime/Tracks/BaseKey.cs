@@ -1,10 +1,11 @@
 ﻿using System;
+using System.ComponentModel;
 using UnityEngine;
 
 namespace Rails.Runtime
 {
 	[Serializable]
-	public abstract class BaseKey : BaseSerializableNotifier
+	public abstract class BaseKey : BaseSerializableNotifier, IKey
 	{
 		[SerializeField] private int timePosition;
 
@@ -41,5 +42,11 @@ namespace Rails.Runtime
 				timePositionCopy = TimePosition;
 #endif
 		}
+	}
+
+	public interface IKey : INotifyPropertyChanged
+	{
+		public int TimePosition { get; set; }
+		public void SetTimePositionWithoutNotify(int value);
 	}
 }

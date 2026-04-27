@@ -11,8 +11,8 @@ using UnityEngine.UIElements;
 namespace Rails.Editor.ViewModel
 {
 	public abstract class BaseTrackViewModel<TTrack, TKey, TKeyViewModel> : BaseNotifyPropertyViewModel<TTrack>
-		where TKey : BaseKey
-		where TTrack : BaseTrack<TKey>
+		where TKey : IKey
+		where TTrack : IBaseTrack<TKey>
 		where TKeyViewModel : BaseKeyViewModel<TKey>
 	{
 		public const string StoreKey = "selectedKeys_";

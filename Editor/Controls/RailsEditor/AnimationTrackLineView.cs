@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 namespace Rails.Editor.Controls
 {
 	[UxmlElement]
-	public partial class AnimationTrackLineView : BaseTrackLineView<AnimationKeyViewModel, AnimationKey>
+	public partial class AnimationTrackLineView : BaseTrackLineView<AnimationKeyViewModel, IAnimationKey>
 	{
 		private List<TrackTweenLineView> tweenLines = new();
 		private Dictionary<int, TrackTweenLineView> keyToTweenLines = new();

@@ -228,7 +228,7 @@ namespace Rails.Editor.Controls
 
 			bool Check<TKeyViewModel, TKey>(BaseTrackLineView<TKeyViewModel, TKey> line)
 				where TKeyViewModel : BaseKeyViewModel<TKey>
-				where TKey : BaseKey
+				where TKey : IKey
 			{
 				if (line.SelectedKeysFrames.IsNullOrEmpty())
 					return false;
@@ -254,7 +254,7 @@ namespace Rails.Editor.Controls
 
 			void AddKeyAction<TKeyViewModel, TKey>(BaseTrackLineView<TKeyViewModel, TKey> track)
 				where TKeyViewModel : BaseKeyViewModel<TKey>
-				where TKey : BaseKey
+				where TKey : IKey
 			{
 				Vector2 mousePosition = track.parent.WorldToLocal(evt.mousePosition);
 				if (track.layout.Contains(mousePosition))

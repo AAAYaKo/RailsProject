@@ -35,16 +35,16 @@ namespace Rails.Editor.Controls
 			}
 		}
 		[UxmlAttribute("type"), CreateProperty]
-		public AnimationTrack.ValueType ValueType
+		public IAnimationTrack.ValueType ValueType
 		{
-			get => type ?? AnimationTrack.ValueType.Single;
+			get => type ?? IAnimationTrack.ValueType.Single;
 			set
 			{
 				if (type == value)
 					return;
 				type = value;
 				UpdateValueView();
-				constrainedToggle.style.display = value is AnimationTrack.ValueType.Single ? DisplayStyle.None : DisplayStyle.Flex;
+				constrainedToggle.style.display = value is IAnimationTrack.ValueType.Single ? DisplayStyle.None : DisplayStyle.Flex;
 			}
 		}
 		[UxmlAttribute("singleValue"), CreateProperty]
@@ -109,7 +109,7 @@ namespace Rails.Editor.Controls
 		private float? singleValue;
 		private Vector2? vector2Value;
 		private Vector3? vector3Value;
-		private AnimationTrack.ValueType? type;
+		private IAnimationTrack.ValueType? type;
 		private FloatField singleField;
 		private Vector2Field vector2Field;
 		private Vector3Field vector3Field;
@@ -157,7 +157,7 @@ namespace Rails.Editor.Controls
 
 		private void UpdateValueView()
 		{
-			if (ValueType is AnimationTrack.ValueType.Single)
+			if (ValueType is IAnimationTrack.ValueType.Single)
 			{
 				if (singleField == null)
 				{
@@ -172,7 +172,7 @@ namespace Rails.Editor.Controls
 				}
 				singleField.SetValueWithoutNotify(SingleValue);
 			}
-			else if (ValueType is AnimationTrack.ValueType.Vector2)
+			else if (ValueType is IAnimationTrack.ValueType.Vector2)
 			{
 				if (vector2Field == null)
 				{
@@ -190,7 +190,7 @@ namespace Rails.Editor.Controls
 				}
 				vector2Field.SetValueWithoutNotify(Vector2Value);
 			}
-			else if (ValueType is AnimationTrack.ValueType.Vector3)
+			else if (ValueType is IAnimationTrack.ValueType.Vector3)
 			{
 				if (vector3Field == null)
 				{

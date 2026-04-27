@@ -7,18 +7,26 @@ using UnityEngine;
 namespace Rails.Runtime.Tracks
 {
 	[Serializable]
-	public abstract class AnimationTrack : BaseTrack<AnimationKey>
+	public abstract class AnimationTrack<TReference, TValue> : BaseTrack<IAnimationKey>, IAnimationTrack
+		where TReference : UnityEngine.Object
 	{
-		[SerializeField] private UnityEngine.Object sceneReference;
+		[SerializeField] private TReference sceneReference;
 
 		public UnityEngine.Object SceneReference
 		{
 			get => sceneReference;
-			set => SetProperty(ref sceneReference, value);
+			set
+			{
+				if (value is TReference reference)
+					SetProperty(ref sceneReference, reference);
+				else
+					throw new InvalidCastException($"Cannot cast {value} to {typeof(TReference).Name}");
+			}
 		}
+		protected TReference Reference => sceneReference;
 
 #if UNITY_EDITOR
-		[NonSerialized] private UnityEngine.Object sceneReferenceCopy;
+		[NonSerialized] private TReference sceneReferenceCopy;
 #endif
 
 
@@ -76,7 +84,7 @@ namespace Rails.Runtime.Tracks
 			InsertNewKey(AnimationKeys[previousIndex], AnimationKeys[nextIndex], frame);
 		}
 
-		public void InsertNewKeyAt(int frame, float singleValue, Vector2 vector2Value, Vector3 vector3Value)
+		public void InsertNewKeyAt(int frame, object value)
 		{
 			int previousIndex = AnimationKeys.FindLastIndex(x =>
 			{
@@ -84,87 +92,68 @@ namespace Rails.Runtime.Tracks
 			});
 			if (previousIndex == -1)
 			{
-				InsertNewKey(null, null, frame, singleValue, vector2Value, vector3Value);
+				InsertNewKey(null, null, frame, value);
 				return;
 			}
 			int nextIndex = previousIndex + 1;
 			if (nextIndex >= AnimationKeys.Count)
 			{
-				InsertNewKey(AnimationKeys[previousIndex], null, frame, singleValue, vector2Value, vector3Value);
+				InsertNewKey(AnimationKeys[previousIndex], null, frame, value);
 				return;
 			}
-			InsertNewKey(AnimationKeys[previousIndex], AnimationKeys[nextIndex], frame, singleValue, vector2Value, vector3Value);
+			InsertNewKey(AnimationKeys[previousIndex], AnimationKeys[nextIndex], frame, value);
 		}
 
-		private void InsertNewKey(AnimationKey previousKey, AnimationKey nextKey, int frame)
+		protected IAnimationKey CreateKey(int frame, TValue value = default)
+		{
+			return new AnimationKey<TValue>()
+			{
+				TimePosition = frame,
+				Value = value,
+			};
+		}
+
+		private void InsertNewKey(IAnimationKey previousKey, IAnimationKey nextKey, int frame)
 		{
 			if (previousKey == null)
 			{
-				AddKey(new AnimationKey()
-				{
-					TimePosition = frame,
-				});
+				AddKey(CreateKey(frame));
 				return;
 			}
 			if (nextKey == null)
 			{
-				AddKey(new AnimationKey()
-				{
-					SingleValue = previousKey.SingleValue,
-					Vector2Value = previousKey.Vector2Value,
-					Vector3Value = previousKey.Vector3Value,
-					TimePosition = frame,
-				});
+				AddKey(CreateKey(frame, (TValue)previousKey.Value));
 				return;
 			}
-			AddKey(new AnimationKey()
-			{
-				SingleValue = previousKey.Ease.EasedValue(previousKey.SingleValue, nextKey.SingleValue, T()),
-				Vector2Value = previousKey.Ease.EasedValue(previousKey.Vector2Value, nextKey.Vector2Value, T()),
-				Vector3Value = previousKey.Ease.EasedValue(previousKey.Vector3Value, nextKey.Vector3Value, T()),
-				TimePosition = frame,
-			});
+			AddKey(CreateKey(frame, (TValue)previousKey.Ease.EasedValue(previousKey.Value, nextKey.Value, Time())));
 
-			float T()
+			float Time()
 			{
 				return math.remap(previousKey.TimePosition, nextKey.TimePosition, 0f, 1f, frame);
 			}
 		}
 
-		private void InsertNewKey(AnimationKey previousKey, AnimationKey nextKey, int frame, float singleValue, Vector2 vector2Value, Vector3 vector3Value)
+		private void InsertNewKey(IAnimationKey previousKey, IAnimationKey nextKey, int frame, object value)
 		{
-			if (previousKey == null)
+			if (value is TValue valueT)
 			{
-				AddKey(new AnimationKey()
+				if (previousKey == null)
 				{
-					SingleValue = singleValue,
-					Vector2Value = vector2Value,
-					Vector3Value = vector3Value,
-					TimePosition = frame,
-				});
-				return;
-			}
-			if (nextKey == null)
-			{
-				AddKey(new AnimationKey()
+					AddKey(CreateKey(frame, valueT));
+					return;
+				}
+				if (nextKey == null)
 				{
-					SingleValue = singleValue,
-					Vector2Value = vector2Value,
-					Vector3Value = vector3Value,
-					TimePosition = frame,
-				});
-				return;
+					AddKey(CreateKey(frame, valueT));
+					return;
+				}
+				AddKey(CreateKey(frame, valueT));
 			}
-			AddKey(new AnimationKey()
-			{
-				SingleValue = singleValue,
-				Vector2Value = vector2Value,
-				Vector3Value = vector3Value,
-				TimePosition = frame,
-			});
+			else
+				throw new InvalidCastException($"Cannot cast {value} to {typeof(TValue).Name}");
 		}
 
-		protected void InsertInstantChange(AnimationKey key, Sequence sequence, float frameTime)
+		protected void InsertInstantChange(IAnimationKey key, Sequence sequence, float frameTime)
 		{
 			sequence.InsertCallback(key.TimePosition * frameTime, () =>
 			{
@@ -172,7 +161,7 @@ namespace Rails.Runtime.Tracks
 			});
 		}
 
-		protected void InsertTween(AnimationKey keyStart, AnimationKey keyEnd, Sequence sequence, float frameTime)
+		protected void InsertTween(IAnimationKey keyStart, IAnimationKey keyEnd, Sequence sequence, float frameTime)
 		{
 			Tween tween = CreateTween(keyStart, keyEnd, frameTime);
 			if (keyStart.Ease.Type is RailsEase.EaseType.EaseFunction)
@@ -187,8 +176,27 @@ namespace Rails.Runtime.Tracks
 			sequence.Insert(keyStart.TimePosition * frameTime, tween);
 		}
 
-		protected abstract Tween CreateTween(AnimationKey keyStart, AnimationKey keyEnd, float frameTime);
-		protected abstract void InstantChange(AnimationKey key);
+		protected abstract Tween CreateTween(TValue start, TValue end, float duration);
+		protected abstract void InstantChange(TValue value);
+
+		protected Tween CreateTween(IAnimationKey keyStart, IAnimationKey keyEnd, float frameTime)
+		{
+			if (keyStart.Value is TValue start && keyEnd.Value is TValue end)
+			{
+				float duration = (keyEnd.TimePosition - keyStart.TimePosition) * frameTime;
+				return CreateTween(start, end, duration);
+			}
+			else
+				throw new InvalidCastException($"Cannot cast {keyStart.Value} and {keyEnd.Value} to float");
+		}
+
+		protected void InstantChange(IAnimationKey key)
+		{
+			if (key.Value is TValue value)
+				InstantChange(value);
+			else
+				throw new InvalidCastException($"Cannot cast {key.Value} to {typeof(TValue).Name}");
+		}
 
 		public override void OnBeforeSerialize()
 		{
@@ -213,6 +221,14 @@ namespace Rails.Runtime.Tracks
 			}
 #endif
 		}
+	}
+
+	public interface IAnimationTrack : IBaseTrack<IAnimationKey>
+	{
+		public UnityEngine.Object SceneReference { get; set; }
+
+
+		public void InsertNewKeyAt(int frame, object value);
 
 		public enum ValueType
 		{

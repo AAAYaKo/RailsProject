@@ -5,22 +5,18 @@ using UnityEngine;
 namespace Rails.Runtime.Tracks
 {
 	[Serializable]
-	public class FadeTrack : AnimationTrack
+	public class FadeTrack : AnimationTrack<CanvasGroup, float>
 	{
-		public CanvasGroup Reference => (CanvasGroup)SceneReference;
-
-
-		protected override Tween CreateTween(AnimationKey keyStart, AnimationKey keyEnd, float frameTime)
+		protected override Tween CreateTween(float start, float end, float duration)
 		{
-			float duration = (keyEnd.TimePosition - keyStart.TimePosition) * frameTime;
 			return Reference
-				.DOFade(keyEnd.SingleValue, duration)
-				.From(keyStart.SingleValue);
+				.DOFade(start, duration)
+				.From(end);
 		}
 
-		protected override void InstantChange(AnimationKey key)
+		protected override void InstantChange(float value)
 		{
-			Reference.alpha = key.SingleValue;
+			Reference.alpha = value;
 		}
 	}
 }

@@ -13,7 +13,7 @@ namespace Rails.Editor.Controls
 	[UxmlElement]
 	public partial class BaseTrackLineView<TKeyViewModel, TKey> : ListObserverElement<TKeyViewModel, TrackKeyView>
 		where TKeyViewModel : BaseKeyViewModel<TKey>
-		where TKey : BaseKey
+		where TKey : IKey
 	{
 		public const string SelectedClass = "track-key--selected";
 		public static readonly BindingId SelectedIndexesProperty = nameof(SelectedIndexes);

@@ -5,21 +5,18 @@ using UnityEngine;
 namespace Rails.Runtime.Tracks
 {
 	[Serializable]
-	public class ScaleTrack : AnimationTrack
+	public class ScaleTrack : AnimationTrack<Transform, Vector3>
 	{
-		public Transform Reference => (Transform)SceneReference;
-
-		protected override Tween CreateTween(AnimationKey keyStart, AnimationKey keyEnd, float frameTime)
+		protected override Tween CreateTween(Vector3 start, Vector3 end, float duration)
 		{
-			float duration = (keyEnd.TimePosition - keyStart.TimePosition) * frameTime;
 			return Reference
-				.DOScale(keyEnd.Vector3Value, duration)
-				.From(keyStart.Vector3Value);
+				.DOScale(start, duration)
+				.From(end);
 		}
 
-		protected override void InstantChange(AnimationKey key)
+		protected override void InstantChange(Vector3 value)
 		{
-			Reference.localScale = key.Vector3Value;
+			Reference.localScale = value;
 		}
 	}
 }

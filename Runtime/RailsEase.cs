@@ -504,6 +504,18 @@ namespace Rails.Runtime
 			return EasedValue(0, 1, t);
 		}
 
+		public object EasedValue(object from, object to, float t)
+		{
+			if (from is float fromFloat && to is float toFloat)
+				return EasedValue(fromFloat, toFloat, t);
+			else if (from is Vector2 fromVector2 && to is Vector2 toVector2)
+				return EasedValue(fromVector2, toVector2, t);
+			else if (from is Vector3 fromVector3 && to is Vector3 toVector3)
+				return EasedValue(fromVector3, toVector3, t);
+			else
+				throw new InvalidCastException($"{from} and {to} is not Eased values");
+		}
+
 		public float EasedValue(float from, float to, float t)
 		{
 			if (Type is EaseType.NoAnimation)

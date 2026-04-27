@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 
 namespace Rails.Editor.ViewModel
 {
-	public class AnimationKeyViewModel : BaseKeyViewModel<AnimationKey>
+	public class AnimationKeyViewModel : BaseKeyViewModel<IAnimationKey>
 	{
 		[CreateProperty]
 		public float SingleValue
@@ -40,9 +40,9 @@ namespace Rails.Editor.ViewModel
 			set => SetProperty(ref constrainedProportions, value);
 		}
 		[CreateProperty]
-		public AnimationTrack.ValueType ValueType
+		public IAnimationTrack.ValueType ValueType
 		{
-			get => valueType ?? AnimationTrack.ValueType.Single;
+			get => valueType ?? IAnimationTrack.ValueType.Single;
 			set => SetProperty(ref valueType, value);
 		}
 		[CreateProperty]
@@ -68,16 +68,19 @@ namespace Rails.Editor.ViewModel
 		private Vector3? vector3Value;
 		private EaseViewModel ease;
 		private bool constrainedProportions;
-		private AnimationTrack.ValueType? valueType;
+		private IAnimationTrack.ValueType? valueType;
 
 		public AnimationKeyViewModel(string trackClass, int keyIndex, ICommand<AnimationTime> moveKeyCommand) : base(trackClass, keyIndex, moveKeyCommand)
 		{
 			ValueEditCommand = new RelayCommand<ValueEditArgs>(args =>
 			{
 				EditorContext.Instance.Record("Key Value Changed");
-				model.SingleValue = args.SingleValue;
-				model.Vector2Value = args.Vector2Value;
-				model.Vector3Value = args.Vector3Value;
+				if (ValueType is IAnimationTrack.ValueType.Single)
+					model.Value = args.SingleValue;
+				else if (ValueType is IAnimationTrack.ValueType.Vector2)
+					model.Value = args.Vector2Value;
+				else if (ValueType is IAnimationTrack.ValueType.Vector3)
+					model.Value = args.Vector3Value;
 			});
 
 			ConstrainedProportionsChangeCommand = new RelayCommand<bool>(x =>
@@ -94,9 +97,13 @@ namespace Rails.Editor.ViewModel
 				return;
 
 			TimePosition = new AnimationTime() { Frames = model.TimePosition };
-			SingleValue = model.SingleValue;
-			Vector2Value = model.Vector2Value;
-			Vector3Value = model.Vector3Value;
+
+			if (ValueType is IAnimationTrack.ValueType.Single)
+				SingleValue = (float)model.Value;
+			else if (ValueType is IAnimationTrack.ValueType.Vector2)
+				Vector2Value = (Vector2)model.Value;
+			else if (ValueType is IAnimationTrack.ValueType.Vector3)
+				Vector3Value = (Vector3)model.Value;
 			ConstrainedProportions = model.ConstrainedProportions;
 		}
 
@@ -104,22 +111,18 @@ namespace Rails.Editor.ViewModel
 		{
 			base.OnModelPropertyChanged(sender, e);
 			bool changed = false;
-			if (e.PropertyName == nameof(AnimationKey.SingleValue))
+			if (e.PropertyName == nameof(IAnimationKey.Value))
 			{
-				SingleValue = model.SingleValue;
+				if (model.Value is float valueSingle)
+					SingleValue = valueSingle;
+				else if (model.Value is Vector2 valueVector2)
+					Vector2Value = valueVector2;
+				else if (model.Value is Vector3 valueVector3)
+					Vector3Value = valueVector3;
+
 				changed = true;
 			}
-			else if (e.PropertyName == nameof(AnimationKey.Vector2Value))
-			{
-				Vector2Value = model.Vector2Value;
-				changed = true;
-			}
-			else if (e.PropertyName == nameof(AnimationKey.Vector3Value))
-			{
-				Vector3Value = model.Vector3Value;
-				changed = true;
-			}
-			else if (e.PropertyName == nameof(AnimationKey.ConstrainedProportions))
+			else if (e.PropertyName == nameof(IAnimationKey.ConstrainedProportions))
 			{
 				ConstrainedProportions = model.ConstrainedProportions;
 				changed = true;

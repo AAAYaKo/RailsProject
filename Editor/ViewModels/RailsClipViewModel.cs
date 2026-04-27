@@ -343,7 +343,7 @@ namespace Rails.Editor.ViewModel
 		protected override void OnUnbind()
 		{
 			base.OnUnbind();
-			ClearViewModels<AnimationTrackViewModel, AnimationTrack>(Tracks, vm => vm.OnClipDeselect());
+			ClearViewModels<AnimationTrackViewModel, IAnimationTrack>(Tracks, vm => vm.OnClipDeselect());
 			eventTrack.UnbindModel();
 		}
 

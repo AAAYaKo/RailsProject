@@ -5,12 +5,11 @@ using UnityEngine;
 namespace Rails.Runtime.Tracks
 {
 	[Serializable]
-	public class AnimationKey : BaseKey
+	public class AnimationKey<T> : BaseKey, IAnimationKey
 	{
 		[SerializeField] private RailsEase ease = new();
-		[SerializeField] private float singleValue;
-		[SerializeField] private Vector3 vector3Value;
-		[SerializeField] private Vector2 vector2Value;
+		[SerializeField] private T animatedValue;
+
 		[SerializeField] private bool constrainedProportions;
 
 		public RailsEase Ease
@@ -25,20 +24,16 @@ namespace Rails.Runtime.Tracks
 					ease.PropertyChanged += OnEaseChanged;
 			}
 		}
-		public float SingleValue
+		public object Value
 		{
-			get => singleValue;
-			set => SetProperty(ref singleValue, value);
-		}
-		public Vector3 Vector3Value
-		{
-			get => vector3Value;
-			set => SetProperty(ref vector3Value, value);
-		}
-		public Vector2 Vector2Value
-		{
-			get => vector2Value;
-			set => SetProperty(ref vector2Value, value);
+			get => animatedValue;
+			set
+			{
+				if (value is T newValue)
+					SetProperty(ref animatedValue, newValue);
+				else
+					throw new InvalidCastException($"Cannot cast {value} to the {typeof(T).Name}");
+			}
 		}
 		public bool ConstrainedProportions
 		{
@@ -48,9 +43,7 @@ namespace Rails.Runtime.Tracks
 
 #if UNITY_EDITOR
 		[NonSerialized] private RailsEase easeCopy;
-		[NonSerialized] private float singleValueCopy;
-		[NonSerialized] private Vector3 vector3ValueCopy;
-		[NonSerialized] private Vector2 vector2ValueCopy;
+		[NonSerialized] private T animatedValueCopy;
 		[NonSerialized] private bool constrainedProportionsCopy;
 #endif
 
@@ -65,9 +58,7 @@ namespace Rails.Runtime.Tracks
 #if UNITY_EDITOR
 			base.OnBeforeSerialize();
 			easeCopy = Ease;
-			singleValueCopy = SingleValue;
-			vector2ValueCopy = Vector2Value;
-			vector3ValueCopy = Vector3Value;
+			animatedValueCopy = animatedValue;
 			constrainedProportionsCopy = ConstrainedProportions;
 #endif
 		}
@@ -78,12 +69,8 @@ namespace Rails.Runtime.Tracks
 			base.OnAfterDeserialize();
 			if (NotifyIfChanged(Ease, easeCopy, nameof(Ease)))
 				easeCopy = Ease;
-			if (NotifyIfChanged(SingleValue, singleValueCopy, nameof(SingleValue)))
-				singleValueCopy = SingleValue;
-			if (NotifyIfChanged(Vector3Value, vector3ValueCopy, nameof(Vector3Value)))
-				vector3ValueCopy = Vector3Value;
-			if (NotifyIfChanged(Vector2Value, vector2ValueCopy, nameof(Vector2Value)))
-				vector2ValueCopy = Vector2Value;
+			if (NotifyIfChanged(animatedValue, animatedValueCopy, nameof(animatedValue)))
+				animatedValueCopy = animatedValue;
 			if (NotifyIfChanged(ConstrainedProportions, constrainedProportionsCopy, nameof(ConstrainedProportions)))
 				constrainedProportionsCopy = ConstrainedProportions;
 #endif
@@ -93,5 +80,12 @@ namespace Rails.Runtime.Tracks
 		{
 			NotifyPropertyChanged(nameof(Ease));
 		}
+	}
+
+	public interface IAnimationKey : IKey
+	{
+		public RailsEase Ease { get; set; }
+		public object Value { get; set; }
+		public bool ConstrainedProportions { get; set; }
 	}
 }
