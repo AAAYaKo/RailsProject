@@ -19,7 +19,7 @@ namespace Rails.Editor.ViewModel
 		private SerializableEventViewModel animationEvent = new();
 
 
-		public EventKeyViewModel(string trackClass, int keyIndex, ICommand<AnimationTime> moveKeyCommand) : base(trackClass, keyIndex, moveKeyCommand)
+		public EventKeyViewModel(int keyIndex, ICommand<AnimationTime> moveKeyCommand) : base(keyIndex, moveKeyCommand)
 		{
 		}
 
@@ -35,14 +35,13 @@ namespace Rails.Editor.ViewModel
 			AnimationEvent.UnbindModel();
 		}
 
-		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
+		protected override void OnModelPropertyChanged(object sender, string propertyName)
 		{
-			base.OnModelPropertyChanged(sender, e);
-			if (e.PropertyName == nameof(EventKey.AnimationEvent))
+			base.OnModelPropertyChanged(sender, propertyName);
+			if (propertyName == nameof(EventKey.AnimationEvent))
 			{
 				AnimationEvent.UnbindModel();
 				AnimationEvent.BindModel(model.AnimationEvent);
-				EventBus.Publish(new ClipChangedEvent());
 			}
 
 		}

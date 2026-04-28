@@ -10,8 +10,13 @@ namespace Rails.Runtime.Tracks
 		protected override Tween CreateTween(float start, float end, float duration)
 		{
 			return Reference
-				.DOFade(start, duration)
-				.From(end);
+				.DOFade(end, duration)
+				.From(start);
+		}
+
+		protected override float GetCurrentValue()
+		{
+			return Reference.alpha;
 		}
 
 		protected override void InstantChange(float value)

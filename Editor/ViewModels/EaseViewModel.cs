@@ -171,27 +171,21 @@ namespace Rails.Editor.ViewModel
 
 		public Vector3 EasedValue(Vector3 from, Vector3 to, float t) => model.EasedValue(from, to, t);
 
-		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
+		protected override void OnModelPropertyChanged(object sender, string propertyName)
 		{
-			bool changed = false;
-			if (e.PropertyName == nameof(RailsEase.Controls))
+			if (propertyName == nameof(RailsEase.Controls))
 			{
 				FirstPoint = model.Controls.xz;
 				SecondPoint = model.Controls.yw;
-				changed = true;
 			}
-			else if (e.PropertyName == nameof(RailsEase.Type))
+			else if (propertyName == nameof(RailsEase.Type))
 			{
 				EaseType = model.Type;
-				changed = true;
 			}
-			else if (e.PropertyName == nameof(RailsEase.EaseFunc))
+			else if (propertyName == nameof(RailsEase.EaseFunc))
 			{
 				SelectedVariant = model.EaseFunc;
-				changed = true;
 			}
-			if (changed)
-				EventBus.Publish(new ClipChangedEvent());
 		}
 
 		protected override void OnModelChanged()

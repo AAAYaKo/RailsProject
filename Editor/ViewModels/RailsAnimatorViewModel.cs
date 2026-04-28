@@ -2,6 +2,7 @@
 using Rails.Editor.Context;
 using Rails.Runtime;
 using Unity.Properties;
+using UnityEditor;
 using UnityEngine.UIElements;
 
 namespace Rails.Editor.ViewModel
@@ -61,6 +62,7 @@ namespace Rails.Editor.ViewModel
 			get => clipSelectCommand;
 			set => SetProperty(ref clipSelectCommand, value);
 		}
+		public SerializedObject SerializedObject { get; private set; }
 
 		private ObservableList<RailsClipViewModel> clips = new();
 		private RailsClipViewModel selectedClip = RailsClipViewModel.Empty;
@@ -89,9 +91,9 @@ namespace Rails.Editor.ViewModel
 			});
 		}
 
-		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
+		protected override void OnModelPropertyChanged(object sender, string propertyName)
 		{
-			if (e.PropertyName == nameof(RailsAnimator.Clips))
+			if (propertyName == nameof(RailsAnimator.Clips))
 			{
 				UpdateClips();
 			}
@@ -108,6 +110,7 @@ namespace Rails.Editor.ViewModel
 				return;
 			}
 
+			SerializedObject = new SerializedObject(model);
 			UpdateClips();
 
 			if (storedSelectedIndex.Value >= Clips.Count || storedSelectedIndex.Value < 0)
@@ -144,7 +147,7 @@ namespace Rails.Editor.ViewModel
 		private void UpdateClips()
 		{
 			UpdateViewModels(Clips, model.Clips,
-				createViewModel: i => new RailsClipViewModel(),
+				createViewModel: i => new RailsClipViewModel(i),
 				viewModelBindCallback: (vm, m) =>
 				{
 					vm.RemoveCommand = new RelayCommand(() =>

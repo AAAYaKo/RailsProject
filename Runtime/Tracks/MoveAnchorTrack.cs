@@ -10,8 +10,13 @@ namespace Rails.Runtime.Tracks
 		protected override Tween CreateTween(Vector2 start, Vector2 end, float duration)
 		{
 			return Reference
-				.DOAnchorPos(start, duration)
-				.From(end);
+				.DOAnchorPos(end, duration)
+				.From(start);
+		}
+
+		protected override Vector2 GetCurrentValue()
+		{
+			return Reference.anchoredPosition;
 		}
 
 		protected override void InstantChange(Vector2 value)

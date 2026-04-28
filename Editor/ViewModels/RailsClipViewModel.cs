@@ -9,6 +9,7 @@ using Rails.Runtime;
 using Rails.Runtime.Tracks;
 using Unity.EditorCoroutines.Editor;
 using Unity.Properties;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -16,7 +17,7 @@ namespace Rails.Editor.ViewModel
 {
 	public class RailsClipViewModel : BaseNotifyPropertyViewModel<RailsClip>
 	{
-		public static readonly RailsClipViewModel Empty = new()
+		public static readonly RailsClipViewModel Empty = new(0)
 		{
 			CanEdit = false,
 		};
@@ -184,6 +185,7 @@ namespace Rails.Editor.ViewModel
 			{
 				if (SetProperty(ref isPreview, value))
 				{
+					model.RecomputeDrivers();
 					if (IsPreview)
 						StartPreview();
 					else
@@ -252,9 +254,12 @@ namespace Rails.Editor.ViewModel
 		private ICommand removeSelectedKeysCommand;
 		private ICommand gotoNextFrameCommand;
 		private EditorCoroutine reloadRoutine;
+		private readonly int clipIndex;
+		private string clipProperty;
+		
 
 
-		public RailsClipViewModel()
+		public RailsClipViewModel(int clipIndex)
 		{
 			AddTrackCommand = new RelayCommand<Type>(trackType =>
 			{
@@ -278,6 +283,7 @@ namespace Rails.Editor.ViewModel
 			});
 			RemoveSelectedKeysCommand = new RelayCommand(RemoveKeys);
 			GotoNextFrameCommand = new RelayCommand(GotoNextFrame);
+			this.clipIndex = clipIndex;
 		}
 
 		public void Select(EventHandler<BindablePropertyChangedEventArgs> propertyChangedCallback)
@@ -286,7 +292,7 @@ namespace Rails.Editor.ViewModel
 			propertyChanged += propertyChangedCallback;
 			eventTrack.OnClipSelect(OnKeysSelectionChanged);
 			tracks.ForEach(x => x.OnClipSelect(OnKeysSelectionChanged));
-			EventBus.Subscribe<ClipChangedEvent>(OnClipChanged);
+			EventBus.Subscribe<PropertyChanged>(OnClipChanged);
 		}
 
 		public void Deselect(EventHandler<BindablePropertyChangedEventArgs> propertyChangedCallback)
@@ -295,7 +301,7 @@ namespace Rails.Editor.ViewModel
 			propertyChanged += propertyChangedCallback;
 			eventTrack.OnClipDeselect();
 			tracks.ForEach(x => x.OnClipDeselect());
-			EventBus.Unsubscribe<ClipChangedEvent>(OnClipChanged);
+			EventBus.Unsubscribe<PropertyChanged>(OnClipChanged);
 			IsPreview = false;
 		}
 
@@ -304,6 +310,8 @@ namespace Rails.Editor.ViewModel
 			if (model == null)
 				return;
 			Name = model.Name;
+
+			clipProperty = $"clips.Array.data[{clipIndex}]";
 			UpdateTracks();
 
 			Duration = new() { Frames = model.Duration };
@@ -315,29 +323,22 @@ namespace Rails.Editor.ViewModel
 			IsPlay = false;
 		}
 
-		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
+		protected override void OnModelPropertyChanged(object sender, string propertyName)
 		{
-			bool mustReload = true;
-			if (e.PropertyName == nameof(RailsClip.Name))
+			if (propertyName == nameof(RailsClip.Name))
 			{
-				mustReload = false;
 				Name = model.Name;
 			}
-			else if (e.PropertyName == nameof(RailsClip.Tracks))
+			else if (propertyName == nameof(RailsClip.Tracks))
 				UpdateTracks();
-			else if (e.PropertyName == nameof(RailsClip.Duration))
+			else if (propertyName == nameof(RailsClip.Duration))
 				Duration = new() { Frames = model.Duration };
-			else if (e.PropertyName == nameof(RailsClip.LoopType))
+			else if (propertyName == nameof(RailsClip.LoopType))
 				LoopType = model.LoopType;
-			else if (e.PropertyName == nameof(RailsClip.LoopCount))
+			else if (propertyName == nameof(RailsClip.LoopCount))
 				LoopCount = model.LoopCount;
-			else if (e.PropertyName == nameof(RailsClip.IsFullDuration))
+			else if (propertyName == nameof(RailsClip.IsFullDuration))
 				IsFullDuration = model.IsFullDuration;
-			else
-				mustReload = false;
-
-			if (mustReload)
-				EventBus.Publish(new ClipChangedEvent());
 		}
 
 		protected override void OnUnbind()
@@ -378,11 +379,12 @@ namespace Rails.Editor.ViewModel
 						}
 						return true;
 					};
-				}
+				},
+				viewModelPreBindCallback: (vm, m) => vm.ClipProperty = clipProperty
 			);
 		}
 
-		private void OnClipChanged(ClipChangedEvent evt)
+		private void OnClipChanged(PropertyChanged evt)
 		{
 			if (!IsPreview)
 				return;
@@ -401,7 +403,8 @@ namespace Rails.Editor.ViewModel
 
 		private void StartPreview()
 		{
-			preview = model.BuildSequence();
+			model.SaveCurrentValue();
+			preview = model.BuildSequence(false);
 			EditorPreviewer.PrepareTweenForPreview(preview, model.Tracks.Select(x => x.SceneReference).Where(x => x != null));
 			EditorPreviewer.Start(RailsClip.FrameTime, x =>
 			{
@@ -416,6 +419,7 @@ namespace Rails.Editor.ViewModel
 		private void StopPreview()
 		{
 			EditorPreviewer.Stop();
+			model.RestoreValue();
 		}
 
 		private void ReloadPreview()

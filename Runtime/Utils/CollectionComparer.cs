@@ -6,7 +6,7 @@ namespace Rails.Runtime
 {
 	public class CollectionComparer<T> : IEqualityComparer<IEnumerable<T>>
 	{
-		private IEqualityComparer<T> comparer;
+		private readonly IEqualityComparer<T> comparer;
 
 
 		public CollectionComparer(IEqualityComparer<T> comparer = null)

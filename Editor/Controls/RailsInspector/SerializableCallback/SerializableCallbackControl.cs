@@ -18,6 +18,7 @@ namespace Rails.Editor.Controls
 		public static readonly BindingId StateProperty = nameof(State);
 		public static readonly BindingId ParamsProperty = nameof(Params);
 		public static readonly BindingId SelectMethodCommandProperty = nameof(SelectMethodCommand);
+		public static readonly BindingId ChangeTargetObjectCommandProperty = nameof(ChangeTargetObjectCommand);
 		private static readonly CollectionComparer<MethodOption> methodsComparer = new();
 
 		[CreateProperty]
@@ -88,6 +89,8 @@ namespace Rails.Editor.Controls
 
 		[CreateProperty]
 		public ICommand<MethodOption> SelectMethodCommand { get; set; }
+		[CreateProperty]
+		public ICommand<Object> ChangeTargetObjectCommand { get; set; }
 
 		private MethodsField methodField;
 		private EnumField stateField;
@@ -182,7 +185,7 @@ namespace Rails.Editor.Controls
 
 		private void OnObjectChanged(ChangeEvent<Object> evt)
 		{
-			TargetObject = evt.newValue;
+			ChangeTargetObjectCommand.Execute(evt.newValue);
 		}
 
 		private void OnMethodChanged(ChangeEvent<MethodOption> evt)

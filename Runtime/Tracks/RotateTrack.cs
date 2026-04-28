@@ -10,8 +10,13 @@ namespace Rails.Runtime.Tracks
 		protected override Tween CreateTween(Vector3 start, Vector3 end, float duration)
 		{
 			return Reference
-				.DORotate(start, duration)
-				.From(end);			
+				.DORotate(end, duration)
+				.From(start);
+		}
+
+		protected override Vector3 GetCurrentValue()
+		{
+			return Reference.eulerAngles;
 		}
 
 		protected override void InstantChange(Vector3 value)

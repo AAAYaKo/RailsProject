@@ -19,6 +19,8 @@ namespace Rails.Editor.Controls
 			AnimationValueControl valueControl = this.Q<AnimationValueControl>();
 			valueControl.SetBinding(AnimationValueControl.ValueEditCommandProperty, new CommandBinding(nameof(AnimationKeyViewModel.ValueEditCommand)));
 			valueControl.SetBinding(AnimationValueControl.ConstrainedProportionsChangeCommandProperty, new CommandBinding(nameof(AnimationKeyViewModel.ConstrainedProportionsChangeCommand)));
+			valueControl.SetBinding(AnimationValueControl.DriverPropertyProperty, new ToTargetBinding(nameof(AnimationKeyViewModel.DriverProperty)));
+			valueControl.SetBinding(AnimationValueControl.HasDriverProperty, new ToTargetBinding(nameof(AnimationKeyViewModel.HasDriver)));
 		}
 	}
 }

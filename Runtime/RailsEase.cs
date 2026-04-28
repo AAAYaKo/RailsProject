@@ -6,12 +6,13 @@ using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using Unity.Mathematics;
+using Unity.Properties;
 using UnityEngine;
 
 namespace Rails.Runtime
 {
 	[Serializable]
-	public class RailsEase : BaseSerializableNotifier
+	public class RailsEase
 	{
 		#region Ease Preview Spline Curves
 		private static readonly Dictionary<Ease, Vector2[]> _easeSplines = new()
@@ -437,45 +438,49 @@ namespace Rails.Runtime
 		};
 		#endregion
 
-		[SerializeField] private EaseType easeType;
-		[SerializeField] private float4 controls = new(1 / 3f, 1 / 6f, 0, 1);
-		[SerializeField] private Ease ease = Ease.Linear;
+		[SerializeField, DontCreateProperty] private EaseType easeType;
+		[SerializeField, DontCreateProperty] private float4 controls = new(1 / 3f, 1 / 6f, 0, 1);
+		[SerializeField, DontCreateProperty] private Ease ease = Ease.Linear;
 
+		[CreateProperty]
 		public EaseType Type
 		{
 			get => easeType;
 			set
 			{
-				if (SetProperty(ref easeType, value))
+				if (easeType != value)
+				{
+					easeType = value;
 					CalculatePolynomial();
+				}
 			}
 		}
 
 		/// <summary>
 		/// format (x1, x2, y1, y2)
 		/// </summary>
+		[CreateProperty]
 		public float4 Controls
 		{
 			get => controls;
 			set
 			{
-				if (SetProperty(ref controls, value, VectorComparer.Instance))
+				if (!VectorComparer.Instance.Equals(controls, value))
+				{
+					controls = value;
 					CalculatePolynomial();
+				}
 			}
 		}
 
+		[CreateProperty]
 		public Ease EaseFunc
 		{
 			get => ease;
-			set => SetProperty(ref ease, value);
+			set => ease = value;
 		}
 
-		private float3x2? polynomial;
-#if UNITY_EDITOR
-		[NonSerialized] private EaseType easeTypeCopy;
-		[NonSerialized] private float4 controlsCopy;
-		[NonSerialized] private Ease easeFuncCopy;
-#endif
+		[NonSerialized] private float3x2? polynomial;
 
 
 		public Vector2[] GetEaseSpline() => easeType switch
@@ -556,27 +561,6 @@ namespace Rails.Runtime
 				return math.lerp(from, to, y);
 			}
 			return DOVirtual.EasedValue(from, to, t, EaseFunc);
-		}
-
-		public override void OnBeforeSerialize()
-		{
-#if UNITY_EDITOR
-			easeTypeCopy = Type;
-			controlsCopy = Controls;
-			easeFuncCopy = EaseFunc;
-#endif
-		}
-
-		public override void OnAfterDeserialize()
-		{
-#if UNITY_EDITOR
-			if (NotifyIfChanged(Type, easeTypeCopy, nameof(Type)))
-				easeTypeCopy = Type;
-			if (NotifyIfChanged(Controls, controlsCopy, nameof(Controls), VectorComparer.Instance))
-				controlsCopy = Controls;
-			if (NotifyIfChanged(EaseFunc, easeFuncCopy, nameof(EaseFunc)))
-				easeFuncCopy = EaseFunc;
-#endif
 		}
 
 		private void CalculatePolynomial()

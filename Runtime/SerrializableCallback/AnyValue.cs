@@ -2,72 +2,73 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using Unity.Properties;
 using UnityEngine;
 
 //Based on https://gist.github.com/adammyhre/e5318c8c9811264f0cabdd793b796529
 namespace Rails.Runtime.Callback
 {
 	[Serializable]
-	public struct AnyValue : INotifyPropertyChanged, IEquatable<AnyValue>
-		, ISerializationCallbackReceiver
+	public struct AnyValue : IEquatable<AnyValue>
 	{
-		[SerializeField] private ValueType type;
+		[SerializeField, DontCreateProperty] private ValueType type;
 
 		// Storage for different types of values
-		[SerializeField] private bool boolValue;
-		[SerializeField] private int intValue;
-		[SerializeField] private float floatValue;
-		[SerializeField] private string stringValue;
-		[SerializeField] private Vector2 vector2Value;
-		[SerializeField] private Vector3 vector3Value;
+		[SerializeField, DontCreateProperty] private bool boolValue;
+		[SerializeField, DontCreateProperty] private int intValue;
+		[SerializeField, DontCreateProperty] private float floatValue;
+		[SerializeField, DontCreateProperty] private string stringValue;
+		[SerializeField, DontCreateProperty] private Vector2 vector2Value;
+		[SerializeField, DontCreateProperty] private Vector3 vector3Value;
 
 		public ValueType Type
 		{
 			readonly get => type;
-			set => SetProperty(ref type, value);
+			set => type = value;
 		}
 		public bool BoolValue
 		{
 			readonly get => boolValue;
-			set => SetProperty(ref boolValue, value);
+			set => boolValue = value;
 		}
 		public int IntValue
 		{
 			readonly get => intValue;
-			set => SetProperty(ref intValue, value);
+			set => intValue = value;
 		}
 		public float FloatValue
 		{
 			readonly get => floatValue;
-			set => SetProperty(ref floatValue, value);
+			set
+			{
+				if (!Mathf.Approximately(floatValue, value))
+					floatValue = value;
+			}
 		}
 		public string StringValue
 		{
 			readonly get => stringValue;
-			set => SetProperty(ref stringValue, value);
+			set => stringValue = value;
 		}
 		public Vector2 Vector2Value
 		{
 			readonly get => vector2Value;
-			set => SetProperty(ref vector2Value, value, VectorComparer.Instance);
+			set
+			{
+				if (!VectorComparer.Instance.Equals(vector2Value, value))
+					vector2Value = value;
+			}
 		}
 		public Vector3 Vector3Value
 		{
 			readonly get => vector3Value;
-			set => SetProperty(ref vector3Value, value, VectorComparer.Instance);
+			set
+			{
+				if (!VectorComparer.Instance.Equals(vector3Value, value))
+					vector3Value = value;
+			}
 		}
 
-		public event PropertyChangedEventHandler PropertyChanged;
-
-#if UNITY_EDITOR
-		private ValueType typeCopy;
-		private bool boolValueCopy;
-		private int intValueCopy;
-		private float floatValueCopy;
-		private string stringValueCopy;
-		private Vector2 vector2ValueCopy;
-		private Vector3 vector3ValueCopy;
-#endif
 
 		// Implicit conversion operators to convert AnyValue to different types
 		public static implicit operator bool(AnyValue value) => value.ConvertValue<bool>();
@@ -79,38 +80,6 @@ namespace Rails.Runtime.Callback
 		public static bool operator ==(AnyValue left, AnyValue right) => left.Equals(right);
 		public static bool operator !=(AnyValue left, AnyValue right) => !(left == right);
 
-		public void OnBeforeSerialize()
-		{
-#if UNITY_EDITOR
-			typeCopy = Type;
-			boolValueCopy = BoolValue;
-			intValueCopy = IntValue;
-			floatValueCopy = FloatValue;
-			stringValueCopy = StringValue;
-			vector2ValueCopy = Vector2Value;
-			vector3ValueCopy = Vector3Value;
-#endif
-		}
-
-		public void OnAfterDeserialize()
-		{
-#if UNITY_EDITOR
-			if (NotifyIfChanged(Type, typeCopy, nameof(Type)))
-				typeCopy = Type;
-			if (NotifyIfChanged(BoolValue, boolValueCopy, nameof(BoolValue)))
-				BoolValue = boolValueCopy;
-			if (NotifyIfChanged(IntValue, intValueCopy, nameof(IntValue)))
-				IntValue = intValueCopy;
-			if (NotifyIfChanged(FloatValue, floatValueCopy, nameof(FloatValue)))
-				FloatValue = floatValueCopy;
-			if (NotifyIfChanged(StringValue, stringValueCopy, nameof(StringValue)))
-				StringValue = stringValueCopy;
-			if (NotifyIfChanged(Vector2Value, vector2ValueCopy, nameof(Vector2Value)))
-				Vector2Value = Vector2Value;
-			if (NotifyIfChanged(Vector3Value, vector3ValueCopy, nameof(Vector3Value)))
-				Vector3Value = Vector3Value;
-#endif
-		}
 
 		public readonly T ConvertValue<T>() => type switch
 		{
@@ -199,37 +168,6 @@ namespace Rails.Runtime.Callback
 			ValueType.Vector3 => (T)(object)vector3Value,
 			_ => throw new InvalidCastException($"Cannot convert AnyValue of type {type} to {typeof(T).Name}")
 		};
-
-		private readonly void NotifyPropertyChanged([CallerMemberName] string property = "")
-		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
-		}
-
-#nullable enable
-		private bool SetProperty<T>(ref T field, T value, IEqualityComparer<T> comparer, [CallerMemberName] string? propertyName = "")
-		{
-			comparer ??= EqualityComparer<T>.Default;
-			if (comparer.Equals(field, value))
-				return false;
-			field = value;
-			if (!string.IsNullOrEmpty(propertyName))
-				NotifyPropertyChanged(propertyName);
-			return true;
-		}
-
-		private bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = "")
-		{
-			return SetProperty(ref field, value, EqualityComparer<T>.Default, propertyName);
-		}
-#nullable disable
-		private bool NotifyIfChanged<T>(in T original, in T copy, string propertyName, IEqualityComparer<T> comparer = null)
-		{
-			comparer ??= EqualityComparer<T>.Default;
-			if (comparer.Equals(copy, original))
-				return false;
-			NotifyPropertyChanged(propertyName);
-			return true;
-		}
 	}
 
 	public enum ValueType

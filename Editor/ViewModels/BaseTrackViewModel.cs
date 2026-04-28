@@ -149,13 +149,12 @@ namespace Rails.Editor.ViewModel
 			NotifyPropertyChanged(nameof(SelectedIndexes));
 		}
 
-		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
+		protected override void OnModelPropertyChanged(object sender, string propertyName)
 		{
-			if (e.PropertyName == nameof(BaseTrack<TKey>.AnimationKeys))
+			if (propertyName == nameof(BaseTrack<TKey>.AnimationKeys))
 			{
 				UpdateKeys();
 				OnTimeHeadPositionChanged(currentFrame);
-				EventBus.Publish(new ClipChangedEvent());
 			}
 		}
 
@@ -163,18 +162,30 @@ namespace Rails.Editor.ViewModel
 		{
 			UpdateViewModels(Keys, model.AnimationKeys,
 				createViewModel: CreateKey,
-				resetViewModel: vm =>
-				{
-					vm.propertyChanged -= OnKeyPropertyChanged;
-				},
-				viewModelBindCallback: (vm, m) =>
-				{
-					vm.propertyChanged += OnKeyPropertyChanged;
-				}
+				resetViewModel: ResetKey,
+				viewModelBindCallback: OnKeyBind,
+				viewModelPreBindCallback: OnKeyPreBind
 			);
 		}
 
 		protected abstract TKeyViewModel CreateKey(int index);
+
+		protected virtual void OnKeyBind(TKeyViewModel vm, TKey m)
+		{
+			vm.propertyChanged += OnKeyPropertyChanged;
+			vm.TrackClass = TrackClass;
+		}
+
+		protected virtual void OnKeyPreBind(TKeyViewModel model, TKey key)
+		{
+			
+		}
+
+		protected void ResetKey(TKeyViewModel vm)
+		{
+			vm.propertyChanged -= OnKeyPropertyChanged;
+			vm.TrackClass = TrackClass;
+		}
 
 		protected void AddKey(int frame)
 		{

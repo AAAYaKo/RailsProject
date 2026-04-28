@@ -28,7 +28,7 @@ namespace Rails.Editor.Context
 		{
 			if (!bus.ContainsKey(typeof(T)))
 				return;
-			foreach (var call in bus[typeof(T)].Cast<Action<T>>())
+			foreach (var call in bus[typeof(T)].Cast<Action<T>>().ToArray())
 				call?.Invoke(eventT);
 		}
 	}

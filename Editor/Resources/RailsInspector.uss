@@ -64,12 +64,6 @@
     background-image: var(--rails-icon-constrained-enabled);
 }
 
-.driver-button {
-}
-
-.driver-button:hover {
-}
-
 .type-mark {
     flex-grow: 0;
     width: 4px;
@@ -218,6 +212,46 @@
     border-top-color: var(--rails-key-inspector-border-color);
 }
 
+.icon-button {
+    padding-top: 0;
+    padding-left: 0;
+    padding-bottom: 0;
+    padding-right: 0;
+    margin-bottom: 0;
+    margin-top: 0;
+    margin-left: 0;
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+    aspect-ratio: 1;
+    background-color: rgba(0, 0, 0, 0);
+    -unity-background-image-tint-color: var(--rails-button-icon-color);
+}
 
+.icon-button:hover {
+    -unity-background-image-tint-color: var(--rails-button-icon-hover-color);
+}
 
+.menu-button {
+    width: 16px;
+    height: 16px;
+    background-image: var(--rails-icon-menu);
+    align-self: center;
+    margin-top: 1px;
+    margin-bottom: 1px;
+    margin-left: -8px;
+    margin-right: -4px;
+}
 
+.value-with-menu .menu-button {
+    visibility: hidden;
+}
+
+.value-with-menu:hover .menu-button {
+    visibility: visible;
+}

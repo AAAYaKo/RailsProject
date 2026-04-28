@@ -2,6 +2,7 @@
 using System.Linq;
 using DG.Tweening;
 using Unity.Mathematics;
+using Unity.Properties;
 using UnityEngine;
 
 namespace Rails.Runtime.Tracks
@@ -9,28 +10,43 @@ namespace Rails.Runtime.Tracks
 	[Serializable]
 	public abstract class AnimationTrack<TReference, TValue> : BaseTrack<IAnimationKey>, IAnimationTrack
 		where TReference : UnityEngine.Object
+		where TValue : struct
 	{
-		[SerializeField] private TReference sceneReference;
+		[SerializeField, DontCreateProperty] private TReference sceneReference;
 
+		[CreateProperty]
 		public UnityEngine.Object SceneReference
 		{
 			get => sceneReference;
 			set
 			{
 				if (value is TReference reference)
-					SetProperty(ref sceneReference, reference);
+					sceneReference = reference;
+				else if (value == null)
+					sceneReference = null;
 				else
 					throw new InvalidCastException($"Cannot cast {value} to {typeof(TReference).Name}");
 			}
 		}
+		[CreateProperty]
 		protected TReference Reference => sceneReference;
 
 #if UNITY_EDITOR
-		[NonSerialized] private TReference sceneReferenceCopy;
+		[NonSerialized] protected TValue storedValue;
 #endif
 
 
-		public override void InsertInSequence(Sequence sequence, float frameTime)
+		public void SaveCurrentValue()
+		{
+			storedValue = GetCurrentValue();
+		}
+
+		public void RestoreValue()
+		{
+			InstantChange(storedValue);
+		}
+
+		public override void InsertInSequence(Sequence sequence, float frameTime, bool recomputeDrivers)
 		{
 			if (AnimationKeys.Count == 0)
 				return;
@@ -46,6 +62,11 @@ namespace Rails.Runtime.Tracks
 			}
 
 			var sorted = AnimationKeys.OrderBy(x => x.TimePosition).ToArray();
+			if (recomputeDrivers)
+			{
+				for (int i = 0; i < sorted.Length - 1; i++)
+					sorted[i].Driver?.UpdateValue();
+			}
 
 			for (int i = 0; i < sorted.Length - 1; i++)
 			{
@@ -72,19 +93,19 @@ namespace Rails.Runtime.Tracks
 			});
 			if (previousIndex == -1)
 			{
-				InsertNewKey(null, null, frame);
+				InsertNewKey(null, null, frame, false);
 				return;
 			}
 			int nextIndex = previousIndex + 1;
 			if (nextIndex >= AnimationKeys.Count)
 			{
-				InsertNewKey(AnimationKeys[previousIndex], null, frame);
+				InsertNewKey(AnimationKeys[previousIndex], null, frame, false);
 				return;
 			}
-			InsertNewKey(AnimationKeys[previousIndex], AnimationKeys[nextIndex], frame);
+			InsertNewKey(AnimationKeys[previousIndex], AnimationKeys[nextIndex], frame, false);
 		}
 
-		public void InsertNewKeyAt(int frame, object value)
+		public void InsertNewKeyAt(int frame, object value, bool constrainedProportions)
 		{
 			int previousIndex = AnimationKeys.FindLastIndex(x =>
 			{
@@ -92,40 +113,46 @@ namespace Rails.Runtime.Tracks
 			});
 			if (previousIndex == -1)
 			{
-				InsertNewKey(null, null, frame, value);
+				InsertNewKey(null, null, frame, value, constrainedProportions);
 				return;
 			}
 			int nextIndex = previousIndex + 1;
 			if (nextIndex >= AnimationKeys.Count)
 			{
-				InsertNewKey(AnimationKeys[previousIndex], null, frame, value);
+				InsertNewKey(AnimationKeys[previousIndex], null, frame, value, constrainedProportions);
 				return;
 			}
-			InsertNewKey(AnimationKeys[previousIndex], AnimationKeys[nextIndex], frame, value);
+			InsertNewKey(AnimationKeys[previousIndex], AnimationKeys[nextIndex], frame, value, constrainedProportions);
 		}
 
-		protected IAnimationKey CreateKey(int frame, TValue value = default)
+		public void RecomputeDrivers()
+		{
+			AnimationKeys.ForEach(x => x.Driver?.UpdateValue());
+		}
+
+		protected IAnimationKey CreateKey(int frame, bool constrainedProportions, TValue value = default)
 		{
 			return new AnimationKey<TValue>()
 			{
 				TimePosition = frame,
 				Value = value,
+				ConstrainedProportions = constrainedProportions,
 			};
 		}
 
-		private void InsertNewKey(IAnimationKey previousKey, IAnimationKey nextKey, int frame)
+		private void InsertNewKey(IAnimationKey previousKey, IAnimationKey nextKey, int frame, bool constrainedProportions)
 		{
 			if (previousKey == null)
 			{
-				AddKey(CreateKey(frame));
+				AddKey(CreateKey(frame, constrainedProportions));
 				return;
 			}
 			if (nextKey == null)
 			{
-				AddKey(CreateKey(frame, (TValue)previousKey.Value));
+				AddKey(CreateKey(frame, constrainedProportions, (TValue)previousKey.Value));
 				return;
 			}
-			AddKey(CreateKey(frame, (TValue)previousKey.Ease.EasedValue(previousKey.Value, nextKey.Value, Time())));
+			AddKey(CreateKey(frame, constrainedProportions, (TValue)previousKey.Ease.EasedValue(previousKey.Value, nextKey.Value, Time())));
 
 			float Time()
 			{
@@ -133,25 +160,27 @@ namespace Rails.Runtime.Tracks
 			}
 		}
 
-		private void InsertNewKey(IAnimationKey previousKey, IAnimationKey nextKey, int frame, object value)
+		private void InsertNewKey(IAnimationKey previousKey, IAnimationKey nextKey, int frame, object value, bool constrainedProportions)
 		{
 			if (value is TValue valueT)
 			{
 				if (previousKey == null)
 				{
-					AddKey(CreateKey(frame, valueT));
+					AddKey(CreateKey(frame, constrainedProportions, valueT));
 					return;
 				}
 				if (nextKey == null)
 				{
-					AddKey(CreateKey(frame, valueT));
+					AddKey(CreateKey(frame, constrainedProportions, valueT));
 					return;
 				}
-				AddKey(CreateKey(frame, valueT));
+				AddKey(CreateKey(frame, constrainedProportions, valueT));
 			}
 			else
 				throw new InvalidCastException($"Cannot cast {value} to {typeof(TValue).Name}");
 		}
+
+		protected abstract TValue GetCurrentValue();
 
 		protected void InsertInstantChange(IAnimationKey key, Sequence sequence, float frameTime)
 		{
@@ -197,30 +226,6 @@ namespace Rails.Runtime.Tracks
 			else
 				throw new InvalidCastException($"Cannot cast {key.Value} to {typeof(TValue).Name}");
 		}
-
-		public override void OnBeforeSerialize()
-		{
-#if UNITY_EDITOR
-			base.OnBeforeSerialize();
-			sceneReferenceCopy = sceneReference;
-#endif
-		}
-
-		public override void OnAfterDeserialize()
-		{
-#if UNITY_EDITOR
-			try
-			{
-				base.OnAfterDeserialize();
-				if (NotifyIfChanged(SceneReference, sceneReferenceCopy, nameof(SceneReference)))
-					sceneReferenceCopy = sceneReference;
-			}
-			catch
-			{
-
-			}
-#endif
-		}
 	}
 
 	public interface IAnimationTrack : IBaseTrack<IAnimationKey>
@@ -228,7 +233,13 @@ namespace Rails.Runtime.Tracks
 		public UnityEngine.Object SceneReference { get; set; }
 
 
-		public void InsertNewKeyAt(int frame, object value);
+		public void SaveCurrentValue();
+
+		public void RestoreValue();
+
+		public void InsertNewKeyAt(int frame, object value, bool constrainedProportions);
+
+		public void RecomputeDrivers();
 
 		public enum ValueType
 		{

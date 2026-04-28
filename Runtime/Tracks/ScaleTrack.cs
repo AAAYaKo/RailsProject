@@ -10,8 +10,13 @@ namespace Rails.Runtime.Tracks
 		protected override Tween CreateTween(Vector3 start, Vector3 end, float duration)
 		{
 			return Reference
-				.DOScale(start, duration)
-				.From(end);
+				.DOScale(end, duration)
+				.From(start);
+		}
+
+		protected override Vector3 GetCurrentValue()
+		{
+			return Reference.localScale;
 		}
 
 		protected override void InstantChange(Vector3 value)

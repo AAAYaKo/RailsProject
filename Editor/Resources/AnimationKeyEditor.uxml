@@ -1,6 +1,6 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
     <ui:TextField label="Time" name="time" is-delayed="true"/>
-    <Rails.Editor.Controls.AnimationValueControl label="Value">
+    <Rails.Editor.Controls.AnimationValueControl label="Value" menu="true">
         <Bindings>
             <ui:DataBinding property="ValueType" data-source-path="ValueType" binding-mode="ToTarget"/>
             <ui:DataBinding property="SingleValue" data-source-path="SingleValue" binding-mode="ToTarget"/>

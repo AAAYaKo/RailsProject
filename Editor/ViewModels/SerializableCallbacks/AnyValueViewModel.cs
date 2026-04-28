@@ -142,46 +142,36 @@ namespace Rails.Editor.ViewModel
 			Vector3Value = model.Vector3Value;
 		}
 
-		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
+		protected override void OnModelPropertyChanged(object sender, string propertyName)
 		{
-			bool changed = false;
-			if (e.PropertyName == nameof(AnyValue.Type))
+			if (propertyName == nameof(AnyValue.Type))
 			{
 				Type = model.Type;
-				changed = true;
 			}
-			else if (e.PropertyName == nameof(AnyValue.BoolValue))
+			else if (propertyName == nameof(AnyValue.BoolValue))
 			{
 				BoolValue = model.BoolValue;
-				changed = true;
 			}
-			else if (e.PropertyName == nameof(AnyValue.IntValue))
+			else if (propertyName == nameof(AnyValue.IntValue))
 			{
 				IntValue = model.IntValue;
-				changed = true;
 			}
-			else if (e.PropertyName == nameof(AnyValue.FloatValue))
+			else if (propertyName == nameof(AnyValue.FloatValue))
 			{
 				FloatValue = model.FloatValue;
-				changed = true;
 			}
-			else if (e.PropertyName == nameof(AnyValue.StringValue))
+			else if (propertyName == nameof(AnyValue.StringValue))
 			{
 				StringValue = model.StringValue;
-				changed = true;
 			}
-			else if (e.PropertyName == nameof(AnyValue.Vector2Value))
+			else if (propertyName == nameof(AnyValue.Vector2Value))
 			{
 				Vector2Value = model.Vector2Value;
-				changed = true;
 			}
-			else if (e.PropertyName == nameof(AnyValue.Vector3Value))
+			else if (propertyName == nameof(AnyValue.Vector3Value))
 			{
 				Vector3Value = model.Vector3Value;
-				changed = true;
 			}
-			if (changed)
-				EventBus.Publish(new ClipChangedEvent());
 		}
 	}
 }

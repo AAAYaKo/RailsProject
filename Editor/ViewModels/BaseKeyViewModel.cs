@@ -54,9 +54,8 @@ namespace Rails.Editor.ViewModel
 		private AnimationTime timePosition;
 		private ICommand<AnimationTime> moveKeyCommand;
 
-		public BaseKeyViewModel(string trackClass, int keyIndex, ICommand<AnimationTime> moveKeyCommand)
+		public BaseKeyViewModel(int keyIndex, ICommand<AnimationTime> moveKeyCommand)
 		{
-			TrackClass = trackClass;
 			KeyIndex = keyIndex;
 			MoveKeyCommand = moveKeyCommand;
 		}
@@ -69,12 +68,11 @@ namespace Rails.Editor.ViewModel
 			TimePosition = new AnimationTime() { Frames = model.TimePosition };
 		}
 
-		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
+		protected override void OnModelPropertyChanged(object sender, string propertyName)
 		{
-			if (e.PropertyName == nameof(BaseKey.TimePosition))
+			if (propertyName == nameof(BaseKey.TimePosition))
 			{
 				TimePosition = new AnimationTime() { Frames = model.TimePosition };
-				EventBus.Publish(new ClipChangedEvent());
 			}
 		}
 	}

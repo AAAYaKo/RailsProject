@@ -63,7 +63,12 @@ namespace Rails.Editor.ViewModel
 			get => Callbacks[SelectedIndex].SelectMethodCommand;
 			set => Callbacks[SelectedIndex].SelectMethodCommand = value;
 		}
-
+		[CreateProperty]
+		public ICommand<Object> ChangeTargetCommand
+		{
+			get => Callbacks[SelectedIndex].ChangeTargetCommand;
+			set => Callbacks[SelectedIndex].ChangeTargetCommand = value;
+		}
 		[CreateProperty]
 		public int SelectedIndex
 		{
@@ -126,12 +131,11 @@ namespace Rails.Editor.ViewModel
 			UpdateCallbacks();
 		}
 
-		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
+		protected override void OnModelPropertyChanged(object sender, string propertyName)
 		{
-			if (e.PropertyName == nameof(SerializableEvent.Callbacks))
+			if (propertyName == nameof(SerializableEvent.Callbacks))
 			{
 				UpdateCallbacks();
-				EventBus.Publish(new ClipChangedEvent());
 			}
 		}
 

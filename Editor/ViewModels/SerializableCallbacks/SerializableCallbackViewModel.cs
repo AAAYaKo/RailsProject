@@ -19,14 +19,7 @@ namespace Rails.Editor.ViewModel
 		public UnityEngine.Object TargetObject
 		{
 			get => targetObject;
-			set
-			{
-				if (SetProperty(ref targetObject, value))
-				{
-					EditorContext.Instance.Record("Changed Event Target");
-					model.TargetObject = value;
-				}
-			}
+			set => SetProperty(ref targetObject, value);
 		}
 		[CreateProperty]
 		public MethodOption SelectedMethod
@@ -60,12 +53,19 @@ namespace Rails.Editor.ViewModel
 			get => selectMethodCommand;
 			set => SetProperty(ref selectMethodCommand, value);
 		}
+		[CreateProperty]
+		public ICommand<UnityEngine.Object> ChangeTargetCommand
+		{
+			get => changeTargetCommand;
+			set => SetProperty(ref changeTargetCommand, value);
+		}
 
 		private UnityEngine.Object targetObject;
 		private MethodOption selectedMethod = MethodOption.NoFunction;
 		private HashSet<MethodOption> methodOptions = new();
 		private SerializableCallbackState? state;
 		private ICommand<MethodOption> selectMethodCommand;
+		private ICommand<UnityEngine.Object> changeTargetCommand;
 		private ObservableList<AnyValueViewModel> _params = new();
 
 
@@ -112,6 +112,12 @@ namespace Rails.Editor.ViewModel
 				model.Parameters = x.Parameters;
 				model.MethodName = x.Method;
 			});
+
+			ChangeTargetCommand = new RelayCommand<UnityEngine.Object>(x =>
+			{
+				EditorContext.Instance.Record("Changed Event Target");
+				model.TargetObject = x;
+			});
 		}
 
 		protected override void OnBind()
@@ -146,34 +152,27 @@ namespace Rails.Editor.ViewModel
 			UpdateSelectedMethod();
 		}
 
-		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
+		protected override void OnModelPropertyChanged(object sender, string propertyName)
 		{
-			bool changed = false;
-			if (e.PropertyName == nameof(SerializableCallback.TargetObject))
+			if (propertyName == nameof(SerializableCallback.TargetObject))
 			{
 				targetObject = model.TargetObject;
 				UpdateMethods();
 				NotifyPropertyChanged(nameof(TargetObject));
-				changed = true;
 			}
-			else if (e.PropertyName == nameof(SerializableCallback.State))
+			else if (propertyName == nameof(SerializableCallback.State))
 			{
 				state = model.State;
 				NotifyPropertyChanged(nameof(State));
-				changed = true;
 			}
-			else if (e.PropertyName == nameof(SerializableCallback.Parameters))
+			else if (propertyName == nameof(SerializableCallback.Parameters))
 			{
 				UpdateParams();
-				changed = true;
 			}
-			else if (e.PropertyName == nameof(SerializableCallback.MethodName))
+			else if (propertyName == nameof(SerializableCallback.MethodName))
 			{
 				UpdateSelectedMethod();
-				changed = true;
 			}
-			if (changed)
-				EventBus.Publish(new ClipChangedEvent());
 		}
 
 		private void UpdateParams()

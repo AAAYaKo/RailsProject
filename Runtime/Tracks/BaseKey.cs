@@ -1,50 +1,32 @@
 ﻿using System;
-using System.ComponentModel;
+using Unity.Properties;
 using UnityEngine;
 
 namespace Rails.Runtime
 {
 	[Serializable]
-	public abstract class BaseKey : BaseSerializableNotifier, IKey
+	public abstract class BaseKey : IKey
 	{
-		[SerializeField] private int timePosition;
+		[SerializeField, DontCreateProperty] private int timePosition;
 
 		/// <summary>
 		/// Time position in frames
 		/// </summary>
+		[CreateProperty]
 		public int TimePosition
 		{
 			get => timePosition;
-			set => SetProperty(ref timePosition, value);
+			set => timePosition = value;
 		}
-
-#if UNITY_EDITOR
-		[NonSerialized] private int timePositionCopy;
-#endif
 
 
 		public void SetTimePositionWithoutNotify(int value)
 		{
 			timePosition = value;
 		}
-
-		public override void OnBeforeSerialize()
-		{
-#if UNITY_EDITOR
-			timePositionCopy = TimePosition;
-#endif
-		}
-
-		public override void OnAfterDeserialize()
-		{
-#if UNITY_EDITOR
-			if (NotifyIfChanged(TimePosition, timePositionCopy, nameof(TimePosition)))
-				timePositionCopy = TimePosition;
-#endif
-		}
 	}
 
-	public interface IKey : INotifyPropertyChanged
+	public interface IKey
 	{
 		public int TimePosition { get; set; }
 		public void SetTimePositionWithoutNotify(int value);

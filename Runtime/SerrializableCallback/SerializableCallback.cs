@@ -12,47 +12,50 @@ namespace Rails.Runtime.Callback
 {
 
 	[Serializable]
-	public class SerializableCallback : BaseSerializableNotifier
+	public class SerializableCallback : ISerializationCallbackReceiver
 	{
 		private static readonly CollectionComparer<AnyValue> comparer = new();
 
-		[SerializeField] private Object targetObject;
-		[SerializeField] private string methodName;
-		[SerializeField] private SerializableCallbackState state = SerializableCallbackState.RuntimeOnly;
-		[SerializeField] private AnyValue[] parameters;
+		[SerializeField, DontCreateProperty] private Object targetObject;
+		[SerializeField, DontCreateProperty] private string methodName;
+		[SerializeField, DontCreateProperty] private SerializableCallbackState state = SerializableCallbackState.RuntimeOnly;
+		[SerializeField, DontCreateProperty] private AnyValue[] parameters;
 
 		[CreateProperty]
 		public Object TargetObject
 		{
 			get => targetObject;
-			set => SetProperty(ref targetObject, value);
+			set
+			{
+				if (targetObject != value)
+					targetObject = value;
+			}
 		}
 		[CreateProperty]
 		public string MethodName
 		{
 			get => methodName;
-			set => SetProperty(ref methodName, value);
+			set => methodName = value;
 		}
 		[CreateProperty]
 		public SerializableCallbackState State
 		{
 			get => state;
-			set => SetProperty(ref state, value);
+			set => state = value;
 		}
 		[CreateProperty]
 		public AnyValue[] Parameters
 		{
 			get => parameters;
-			set => SetProperty(ref parameters, value, comparer);
+			set
+			{
+				if (!comparer.Equals(parameters, value))
+					parameters = value;
+			}
 		}
 
 		private Delegate cachedDelegate;
-#if UNITY_EDITOR
-		[NonSerialized] private Object targetObjectCopy;
-		[NonSerialized] private string methodNameCopy;
-		[NonSerialized] private SerializableCallbackState stateCopy;
-		[NonSerialized] private AnyValue[] parametersCopy;
-#endif
+
 
 		public void Invoke() => Invoke(parameters);
 
@@ -74,27 +77,6 @@ namespace Rails.Runtime.Callback
 			if (targetObject != null && !string.IsNullOrEmpty(methodName))
 				Debug.LogWarning($"Unable to invoke method {methodName} on {targetObject}");
 			return;
-		}
-
-		public override void OnBeforeSerialize()
-		{
-			targetObjectCopy = TargetObject;
-			methodNameCopy = MethodName;
-			stateCopy = State;
-			CopyArray(Parameters, ref parametersCopy);
-		}
-
-		public override void OnAfterDeserialize()
-		{
-			cachedDelegate = null;
-			if (NotifyIfChanged(TargetObject, targetObjectCopy, nameof(TargetObject)))
-				targetObjectCopy = TargetObject;
-			if (NotifyIfChanged(MethodName, methodNameCopy, nameof(MethodName)))
-				methodNameCopy = MethodName;
-			if (NotifyIfChanged(State, stateCopy, nameof(State)))
-				stateCopy = State;
-			if (NotifyIfChanged(Parameters, parametersCopy, nameof(Parameters), comparer))
-				CopyArray(Parameters, ref parametersCopy);
 		}
 
 		private object[] ConvertParameters(AnyValue[] args)
@@ -140,6 +122,15 @@ namespace Rails.Runtime.Callback
 
 			Type delegateType = Expression.GetDelegateType(parameterTypes.Append(methodInfo.ReturnType).ToArray());
 			cachedDelegate = methodInfo.CreateDelegate(delegateType, targetObject);
+		}
+
+		public void OnBeforeSerialize()
+		{
+		}
+
+		public void OnAfterDeserialize()
+		{
+			cachedDelegate = null;
 		}
 	}
 

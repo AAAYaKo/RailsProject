@@ -17,7 +17,7 @@ namespace Rails.Editor.ViewModel
 
 		protected override EventKeyViewModel CreateKey(int index)
 		{
-			return new(TrackClass, index, new RelayCommand<AnimationTime>(x =>
+			return new(index, new RelayCommand<AnimationTime>(x =>
 			{
 				Dictionary<int, int> keysFramesPositions = new()
 				{

@@ -5,6 +5,7 @@ using Rails.Editor.Context;
 using Rails.Runtime.Tracks;
 using Unity.Mathematics;
 using Unity.Properties;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -55,6 +56,12 @@ namespace Rails.Editor.ViewModel
 			set => SetProperty(ref constrainedProportions, value);
 		}
 		[CreateProperty]
+		public bool CurrentHasDriver
+		{
+			get => hasDriver ?? false;
+			set => SetProperty(ref hasDriver, value);
+		}
+		[CreateProperty]
 		public ICommand RemoveCommand
 		{
 			get => removeCommand;
@@ -91,6 +98,7 @@ namespace Rails.Editor.ViewModel
 			set => SetProperty(ref changeReferenceCommand, value);
 		}
 		public Predicate<UnityEngine.Object> CheckReference { get; set; }
+		public string ClipProperty { get; set; }
 
 		private UnityEngine.Object reference;
 		private TrackData trackData;
@@ -98,12 +106,14 @@ namespace Rails.Editor.ViewModel
 		private Vector2? currentVector2Value;
 		private Vector3? currentVector3Value;
 		private bool? constrainedProportions;
+		private bool? hasDriver;
 		private ICommand removeCommand;
 		private ICommand keyFrameAddCommand;
 		private ICommand keyFrameRemoveCommand;
 		private ICommand<UnityEngine.Object> changeReferenceCommand;
 		private ICommand<ValueEditArgs> valueEditCommand;
 		private ICommand<bool> constrainedProportionsChangeCommand;
+		private int trackIndex;
 
 		public AnimationTrackViewModel(int trackIndex) : base()
 		{
@@ -129,11 +139,11 @@ namespace Rails.Editor.ViewModel
 				{
 					EditorContext.Instance.Record("Key Frame Added");
 					if (ValueType is IAnimationTrack.ValueType.Single)
-						model.InsertNewKeyAt(currentFrame, args.SingleValue);
+						model.InsertNewKeyAt(currentFrame, args.SingleValue, constrainedProportions.Value);
 					else if (ValueType is IAnimationTrack.ValueType.Vector2)
-						model.InsertNewKeyAt(currentFrame, args.Vector2Value);
+						model.InsertNewKeyAt(currentFrame, args.Vector2Value, constrainedProportions.Value);
 					else if (ValueType is IAnimationTrack.ValueType.Vector3)
-						model.InsertNewKeyAt(currentFrame, args.Vector3Value);
+						model.InsertNewKeyAt(currentFrame, args.Vector3Value, constrainedProportions.Value);
 				}
 			});
 
@@ -146,13 +156,24 @@ namespace Rails.Editor.ViewModel
 					EditorContext.Instance.Record(recordName);
 					model.AnimationKeys[keyIndex].ConstrainedProportions = x;
 				}
+				else
+				{
+					EditorContext.Instance.Record("Key Frame Added");
+					if (ValueType is IAnimationTrack.ValueType.Single)
+						model.InsertNewKeyAt(currentFrame, currentSingleValue, x);
+					else if (ValueType is IAnimationTrack.ValueType.Vector2)
+						model.InsertNewKeyAt(currentFrame, currentVector2Value, x);
+					else if (ValueType is IAnimationTrack.ValueType.Vector3)
+						model.InsertNewKeyAt(currentFrame, currentVector3Value, x);
+				}
 			});
 
 			ChangeReferenceCommand = new RelayCommand<UnityEngine.Object>(x =>
 			{
 				EditorContext.Instance.Record("Track Reference Changed");
 				model.SceneReference = x;
-			}, x => x != null && CheckReference(x));
+			}, x => x == null || CheckReference(x));
+			this.trackIndex = trackIndex;
 		}
 
 		public override void OnTimeHeadPositionChanged(int frame)
@@ -166,11 +187,13 @@ namespace Rails.Editor.ViewModel
 			{
 				IsKeyFrame = false;
 				CurrentConstrainedProportions = false;
+				CurrentHasDriver = false;
 				UpdateCurrentValue(null, null, frame);
 				return;
 			}
 			IsKeyFrame = Keys[previousIndex].TimePosition == frame;
 			CurrentConstrainedProportions = IsKeyFrame && Keys[previousIndex].ConstrainedProportions;
+			CurrentHasDriver = IsKeyFrame && Keys[previousIndex].HasDriver;
 			int nextIndex = previousIndex + 1;
 			UpdateCurrentValue(Keys[previousIndex], nextIndex >= Keys.Count ? null : Keys[nextIndex], frame);
 		}
@@ -186,20 +209,16 @@ namespace Rails.Editor.ViewModel
 				return;
 
 			Reference = model.SceneReference;
-
-			keys.ForEach(x => x.TrackClass = trackData.TrackClass);
-
 			NotifyPropertyChanged(nameof(Type));
 			NotifyPropertyChanged(nameof(ValueType));
 		}
 
-		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
+		protected override void OnModelPropertyChanged(object sender, string propertyName)
 		{
-			base.OnModelPropertyChanged(sender, e);
-			if (e.PropertyName == nameof(IAnimationTrack.SceneReference))
+			base.OnModelPropertyChanged(sender, propertyName);
+			if (propertyName == nameof(IAnimationTrack.SceneReference))
 			{
 				Reference = model.SceneReference;
-				EventBus.Publish(new ClipChangedEvent());
 			}
 		}
 
@@ -261,24 +280,33 @@ namespace Rails.Editor.ViewModel
 
 		protected override AnimationKeyViewModel CreateKey(int index)
 		{
-			return new AnimationKeyViewModel(TrackClass, index, new RelayCommand<AnimationTime>(x =>
+			return new AnimationKeyViewModel(index, new RelayCommand<AnimationTime>(x =>
 			{
 				Dictionary<int, int> keysFramesPositions = new()
 				{
 					{ index, x.Frames }
 				};
 				MoveKeys(keysFramesPositions);
-			}))
-			{
-				Reference = Reference,
-				ValueType = ValueType,
-			};
+			}));
+		}
+
+		protected override void OnKeyBind(AnimationKeyViewModel vm, IAnimationKey m)
+		{
+			base.OnKeyBind(vm, m);
+			vm.Reference = Reference;
+		}
+
+		protected override void OnKeyPreBind(AnimationKeyViewModel vm, IAnimationKey m)
+		{
+			base.OnKeyPreBind(vm, m);
+			vm.ValueType = ValueType;
+			vm.TrackProperty = $"{ClipProperty}.tracks.Array.data[{trackIndex}]";
 		}
 
 		protected override void OnKeyPropertyChanged(object sender, BindablePropertyChangedEventArgs e)
 		{
 			base.OnKeyPropertyChanged(sender, e);
-			UpdateKeys();
+			Keys.NotifyListChanged();
 		}
 
 		public static readonly Dictionary<Type, TrackData> TrackTypes = new()

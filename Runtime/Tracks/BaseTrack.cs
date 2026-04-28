@@ -1,65 +1,47 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using DG.Tweening;
+using Unity.Properties;
 using UnityEngine;
 
 namespace Rails.Runtime
 {
 	[Serializable]
-	public abstract class BaseTrack<TKey> : BaseSerializableNotifier, IBaseTrack<TKey>
+	public abstract class BaseTrack<TKey> : IBaseTrack<TKey>
 		where TKey : IKey
 	{
 		public static readonly CollectionComparer<TKey> comparer = new();
 
-		[SerializeReference] private List<TKey> animationKeys = new();
+		[SerializeReference, DontCreateProperty] private List<TKey> animationKeys = new();
 
+		[CreateProperty]
 		public List<TKey> AnimationKeys
 		{
 			get => animationKeys;
-			set => SetProperty(ref animationKeys, value, comparer);
+			set
+			{
+				if (!comparer.Equals(value, animationKeys))
+					animationKeys = value;
+			}
 		}
 
-#if UNITY_EDITOR
-		[NonSerialized] private readonly List<TKey> animationKeysCopy = new();
-#endif
 
-
-		public override void OnBeforeSerialize()
-		{
-#if UNITY_EDITOR
-			CopyList(AnimationKeys, animationKeysCopy);
-#endif
-		}
-
-		public override void OnAfterDeserialize()
-		{
-#if UNITY_EDITOR
-			if (NotifyIfChanged(AnimationKeys, animationKeysCopy, nameof(AnimationKeys), comparer))
-				CopyList(AnimationKeys, animationKeysCopy);
-#endif
-		}
-
-		public abstract void InsertInSequence(Sequence sequence, float frameTime);
+		public abstract void InsertInSequence(Sequence sequence, float frameTime, bool recomputeDrivers);
 
 		public void AddKey(TKey key)
 		{
 			AddKeyWithoutNotify(key);
-			NotifyPropertyChanged(nameof(AnimationKeys));
 		}
 
 		public void RemoveKey(TKey key)
 		{
 			RemoveKeyWithoutNotify(key);
-			NotifyPropertyChanged(nameof(AnimationKeys));
 		}
 
 		public void RemoveKeys(IEnumerable<TKey> toRemove)
 		{
 			foreach (var key in toRemove)
 				RemoveKeyWithoutNotify(key);
-			NotifyPropertyChanged(nameof(AnimationKeys));
 		}
 
 		public void MoveMultipleKeys(Dictionary<int, int> keysFramePositions)
@@ -77,8 +59,6 @@ namespace Rails.Runtime
 			keysToRemove.ForEach(x => RemoveKeyWithoutNotify(x));
 
 			animationKeys.Sort((x, y) => x.TimePosition.CompareTo(y.TimePosition));
-
-			NotifyPropertyChanged(nameof(AnimationKeys));
 		}
 
 		public abstract void InsertNewKeyAt(int frame);
@@ -111,11 +91,11 @@ namespace Rails.Runtime
 		}
 	}
 
-	public interface IBaseTrack<TKey> : INotifyPropertyChanged
+	public interface IBaseTrack<TKey>
 		where TKey : IKey
 	{
 		public List<TKey> AnimationKeys { get; set; }
-		public void InsertInSequence(Sequence sequence, float frameTime);
+		public void InsertInSequence(Sequence sequence, float frameTime, bool recomputeDrivers);
 		public void AddKey(TKey key);
 		public void RemoveKey(TKey key);
 		public void RemoveKeys(IEnumerable<TKey> toRemove);

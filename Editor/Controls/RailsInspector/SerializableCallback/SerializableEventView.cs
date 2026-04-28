@@ -51,12 +51,13 @@ namespace Rails.Editor.Controls
 			list.makeItem = () =>
 			{
 				var control = new SerializableCallbackControl();
-				control.SetBinding(SerializableCallbackControl.TargetObjectProperty, new TwoWayBinding(nameof(SerializableCallbackViewModel.TargetObject)));
+				control.SetBinding(SerializableCallbackControl.TargetObjectProperty, new ToTargetBinding(nameof(SerializableCallbackViewModel.TargetObject)));
 				control.SetBinding(SerializableCallbackControl.StateProperty, new TwoWayBinding(nameof(SerializableCallbackViewModel.State)));
 				control.SetBinding(SerializableCallbackControl.MethodOptionsProperty, new ToTargetBinding(nameof(SerializableCallbackViewModel.MethodOptions)));
 				control.SetBinding(SerializableCallbackControl.SelectedMethodProperty, new ToTargetBinding(nameof(SerializableCallbackViewModel.SelectedMethod)));
 				control.SetBinding(SerializableCallbackControl.ParamsProperty, new ToTargetBinding(nameof(SerializableCallbackViewModel.Params)));
 				control.SetBinding(SerializableCallbackControl.SelectMethodCommandProperty, new CommandBinding(nameof(SerializableCallbackViewModel.SelectMethodCommand)));
+				control.SetBinding(SerializableCallbackControl.ChangeTargetObjectCommandProperty, new CommandBinding(nameof(SerializableCallbackViewModel.ChangeTargetCommand)));
 				return control;
 			};
 			list.bindItem = (element, index) =>

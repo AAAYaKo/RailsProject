@@ -1,7 +1,8 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Generic;
 using Rails.Editor.Context;
 using Rails.Runtime.Tracks;
 using Unity.Properties;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -57,20 +58,55 @@ namespace Rails.Editor.ViewModel
 			get => constrainedProportionsChangeCommand;
 			set => SetProperty(ref constrainedProportionsChangeCommand, value);
 		}
-		private ICommand<ValueEditArgs> valueEditCommand;
-		private ICommand<bool> constrainedProportionsChangeCommand;
+		[CreateProperty]
+		public UnityEngine.Object Reference
+		{
+			private get => reference;
+			set
+			{
+				if (SetProperty(ref reference, value))
+					NotifyPropertyChanged(nameof(TrackName));
+			}
+		}
+		[CreateProperty]
+		public bool HasDriver
+		{
+			get => hasDriver ?? false;
+			set => SetProperty(ref hasDriver, value);
+		}
+		[CreateProperty]
+		public SerializedProperty DriverProperty { get; private set; }
 
 		public override string TrackName => Reference == null ? "No Reference" : Reference.name;
-		public Object Reference { private get; set; }
+		public string TrackProperty
+		{
+			private get => trackProperty;
+			set
+			{
+				if (trackProperty == value)
+					return;
+				trackProperty = value;
 
+				string path = $"{trackProperty}.animationKeys.Array.data[{KeyIndex}].driver";
+
+				DriverProperty = EditorContext.Instance.ViewModel.SerializedObject.FindProperty(path);
+				NotifyPropertyChanged(nameof(DriverProperty));
+			}
+		}
+
+		private ICommand<ValueEditArgs> valueEditCommand;
+		private ICommand<bool> constrainedProportionsChangeCommand;
 		private float? singleValue;
 		private Vector2? vector2Value;
 		private Vector3? vector3Value;
 		private EaseViewModel ease;
 		private bool constrainedProportions;
 		private IAnimationTrack.ValueType? valueType;
+		private UnityEngine.Object reference;
+		private bool? hasDriver;
+		private string trackProperty;
 
-		public AnimationKeyViewModel(string trackClass, int keyIndex, ICommand<AnimationTime> moveKeyCommand) : base(trackClass, keyIndex, moveKeyCommand)
+		public AnimationKeyViewModel(int keyIndex, ICommand<AnimationTime> moveKeyCommand) : base(keyIndex, moveKeyCommand)
 		{
 			ValueEditCommand = new RelayCommand<ValueEditArgs>(args =>
 			{
@@ -105,13 +141,23 @@ namespace Rails.Editor.ViewModel
 			else if (ValueType is IAnimationTrack.ValueType.Vector3)
 				Vector3Value = (Vector3)model.Value;
 			ConstrainedProportions = model.ConstrainedProportions;
+
+			HasDriver = model.HasDriver;
 		}
 
-		protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
+		protected override void OnModelPropertyChanged(PropertyChanged evt)
 		{
-			base.OnModelPropertyChanged(sender, e);
-			bool changed = false;
-			if (e.PropertyName == nameof(IAnimationKey.Value))
+			if (model?.Driver != null && model.Driver == evt.Sender)
+				model.Driver.UpdateValue();
+			if (!EqualityComparer<object>.Default.Equals(model, evt.Sender))
+				return;
+			OnModelPropertyChanged(evt.Sender, evt.PropertyName);
+		}
+
+		protected override void OnModelPropertyChanged(object sender, string propertyName)
+		{
+			base.OnModelPropertyChanged(sender, propertyName);
+			if (propertyName == nameof(IAnimationKey.Value))
 			{
 				if (model.Value is float valueSingle)
 					SingleValue = valueSingle;
@@ -119,16 +165,15 @@ namespace Rails.Editor.ViewModel
 					Vector2Value = valueVector2;
 				else if (model.Value is Vector3 valueVector3)
 					Vector3Value = valueVector3;
-
-				changed = true;
 			}
-			else if (e.PropertyName == nameof(IAnimationKey.ConstrainedProportions))
+			else if (propertyName == nameof(IAnimationKey.ConstrainedProportions))
 			{
 				ConstrainedProportions = model.ConstrainedProportions;
-				changed = true;
 			}
-			if (changed)
-				EventBus.Publish(new ClipChangedEvent());
+			else if (propertyName == nameof(IAnimationKey.HasDriver))
+			{
+				HasDriver = model.HasDriver;
+			}
 		}
 
 		protected override void OnBind()

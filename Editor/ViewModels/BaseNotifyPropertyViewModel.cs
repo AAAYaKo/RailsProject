@@ -1,13 +1,15 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using Rails.Editor.Context;
+using Unity.EditorCoroutines.Editor;
 using UnityEngine.UIElements;
 
 namespace Rails.Editor.ViewModel
 {
 	public abstract class BaseNotifyPropertyViewModel<TModel> : INotifyBindablePropertyChanged
-		where TModel : INotifyPropertyChanged
 	{
 		public event EventHandler<BindablePropertyChangedEventArgs> propertyChanged;
 		protected TModel model;
@@ -17,8 +19,8 @@ namespace Rails.Editor.ViewModel
 		{
 			bool modelChanged = !this.model?.Equals(model) ?? true;
 			this.model = model;
-			if (model != null)
-				this.model.PropertyChanged += OnModelPropertyChanged;
+
+			EventBus.Subscribe<PropertyChanged>(OnModelPropertyChanged);
 			OnBind();
 			if (modelChanged)
 				OnModelChanged();
@@ -28,7 +30,7 @@ namespace Rails.Editor.ViewModel
 		{
 			if (model == null)
 				return;
-			model.PropertyChanged -= OnModelPropertyChanged;
+			EventBus.Unsubscribe<PropertyChanged>(OnModelPropertyChanged);
 			model = default;
 			OnUnbind();
 		}
@@ -38,7 +40,14 @@ namespace Rails.Editor.ViewModel
 			propertyChanged?.Invoke(this, new BindablePropertyChangedEventArgs(property));
 		}
 
-		protected abstract void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e);
+		protected virtual void OnModelPropertyChanged(PropertyChanged evt)
+		{
+			if (!EqualityComparer<object>.Default.Equals(model, evt.Sender))
+				return;
+			OnModelPropertyChanged(evt.Sender, evt.PropertyName);
+		}
+
+		protected abstract void OnModelPropertyChanged(object sender, string propertyName);
 		protected abstract void OnModelChanged();
 
 		protected virtual void OnBind()
@@ -49,9 +58,8 @@ namespace Rails.Editor.ViewModel
 		{
 		}
 
-		protected void UpdateViewModels<VM, M>(ObservableList<VM> viewModels, IList<M> models, Func<int, VM> createViewModel, Action<VM> resetViewModel = null, Action<VM, M> viewModelBindCallback = null)
+		protected void UpdateViewModels<VM, M>(ObservableList<VM> viewModels, IList<M> models, Func<int, VM> createViewModel, Action<VM> resetViewModel = null, Action<VM, M> viewModelBindCallback = null, Action<VM, M> viewModelPreBindCallback = null)
 			where VM : BaseNotifyPropertyViewModel<M>
-			where M : INotifyPropertyChanged
 		{
 			if (models == null)
 			{
@@ -80,6 +88,7 @@ namespace Rails.Editor.ViewModel
 
 				viewModel.UnbindModel();
 				resetViewModel?.Invoke(viewModel);
+				viewModelPreBindCallback?.Invoke(viewModel, model);
 				viewModel.BindModel(model);
 				viewModelBindCallback?.Invoke(viewModel, model);
 			}
@@ -89,7 +98,6 @@ namespace Rails.Editor.ViewModel
 
 		protected void ClearViewModels<VM, M>(ObservableList<VM> viewModels, Action<VM> resetViewModel = null)
 			where VM : BaseNotifyPropertyViewModel<M>
-			where M : INotifyPropertyChanged
 		{
 			foreach (var viewModel in viewModels)
 			{

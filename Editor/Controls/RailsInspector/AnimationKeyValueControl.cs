@@ -1,7 +1,11 @@
+using System;
+using Rails.Editor.Drivers;
 using Rails.Editor.ViewModel;
 using Rails.Runtime;
 using Rails.Runtime.Tracks;
 using Unity.Properties;
+using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -16,6 +20,9 @@ namespace Rails.Editor.Controls
 		public static readonly BindingId ValueEditCommandProperty = nameof(ValueEditCommand);
 		public static readonly BindingId ConstrainedProportionsProperty = nameof(ConstrainedProportions);
 		public static readonly BindingId ConstrainedProportionsChangeCommandProperty = nameof(ConstrainedProportionsChangeCommand);
+		public static readonly BindingId ShowMenuProperty = nameof(ShowMenu);
+		public static readonly BindingId DriverPropertyProperty = nameof(DriverProperty);
+		public static readonly BindingId HasDriverProperty = nameof(HasDriver);
 
 		[UxmlAttribute("label"), CreateProperty]
 		public string Label
@@ -99,6 +106,48 @@ namespace Rails.Editor.Controls
 				NotifyPropertyChanged(ConstrainedProportionsProperty);
 			}
 		}
+		[UxmlAttribute("menu"), CreateProperty]
+		public bool ShowMenu
+		{
+			get => showMenu;
+			set
+			{
+				if (showMenu == value)
+					return;
+				showMenu = value;
+				menuButton.style.display = !showMenu ? DisplayStyle.None : DisplayStyle.Flex;
+			}
+		}
+		[CreateProperty]
+		public SerializedProperty DriverProperty
+		{
+			get => driverProperty;
+			set
+			{
+				if (driverProperty == value)
+					return;
+				driverProperty = value;
+				if (driverProperty == null)
+					return;
+				propertyField.label = DriversUtils.ExtractTypeFromString(driverProperty.managedReferenceFullTypename)?.Name ?? "";
+				propertyField.bindingPath = driverProperty.propertyPath;
+				propertyField.Bind(driverProperty.serializedObject);
+			}
+		}
+		[UxmlAttribute("hasDriver"), CreateProperty]
+		public bool HasDriver
+		{
+			get => hasDriver;
+			set
+			{
+				if (hasDriver == value)
+					return;
+				hasDriver = value;
+				propertyField.style.display = !hasDriver ? DisplayStyle.None : DisplayStyle.Flex;
+				fieldContainer.enabledSelf = !hasDriver;
+				constrainedToggle.enabledSelf = !hasDriver;
+			}
+		}
 
 		[CreateProperty]
 		public ICommand<ValueEditArgs> ValueEditCommand { get; set; }
@@ -110,17 +159,31 @@ namespace Rails.Editor.Controls
 		private Vector2? vector2Value;
 		private Vector3? vector3Value;
 		private IAnimationTrack.ValueType? type;
+		private VisualElement firstLine;
+		private VisualElement fieldContainer;
 		private FloatField singleField;
 		private Vector2Field vector2Field;
 		private Vector3Field vector3Field;
+		private PropertyField propertyField;
+		private Button menuButton;
 		private Toggle constrainedToggle;
 		private Vector2 vector2Proportions;
 		private Vector3 vector3Proportions;
 		private bool constrainedProportions;
+		private bool showMenu;
+		private bool hasDriver;
+		private SerializedProperty driverProperty;
 
 		public AnimationValueControl()
 		{
-			style.flexDirection = FlexDirection.RowReverse;
+			firstLine = new VisualElement();
+			firstLine.style.flexDirection = FlexDirection.Row;
+			firstLine.style.alignItems = Align.Auto;
+			firstLine.AddToClassList("value-with-menu");
+
+			fieldContainer = new VisualElement();
+			fieldContainer.style.flexGrow = 1;
+			fieldContainer.style.flexShrink = 1;
 
 			constrainedToggle = new Toggle();
 			constrainedToggle.AddToClassList("icon-toggle");
@@ -133,8 +196,60 @@ namespace Rails.Editor.Controls
 			singleField.RegisterValueChangedCallback(OnValueChanged);
 			singleField.SetValueWithoutNotify(SingleValue);
 
-			hierarchy.Add(constrainedToggle);
-			hierarchy.Add(singleField);
+			menuButton = new Button(() =>
+			{
+				var menu = this.panel.CreateMenu();
+				if (driverProperty.managedReferenceValue == null)
+				{
+					menu.AddItem("Add Driver", false, () =>
+					{
+						Type propertyType = DriversUtils.ExtractTypeFromString(driverProperty.managedReferenceFieldTypename);
+						var driverTypes = DriversUtils.GetAssignableTypes(propertyType);
+
+						GenericDropdownMenu genericMenu = new();
+						foreach (var type in driverTypes)
+						{
+							genericMenu.AddItem(type.Name, false, () =>
+							{
+								driverProperty.managedReferenceValue = DriversUtils.CreateObjectFromType(type);
+								driverProperty.serializedObject.ApplyModifiedProperties();
+							});
+						}
+
+						genericMenu.DropDown(firstLine.worldBound, firstLine, DropdownMenuSizeMode.Auto);
+					});
+				}
+				else
+				{
+					menu.AddItem("Remove Driver", false, () =>
+					{
+						driverProperty.managedReferenceValue = null;
+						driverProperty.serializedObject.ApplyModifiedProperties();
+					});
+				}
+				menu.DropDown(firstLine.worldBound, firstLine, DropdownMenuSizeMode.Auto);
+			});
+			menuButton.AddToClassList("icon-button");
+			menuButton.AddToClassList("menu-button");
+			menuButton.style.display = DisplayStyle.None;
+
+			firstLine.Add(menuButton);
+			firstLine.Add(fieldContainer);
+			firstLine.Add(constrainedToggle);
+			fieldContainer.Add(singleField);
+
+			propertyField = new PropertyField();
+			propertyField.style.display = DisplayStyle.None;
+
+			hierarchy.Add(firstLine);
+			hierarchy.Add(propertyField);
+
+			firstLine.AddManipulator(new ContextualMenuManipulator(x =>
+			{
+				if (!ShowMenu)
+					return;
+				FillMenu(x.menu);
+			}));
 		}
 
 		protected override void OnAttach(AttachToPanelEvent evt)
@@ -155,6 +270,38 @@ namespace Rails.Editor.Controls
 			constrainedToggle.UnregisterValueChangedCallback(OnConstrainedToggle);
 		}
 
+		private void FillMenu(DropdownMenu menu)
+		{
+			if (driverProperty.managedReferenceValue == null)
+			{
+				menu.AppendAction("Add Driver", x =>
+				{
+					Type propertyType = DriversUtils.ExtractTypeFromString(driverProperty.managedReferenceFieldTypename);
+					var driverTypes = DriversUtils.GetAssignableTypes(propertyType);
+
+					GenericDropdownMenu genericMenu = new();
+					foreach (var type in driverTypes)
+					{
+						genericMenu.AddItem(type.Name, false, () =>
+						{
+							driverProperty.managedReferenceValue = DriversUtils.CreateObjectFromType(type);
+							driverProperty.serializedObject.ApplyModifiedProperties();
+						});
+					}
+
+					genericMenu.DropDown(firstLine.worldBound, firstLine, DropdownMenuSizeMode.Auto);
+				}, DropdownMenuAction.Status.Normal);
+			}
+			else
+			{
+				menu.AppendAction("Remove Driver", x =>
+				{
+					driverProperty.managedReferenceValue = null;
+					driverProperty.serializedObject.ApplyModifiedProperties();
+				}, DropdownMenuAction.Status.Normal);
+			}
+		}
+
 		private void UpdateValueView()
 		{
 			if (ValueType is IAnimationTrack.ValueType.Single)
@@ -166,7 +313,7 @@ namespace Rails.Editor.Controls
 					singleField = new FloatField(Label);
 					singleField.style.flexGrow = 1;
 					singleField.style.flexShrink = 1;
-					hierarchy.Add(singleField);
+					fieldContainer.Add(singleField);
 					singleField.RegisterValueChangedCallback(OnValueChanged);
 					this.Query<FloatField>().ForEach(x => x.isDelayed = true);
 				}
@@ -184,7 +331,7 @@ namespace Rails.Editor.Controls
 					vector2Field
 						.Q(className: "unity-composite-field__field-spacer")
 						.RemoveFromHierarchy();
-					hierarchy.Add(vector2Field);
+					fieldContainer.Add(vector2Field);
 					vector2Field.RegisterValueChangedCallback(OnValueChanged);
 					this.Query<FloatField>().ForEach(x => x.isDelayed = true);
 				}
@@ -199,7 +346,7 @@ namespace Rails.Editor.Controls
 					vector3Field = new Vector3Field(Label);
 					vector3Field.style.flexGrow = 1;
 					vector3Field.style.flexShrink = 1;
-					hierarchy.Add(vector3Field);
+					fieldContainer.Add(vector3Field);
 					vector3Field.RegisterValueChangedCallback(OnValueChanged);
 					this.Query<FloatField>().ForEach(x => x.isDelayed = true);
 				}
@@ -212,7 +359,7 @@ namespace Rails.Editor.Controls
 			if (singleField != null)
 			{
 				singleField.UnregisterValueChangedCallback(OnValueChanged);
-				hierarchy.Remove(singleField);
+				fieldContainer.Remove(singleField);
 				singleField = null;
 			}
 		}
@@ -222,7 +369,7 @@ namespace Rails.Editor.Controls
 			if (vector2Field != null)
 			{
 				vector2Field.UnregisterValueChangedCallback(OnValueChanged);
-				hierarchy.Remove(vector2Field);
+				fieldContainer.Remove(vector2Field);
 				vector2Field = null;
 			}
 		}
@@ -232,7 +379,7 @@ namespace Rails.Editor.Controls
 			if (vector3Field != null)
 			{
 				vector3Field.UnregisterValueChangedCallback(OnValueChanged);
-				hierarchy.Remove(vector3Field);
+				fieldContainer.Remove(vector3Field);
 				vector3Field = null;
 			}
 		}

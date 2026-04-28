@@ -8,23 +8,23 @@ using UnityEngine;
 namespace Rails.Runtime.Callback
 {
 	[Serializable]
-	public class SerializableEvent : BaseSerializableNotifier, IEquatable<SerializableEvent>
+	public class SerializableEvent : IEquatable<SerializableEvent>
 
 	{
 		private static readonly CollectionComparer<SerializableCallback> comparer = new();
 
-		[SerializeField] private List<SerializableCallback> callbacks = new();
+		[SerializeField, DontCreateProperty] private List<SerializableCallback> callbacks = new();
 
 		[CreateProperty]
 		public List<SerializableCallback> Callbacks
 		{
 			get => callbacks;
-			set => SetProperty(ref callbacks, value, comparer);
+			set
+			{
+				if (!comparer.Equals(callbacks, value))
+					callbacks = value;
+			}
 		}
-
-#if UNITY_EDITOR
-		[NonSerialized] private readonly List<SerializableCallback> callbacksCopy = new();
-#endif
 
 
 		public void Invoke()
@@ -33,17 +33,6 @@ namespace Rails.Runtime.Callback
 		}
 
 #if UNITY_EDITOR
-		public override void OnBeforeSerialize()
-		{
-			CopyList(Callbacks, callbacksCopy);
-		}
-
-		public override void OnAfterDeserialize()
-		{
-			if (NotifyIfChanged(Callbacks, callbacksCopy, nameof(Callbacks), comparer))
-				CopyList(Callbacks, callbacksCopy);
-		}
-
 		public void Copy(in SerializableEvent other)
 		{
 			Callbacks.Clear();

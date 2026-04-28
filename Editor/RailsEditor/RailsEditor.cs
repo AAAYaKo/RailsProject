@@ -1,5 +1,6 @@
 using Rails.Editor.Context;
 using Rails.Editor.Controls;
+using Rails.Editor.Property;
 using Rails.Editor.ViewModel;
 using Rails.Runtime;
 using Unity.Properties;
@@ -90,7 +91,12 @@ namespace Rails.Editor
 		{
 			EditorContext.Instance.ViewModel.UnbindModel();
 			EditorContext.Instance.ViewModel.BindModel(target);
+
+			if (currentTarget != null)
+				ChangeChecker.Unregister(currentTarget);
+
 			currentTarget = target;
+			ChangeChecker.Register(currentTarget);
 		}
 
 		private void OnDimensionChanged(float dimension)
