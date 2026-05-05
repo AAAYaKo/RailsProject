@@ -409,6 +409,8 @@
 .loop-icon {
     --unity-image-size: scale-to-fit;
     --unity-image-tint-color: var(--rails-button-icon-color);
+    width: 20px;
+    height: 20px;
 }
 
 .loop-icon-cycle {
@@ -428,6 +430,7 @@
     padding-right: 5px;
     padding-bottom: 2px;
     padding-left: 0;
+    margin-bottom: 3px;
 }
 
 .loop-drop-down:hover {
