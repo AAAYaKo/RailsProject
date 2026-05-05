@@ -20,8 +20,11 @@ namespace Rails.Editor.ViewModel
 			bool modelChanged = !this.model?.Equals(model) ?? true;
 			this.model = model;
 
-			EventBus.Subscribe<PropertyChanged>(OnModelPropertyChanged);
-			OnBind();
+			if (model != null)
+			{
+				EventBus.Subscribe<PropertyChanged>(OnModelPropertyChanged);
+				OnBind();
+			}
 			if (modelChanged)
 				OnModelChanged();
 		}
