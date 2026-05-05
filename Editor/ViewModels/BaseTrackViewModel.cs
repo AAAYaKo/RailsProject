@@ -195,18 +195,20 @@ namespace Rails.Editor.ViewModel
 			EditorContext.Instance.Record("Key Frame Added");
 
 			keyIndex = keys.FindIndex(x => x.TimePosition > frame);
-			var copy = SelectedIndexes.ToList();
-			if (keyIndex >= 0)
-			{
-				for (int i = 0; i < copy.Count; i++)
-				{
-					if (copy[i] >= keyIndex)
-						copy[i] += 1;
-				}
-			}
+			//var copy = SelectedIndexes.ToList();
+			//if (keyIndex >= 0)
+			//{
+			//	for (int i = 0; i < copy.Count; i++)
+			//	{
+			//		if (copy[i] >= keyIndex)
+			//			copy[i] += 1;
+			//	}
+			//}
 
 			model.InsertNewKeyAt(frame);
-			storedSelectedIndexes.Value = copy;
+			UpdateKeys();
+			keyIndex = model.AnimationKeys.FindIndex(x => x.TimePosition == frame);
+			storedSelectedIndexes.Value = /*copy*/ new() { keyIndex };
 		}
 
 		protected void RemoveKey(int frame)

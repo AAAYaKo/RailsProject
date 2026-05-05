@@ -1,4 +1,5 @@
 ﻿using Rails.Editor.Context;
+using Unity.Mathematics;
 using Unity.Properties;
 using UnityEngine.UIElements;
 
@@ -104,7 +105,7 @@ namespace Rails.Editor.Controls
 
 		private void UpdatePosition()
 		{
-			style.left = TrackLinesView.StartAdditional + (TimeHeadPosition - timePosition) * framePixelSize;
+			style.marginLeft = math.round((TimeHeadPosition - timePosition) * framePixelSize) - 1;
 		}
 	}
 }

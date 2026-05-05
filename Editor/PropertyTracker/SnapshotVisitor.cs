@@ -44,14 +44,21 @@ namespace Rails.Editor.Property
 					.Append(property.Name)
 					.Append(": ");
 
-				int i = 0;
-				int count = value.Count;
-				foreach (var element in value)
+				if (value != null)
 				{
-					i++;
-					builder.Append(element);
-					if (i < count)
-						builder.Append(", ");
+					int i = 0;
+					int count = value.Count;
+					foreach (var element in value)
+					{
+						i++;
+						builder.Append(element);
+						if (i < count)
+							builder.Append(", ");
+					}
+				}
+				else
+				{
+					builder.Append("null");
 				}
 
 				Debug.Log(builder.ToString());

@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using DG.Tweening;
 using Rails.Editor.Context;
@@ -256,7 +255,7 @@ namespace Rails.Editor.ViewModel
 		private EditorCoroutine reloadRoutine;
 		private readonly int clipIndex;
 		private string clipProperty;
-		
+
 
 
 		public RailsClipViewModel(int clipIndex)
@@ -376,6 +375,11 @@ namespace Rails.Editor.ViewModel
 								continue;
 							if (track.TrackType == vm.TrackType && track.Reference == x)
 								return false;
+							if (x is Component component)
+							{
+								if (!component.transform.IsChildOf(EditorContext.Instance.CurrentTarget.transform))
+									return false;
+							}
 						}
 						return true;
 					};

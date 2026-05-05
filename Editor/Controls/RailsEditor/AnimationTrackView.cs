@@ -136,7 +136,7 @@ namespace Rails.Editor.Controls
 		{
 			if (!ChangeReferenceCommand.Validate(evt.newValue))
 			{
-				Debug.LogWarning("Cannot add multiple references to an Object!");
+				Debug.LogWarning("Cannot add multiple references to an Object, or reference to an Object that is not a child of the Animator!");
 				referenceField.SetValueWithoutNotify(evt.previousValue);
 				return;
 			}
