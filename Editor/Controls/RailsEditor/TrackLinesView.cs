@@ -40,8 +40,8 @@ namespace Rails.Editor.Controls
 				}
 				else if (currentDelta < 2 && duration >= 2)
 				{
-					slider.maxValue = slider.minValue + 2;
-					CurrentDelta = 2;
+					slider.value = new Vector2(0, duration);
+					CurrentDelta = duration;
 				}
 				else
 				{
