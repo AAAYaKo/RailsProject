@@ -38,11 +38,15 @@ namespace Rails.Runtime.Tracks
 
 		public void SaveCurrentValue()
 		{
+			if (Reference == null)
+				return;
 			storedValue = GetCurrentValue();
 		}
 
 		public void RestoreValue()
 		{
+			if (Reference == null)
+				return;
 			InstantChange(storedValue);
 		}
 

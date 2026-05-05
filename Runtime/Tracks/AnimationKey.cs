@@ -12,7 +12,7 @@ namespace Rails.Runtime.Tracks
 	{
 		[SerializeField, DontCreateProperty] private RailsEase ease = new();
 		[SerializeField, DontCreateProperty] private T animatedValue;
-		[SerializeReference, DontCreateProperty] private RailsDriver<T> driver;
+		[SerializeReference, DontCreateProperty] private IRailsDriver<T> driver;
 
 		[SerializeField, DontCreateProperty] private bool constrainedProportions;
 

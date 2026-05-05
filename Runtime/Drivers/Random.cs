@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Rails.Runtime.Drivers
 {
 	[Serializable]
-	public class Random : RailsDriver<float>
+	public class Random : BaseRailsDriver<float>
 	{
 		[SerializeField] private float min = 0;
 		[SerializeField] private float max = 1;

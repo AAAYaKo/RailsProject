@@ -3,7 +3,7 @@ using Unity.Properties;
 
 namespace Rails.Runtime.Drivers
 {
-	public abstract class RailsDriver<T> : IDriver
+	public abstract class BaseRailsDriver<T> : IRailsDriver<T>
 		where T : struct
 	{
 		[NonSerialized, DontCreateProperty] protected T? storedValue;
@@ -21,10 +21,5 @@ namespace Rails.Runtime.Drivers
 		{
 			storedValue = ComputeValue();
 		}
-	}
-
-	public interface IDriver
-	{
-		public void UpdateValue();
 	}
 }
