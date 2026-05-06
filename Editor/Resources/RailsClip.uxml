@@ -1,10 +1,15 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
-    <Style src="project://database/Assets/Rails/Editor/Resources/RailsEditor.uss?fileID=7433441132597879392&amp;guid=a52f72ccd09932d4795d5bf54f12136c&amp;type=3#RailsEditor" />
+    <Style src="project://database/Assets/Rails/Editor/Resources/RailsEditor.uss?fileID=7433441132597879392&amp;guid=a52f72ccd09932d4795d5bf54f12136c&amp;type=3#RailsEditor"/>
     <ui:VisualElement class="rails-clip-view">
-        <ui:Label text="Label" name="name" style="-unity-text-align: middle-left;">
+        <ui:Label text="Label" name="name" style="-unity-text-align: middle-left; flex-grow: 1; text-overflow: ellipsis; overflow: hidden;">
             <Bindings>
-                <ui:DataBinding property="text" data-source-path="Name" binding-mode="ToTarget" />
+                <ui:DataBinding property="text" data-source-path="Name" binding-mode="ToTarget"/>
             </Bindings>
         </ui:Label>
+        <ui:TextField label="" placeholder-text="Clip Name" name="nameField" is-delayed="true" max-length="64" style="margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; flex-grow: 1;">
+            <Bindings>
+                <ui:DataBinding property="value" data-source-path="Name" binding-mode="TwoWay"/>
+            </Bindings>
+        </ui:TextField>
     </ui:VisualElement>
 </ui:UXML>

@@ -31,7 +31,14 @@ namespace Rails.Editor.ViewModel
 		public string Name
 		{
 			get => name;
-			set => SetProperty(ref name, value);
+			set
+			{
+				if(SetProperty(ref name, value))
+				{
+					EditorContext.Instance.Record($"Rename clip: {model.Name} to {name}");
+					model.Name = name;
+				}
+			}
 		}
 		[CreateProperty]
 		public EventTrackViewModel EventTrack

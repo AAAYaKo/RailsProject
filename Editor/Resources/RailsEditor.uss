@@ -6,10 +6,10 @@
     padding-bottom: 10px;
     height: 39px;
     margin-bottom: 5px;
+    padding-right: 8px;
 }
 
 .rails-clip-view:hover {
-    margin-bottom: 5px;
     border-top-left-radius: 5px;
     border-top-right-radius: 5px;
     border-bottom-right-radius: 5px;
@@ -18,32 +18,27 @@
     border-right-color: var(--rails-clip-hover-outline-color);
     border-top-color: var(--rails-clip-hover-outline-color);
     border-bottom-color: var(--rails-clip-hover-outline-color);
-    border-top-width: 1px;
     border-right-width: 1px;
     border-bottom-width: 1px;
     border-left-width: 1px;
-    height: 39px;
-    justify-content: center;
-    padding-left: 8px;
-    padding-top: 8px;
-    padding-bottom: 10px;
+    border-top-width: 1px;
 }
 
-.rails-clip-view--selected {
+.rails-clip-view--selected > .rails-clip-view {
     border-top-left-radius: 5px;
     border-top-right-radius: 5px;
     border-bottom-right-radius: 5px;
     border-bottom-left-radius: 5px;
     background-color: var(--rails-clip-selected-background-color);
     height: 39px;
-    margin-bottom: 5px;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    padding-left: 0;
 }
 
 .rails-clip-view--selected * Label {
     color: var(--rails-clip-selected-text-color);
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
 }
 
 .rails_key_toggle {
