@@ -64,6 +64,7 @@ namespace Rails.Editor.Controls
 		public List<int> SelectedKeysFrames { get; } = new();
 		public int FirstSelectedKeyFrame { get; private set; }
 		public int LastSelectedKeyFrame { get; private set; }
+		public IEnumerable<int> KeyFrames => Values.Select(x => x.TimePosition.Frames);
 
 		private ObservableList<int> selectedIndexes;
 		private List<int> selectedViewKeys = new();

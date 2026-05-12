@@ -77,6 +77,7 @@ namespace Rails.Editor
 
 			Resources.Load<VisualTreeAsset>("RailsFirstPage").CloneTree(twoPanels.FirstPanel);
 			var clips = twoPanels.FirstPanel.Q<ClipsListView>("clips-view");
+			twoPanels.FirstPanel.style.minWidth = 160;
 
 			ClipView clipView = new();
 			clipView.style.width = new Length(100, LengthUnit.Percent);

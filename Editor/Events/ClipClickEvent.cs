@@ -6,6 +6,7 @@ namespace Rails.Editor
 	{
 		public ClipItemView Clip { get; }
 
+
 		public ClipClickEvent(ClipItemView clip)
 		{
 			Clip = clip;

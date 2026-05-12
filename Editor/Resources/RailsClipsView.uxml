@@ -1,8 +1,8 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
     <ui:ScrollView vertical-scroller-visibility="Hidden" style="flex-grow: 1; flex-basis: 100%;">
-        <ui:VisualElement name="clips-container" style="flex-grow: 1; padding-left: 10px; padding-right: 10px;" />
+        <ui:VisualElement name="clips-container" style="flex-grow: 1; padding-left: 10px; padding-right: 10px;"/>
         <ui:VisualElement name="button-container" style="flex-grow: 1; padding-right: 20px; padding-left: 20px;">
-            <ui:Button text="+ Add Clip" name="add-button" />
+            <ui:Button text="+ Add Clip" name="add-button" style="overflow: hidden; text-overflow: ellipsis;"/>
         </ui:VisualElement>
     </ui:ScrollView>
 </ui:UXML>

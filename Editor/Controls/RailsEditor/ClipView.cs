@@ -1,8 +1,12 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using Rails.Editor.Context;
 using Rails.Editor.Manipulator;
 using Rails.Editor.ViewModel;
 using Rails.Runtime;
+using Unity.EditorCoroutines.Editor;
 using Unity.Properties;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -12,6 +16,7 @@ namespace Rails.Editor.Controls
 	[UxmlElement]
 	public partial class ClipView : FocusableView
 	{
+		private static readonly BindingId TimeHeadPositionProperty = new("TimeHeadPosition");
 		private const string FixedDimensionKey = "clipFixedDimension";
 
 		[UxmlAttribute("duration"), CreateProperty]
@@ -24,6 +29,18 @@ namespace Rails.Editor.Controls
 					return;
 				duration = value;
 				AdjustContainer(framePixelSize);
+			}
+		}
+		[UxmlAttribute("time-position"), CreateProperty]
+		public int TimeHeadPosition
+		{
+			get => timeHeadPosition;
+			set
+			{
+				if (timeHeadPosition == value)
+					return;
+				timeHeadPosition = value;
+				NotifyPropertyChanged(TimeHeadPositionProperty);
 			}
 		}
 		[CreateProperty]
@@ -47,8 +64,13 @@ namespace Rails.Editor.Controls
 		private static VisualTreeAsset templateRight;
 
 		private int duration = -1;
+		private int timeHeadPosition = -1;
 		private float timePosition;
 		private float framePixelSize = 30;
+		private bool isForwardMove;
+		private bool isFastMove;
+		private EditorCoroutine movingRoutine;
+		private static readonly HashSet<int> keyFrames = new();
 
 
 		static ClipView()
@@ -65,6 +87,8 @@ namespace Rails.Editor.Controls
 			split.style.flexGrow = 1;
 			templateLeft.CloneTree(split.FirstPanel);
 			templateRight.CloneTree(split.SecondPanel);
+			split.FirstPanel.style.minWidth = 350;
+			split.SecondPanel.style.minWidth = 200;
 
 			split.FixedPaneInitialDimension = Storage.RecordsFloat.Get(FixedDimensionKey, 300);
 			hierarchy.Add(split);
@@ -84,6 +108,7 @@ namespace Rails.Editor.Controls
 			selectionBoxManipulatorLayer.AddManipulator(selectionBoxManipulator);
 
 			SetBinding(nameof(Duration), new ToTargetBinding("SelectedClip.Duration"));
+			SetBinding(nameof(TimeHeadPosition), new TwoWayBinding("SelectedClip.TimeHeadPosition"));
 			SetBinding(nameof(RemoveSelectedKeysCommand), new CommandBinding("SelectedClip.RemoveSelectedKeysCommand"));
 			ContextualMenuManipulator contextMenuTracks = new(ShowContextMenu);
 			ContextualMenuManipulator contextMenuEvents = new(ShowContextMenu);
@@ -97,6 +122,8 @@ namespace Rails.Editor.Controls
 			base.OnAttach(evt);
 			RegisterCallback<WheelEvent>(ScrollHandler, TrickleDown.TrickleDown);
 			RegisterCallback<KeyUpEvent>(OnKeyClick, TrickleDown.TrickleDown);
+			RegisterCallback<KeyDownEvent>(OnKeyDown, TrickleDown.TrickleDown);
+			RegisterCallback<KeyUpEvent>(OnKeyUp, TrickleDown.TrickleDown);
 			trackView.VerticalScroller.valueChanged += OnVerticalScroller;
 			split.FixedPanelDimensionChanged += OnDimensionChanged;
 			selectionBoxManipulator.SelectionBegin += OnSelectionBegin;
@@ -105,6 +132,7 @@ namespace Rails.Editor.Controls
 			EventBus.Subscribe<FramePixelSizeChangedEvent>(OnFramePixelSizeChanged);
 			EventBus.Subscribe<TimePositionChangedEvent>(OnTimePositionChanged);
 			EventBus.Subscribe<KeyDragEvent>(OnKeyDragged);
+			EventBus.Subscribe<PerformMove>(OnPerformMove);
 			OnFramePixelSizeChanged(EditorContext.Instance.FramePixelSize);
 			OnTimePositionChanged(EditorContext.Instance.TimePosition);
 		}
@@ -114,6 +142,8 @@ namespace Rails.Editor.Controls
 			base.OnDetach(evt);
 			UnregisterCallback<WheelEvent>(ScrollHandler, TrickleDown.TrickleDown);
 			UnregisterCallback<KeyUpEvent>(OnKeyClick, TrickleDown.TrickleDown);
+			UnregisterCallback<KeyDownEvent>(OnKeyDown, TrickleDown.TrickleDown);
+			UnregisterCallback<KeyUpEvent>(OnKeyUp, TrickleDown.TrickleDown);
 			trackView.VerticalScroller.valueChanged -= OnVerticalScroller;
 			split.FixedPanelDimensionChanged -= OnDimensionChanged;
 			selectionBoxManipulator.SelectionBegin -= OnSelectionBegin;
@@ -122,6 +152,7 @@ namespace Rails.Editor.Controls
 			EventBus.Unsubscribe<FramePixelSizeChangedEvent>(OnFramePixelSizeChanged);
 			EventBus.Unsubscribe<TimePositionChangedEvent>(OnTimePositionChanged);
 			EventBus.Unsubscribe<KeyDragEvent>(OnKeyDragged);
+			EventBus.Unsubscribe<PerformMove>(OnPerformMove);
 		}
 
 		private void OnVerticalScroller(float value)
@@ -146,6 +177,129 @@ namespace Rails.Editor.Controls
 			if (evt.keyCode is KeyCode.Delete or KeyCode.Backspace && HasAnySelected())
 			{
 				RemoveSelectedKeysCommand.Execute();
+			}
+		}
+
+		private void OnKeyDown(KeyDownEvent evt)
+		{
+			if (evt.keyCode is KeyCode.Period && !evt.actionKey && !evt.altKey && movingRoutine == null)
+			{
+				movingRoutine = EditorCoroutineUtility.StartCoroutine(MovePlayHeadRoutine(true, DeltaNextFrame), EditorContext.Instance.Editor);
+			}
+			else if (evt.keyCode is KeyCode.Comma && !evt.actionKey && !evt.altKey && movingRoutine == null)
+			{
+				movingRoutine = EditorCoroutineUtility.StartCoroutine(MovePlayHeadRoutine(false, DeltaNextFrame), EditorContext.Instance.Editor);
+			}
+			if (evt.keyCode is KeyCode.Period && evt.actionKey && movingRoutine == null)
+			{
+				movingRoutine = EditorCoroutineUtility.StartCoroutine(MovePlayHeadRoutine(true, DeltaNextKeyFrame), EditorContext.Instance.Editor);
+			}
+			else if (evt.keyCode is KeyCode.Comma && evt.actionKey && movingRoutine == null)
+			{
+				movingRoutine = EditorCoroutineUtility.StartCoroutine(MovePlayHeadRoutine(false, DeltaNextKeyFrame), EditorContext.Instance.Editor);
+			}
+			if (evt.keyCode is KeyCode.Period && evt.altKey && movingRoutine == null)
+			{
+				movingRoutine = EditorCoroutineUtility.StartCoroutine(MoveSelectedKeysRoutine(true, DeltaNextFrame), EditorContext.Instance.Editor);
+			}
+			else if (evt.keyCode is KeyCode.Comma && evt.altKey && movingRoutine == null)
+			{
+				movingRoutine = EditorCoroutineUtility.StartCoroutine(MoveSelectedKeysRoutine(false, DeltaNextFrame), EditorContext.Instance.Editor);
+			}
+			else if (evt.shiftKey)
+			{
+				isFastMove = true;
+			}
+		}
+
+		private void OnPerformMove(PerformMove evt)
+		{
+			int delta = evt.Mode switch
+			{
+				PerformMove.MoveMode.frame => DeltaNextFrame(evt.IsForward, false),
+				PerformMove.MoveMode.frame10 => DeltaNextFrame(evt.IsForward, true),
+				PerformMove.MoveMode.key => DeltaNextKeyFrame(evt.IsForward, false),
+				PerformMove.MoveMode.startEnd => DeltaNextKeyFrame(evt.IsForward, true),
+				_ => DeltaNextFrame(evt.IsForward, false),
+			};
+			if (evt.NeedMoveKey)
+			{
+				MoveSelectedKeys(delta);
+				EventBus.Publish(new KeyDragCompleteEvent());
+			}
+			else
+			{
+				TimeHeadPosition += delta;
+			}
+		}
+
+		private IEnumerator MovePlayHeadRoutine(bool isForward, Func<bool, bool, int> delta)
+		{
+			isForwardMove = isForward;
+			while ((isForward && TimeHeadPosition < Duration) || (!isForward && TimeHeadPosition > 0))
+			{
+				TimeHeadPosition += delta(isForward, isFastMove);
+				yield return new EditorWaitForSeconds(0.1f);
+			}
+			movingRoutine = null;
+		}
+
+		private IEnumerator MoveSelectedKeysRoutine(bool isForward, Func<bool, bool, int> delta)
+		{
+			isForwardMove = isForward;
+			while (HasAnySelected())
+			{
+				MoveSelectedKeys(delta(isForward, isFastMove));
+				EventBus.Publish(new KeyDragCompleteEvent());
+				yield return new EditorWaitForSeconds(0.1f);
+			}
+			movingRoutine = null;
+		}
+
+		private int DeltaNextFrame(bool isForward, bool isFastMove)
+		{
+			int shift = !isFastMove ? 1 : 10;
+			return isForward ? shift : -shift;
+		}
+
+		private int DeltaNextKeyFrame(bool isForward, bool isFastMove)
+		{
+			keyFrames.Clear();
+			eventsTrackLine.KeyFrames.ForEach(x => keyFrames.Add(x));
+			trackView.Views.ForEach(x => x.KeyFrames.ForEach(x => keyFrames.Add(x)));
+			if (isForward && (keyFrames.Any(x => x > TimeHeadPosition) || isFastMove))
+			{
+				if (isFastMove)
+					return Duration - TimeHeadPosition;
+				else
+					return keyFrames.Where(x => x > TimeHeadPosition).Min() - TimeHeadPosition;
+			}
+			else if (!isForward && (keyFrames.Any(x => x < TimeHeadPosition) || isFastMove))
+			{
+				if (isFastMove)
+					return -TimeHeadPosition;
+				else
+					return keyFrames.Where(x => x < TimeHeadPosition).Max() - TimeHeadPosition;
+			}
+			else
+				return 0;
+		}
+
+		private void OnKeyUp(KeyUpEvent evt)
+		{
+			if (evt.keyCode is KeyCode.Period && isForwardMove && movingRoutine != null)
+			{
+				EditorCoroutineUtility.StopCoroutine(movingRoutine);
+				movingRoutine = null;
+			}
+			else if (evt.keyCode is KeyCode.Comma && !isForwardMove && movingRoutine != null)
+			{
+				EditorCoroutineUtility.StopCoroutine(movingRoutine);
+				movingRoutine = null;
+			}
+			else if (evt.keyCode is KeyCode.LeftShift or KeyCode.RightShift)
+			{
+				isFastMove = false;
 			}
 		}
 
@@ -214,7 +368,11 @@ namespace Rails.Editor.Controls
 
 		private void OnKeyDragged(KeyDragEvent evt)
 		{
-			int deltaFrames = evt.DragFrames;
+			MoveSelectedKeys(evt.DragFrames);
+		}
+
+		private void MoveSelectedKeys(int deltaFrames)
+		{
 			foreach (var line in trackView.Views)
 			{
 				if (Check(line))
