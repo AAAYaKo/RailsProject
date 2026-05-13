@@ -14,6 +14,12 @@ namespace Rails.Editor
 		public static event Action AnimatorDestroyed;
 
 
+		private void OnEnable()
+		{
+			if (target != EditorContext.Instance.CurrentTarget)
+				EditorContext.Instance.CurrentTarget = (RailsAnimator)target;
+		}
+
 		private void OnDisable()
 		{
 			if (target == null)

@@ -49,7 +49,7 @@ namespace Rails.Editor.Context
 		{
 			if (CurrentTarget == null)
 				return;
-			Undo.RecordObject(CurrentTarget, $"Rails({CurrentTarget.name}) " + undoRecordName);
+			Undo.RecordObjects(new UnityEngine.Object[] { CurrentTarget, Editor }, $"Rails({CurrentTarget.name}) " + undoRecordName);
 		}
 
 		public void Record(UnityEngine.Object target, string undoRecordName)
@@ -64,7 +64,7 @@ namespace Rails.Editor.Context
 			if (CurrentTarget != null)
 				return;
 
-			CurrentTarget = null;
+			currentTarget = null;
 			CurrentTargetChanged?.Invoke(CurrentTarget);
 		}
 

@@ -1,5 +1,4 @@
-﻿using System.ComponentModel;
-using Rails.Editor.Context;
+﻿using Rails.Editor.Context;
 using Rails.Runtime;
 using Unity.Properties;
 using UnityEditor;
@@ -31,7 +30,7 @@ namespace Rails.Editor.ViewModel
 			set
 			{
 				SetProperty(ref selectedClipIndex, value);
-				SelectedClip = Clips.Count > 0 && selectedClipIndex >= 0 ? Clips[selectedClipIndex] : RailsClipViewModel.Empty;
+				SelectedClip = Clips.Count > 0 && selectedClipIndex >= 0 && selectedClipIndex < Clips.Count ? Clips[selectedClipIndex] : RailsClipViewModel.Empty;
 			}
 		}
 		[CreateProperty]
@@ -105,23 +104,16 @@ namespace Rails.Editor.ViewModel
 			if (model == null)
 			{
 				if (clips.Count > 0)
+				{
 					ClearViewModels<RailsClipViewModel, RailsClip>(Clips);
+				}
+					Clips.NotifyListChanged();
 				SelectedClip = RailsClipViewModel.Empty;
 				return;
 			}
 
 			SerializedObject = new SerializedObject(model);
 			UpdateClips();
-
-			if (storedSelectedIndex.Value >= Clips.Count || storedSelectedIndex.Value < 0)
-			{
-				if (Clips.Count != 0)
-					storedSelectedIndex.Value = 0;
-				else
-					storedSelectedIndex.Value = -1;
-			}
-
-			SelectedClipIndex = storedSelectedIndex.Value;
 		}
 
 		protected override void OnBind()
@@ -154,18 +146,14 @@ namespace Rails.Editor.ViewModel
 					{
 						EditorContext.Instance.Record("Clip Removed");
 						model.RemoveClip(m);
-
-						if (storedSelectedIndex.Value >= Clips.Count || storedSelectedIndex.Value < 0)
-						{
-							if (Clips.Count != 0)
-								storedSelectedIndex.Value = 0;
-							else
-								storedSelectedIndex.Value = -1;
-						}
-
-						SelectedClipIndex = storedSelectedIndex.Value;
+						UpdateClips();
 					});
 				});
+
+			if (storedSelectedIndex.Value >= Clips.Count || storedSelectedIndex.Value < 0)
+				storedSelectedIndex.Value = Clips.Count != 0 ? 0 : -1;
+
+			SelectedClipIndex = storedSelectedIndex.Value;
 		}
 
 		private void NotifySelectedClipChanged(object sender, BindablePropertyChangedEventArgs e)

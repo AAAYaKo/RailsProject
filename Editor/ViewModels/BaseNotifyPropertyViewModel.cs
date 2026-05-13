@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -20,7 +20,7 @@ namespace Rails.Editor.ViewModel
 			bool modelChanged = !this.model?.Equals(model) ?? true;
 			this.model = model;
 
-			if (model != null)
+			if (model is not UnityEngine.Object && model != null || model is UnityEngine.Object unityObject && unityObject != null) //For unity destoyed check
 			{
 				EventBus.Subscribe<PropertyChanged>(OnModelPropertyChanged);
 				OnBind();

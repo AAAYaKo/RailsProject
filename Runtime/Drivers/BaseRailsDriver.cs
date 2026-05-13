@@ -3,6 +3,7 @@ using Unity.Properties;
 
 namespace Rails.Runtime.Drivers
 {
+	[Serializable]
 	public abstract class BaseRailsDriver<T> : IRailsDriver<T>
 		where T : struct
 	{

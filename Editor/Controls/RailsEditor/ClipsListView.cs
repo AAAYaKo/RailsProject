@@ -50,17 +50,7 @@ namespace Rails.Editor.Controls
 		[CreateProperty]
 		public ICommand ClipRemoveCommand { get; set; }
 		[CreateProperty]
-		public ICommand<int> ClipSelectCommand
-		{
-			get => clipSelectCommand;
-			set
-			{
-				clipSelectCommand = value;
-			}
-		}
-
-		[CreateProperty]
-		private ICommand<int> clipSelectCommand;
+		public ICommand<int> ClipSelectCommand { get; set; }
 
 		private static VisualTreeAsset template;
 		private VisualElement buttonContainer;
@@ -122,7 +112,7 @@ namespace Rails.Editor.Controls
 		private void ChangeSelection(int index)
 		{
 			selectedIndex = index;
-			if (views.Count > 0)
+			if (views.Count > 0 && selectedIndex < views.Count && selectedIndex >= 0)
 			{
 				selected?.RemoveFromClassList(SelectedClass);
 				selected = views[index];

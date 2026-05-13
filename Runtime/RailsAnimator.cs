@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace Rails.Runtime
 {
+	[DisallowMultipleComponent]
 	public class RailsAnimator : MonoBehaviour
 	{
 		private static readonly CollectionComparer<RailsClip> comparer = new();
