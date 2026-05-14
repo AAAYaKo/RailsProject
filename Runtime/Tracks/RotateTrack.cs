@@ -7,6 +7,11 @@ namespace Rails.Runtime.Tracks
 	[Serializable]
 	public class RotateTrack : AnimationTrack<Transform, Vector3>
 	{
+		protected override Tween CreateInstantTween(Vector3 end)
+		{
+			return Reference.DORotate(end, 0.0001f);
+		}
+
 		protected override Tween CreateTween(Vector3 start, Vector3 end, float duration)
 		{
 			return Reference

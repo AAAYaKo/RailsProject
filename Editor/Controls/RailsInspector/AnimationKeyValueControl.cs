@@ -133,8 +133,10 @@ namespace Rails.Editor.Controls
 				if (driverProperty == null)
 					return;
 				propertyField.label = DriversUtils.ExtractTypeFromString(driverProperty.managedReferenceFullTypename)?.Name ?? "";
+				propertyField.Unbind();
 				propertyField.bindingPath = driverProperty.propertyPath;
-				propertyField.Bind(driverProperty.serializedObject);
+				propertyField.BindProperty(driverProperty.serializedObject);
+				
 			}
 		}
 		[UxmlAttribute("hasDriver"), CreateProperty]

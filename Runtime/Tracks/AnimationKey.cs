@@ -35,7 +35,7 @@ namespace Rails.Runtime.Tracks
 			get
 			{
 				if (driver != null)
-					return driver.Value();
+					return driver.Value(Reference);
 				return animatedValue;
 			}
 			set
@@ -61,6 +61,9 @@ namespace Rails.Runtime.Tracks
 		[CreateProperty]
 		public IDriver Driver => driver;
 
+		public UnityEngine.Object Reference { get; set; }
+
+
 		public AnimationKey()
 		{
 			//ease.PropertyChanged += OnEaseChanged;
@@ -79,5 +82,6 @@ namespace Rails.Runtime.Tracks
 		public bool ConstrainedProportions { get; set; }
 		public bool HasDriver { get; }
 		public IDriver Driver { get; }
+		public UnityEngine.Object Reference { get; set; }
 	}
 }

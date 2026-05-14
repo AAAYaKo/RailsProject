@@ -7,6 +7,11 @@ namespace Rails.Runtime.Tracks
 	[Serializable]
 	public class MoveAnchorTrack : AnimationTrack<RectTransform, Vector2>
 	{
+		protected override Tween CreateInstantTween(Vector2 end)
+		{
+			return Reference.DOAnchorPos(end, 0.0001f);
+		}
+
 		protected override Tween CreateTween(Vector2 start, Vector2 end, float duration)
 		{
 			return Reference

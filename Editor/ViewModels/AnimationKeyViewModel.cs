@@ -148,7 +148,7 @@ namespace Rails.Editor.ViewModel
 		protected override void OnModelPropertyChanged(PropertyChanged evt)
 		{
 			if (model?.Driver != null && model.Driver == evt.Sender)
-				model.Driver.UpdateValue();
+				model.Driver.UpdateValue(Reference);
 			if (!EqualityComparer<object>.Default.Equals(model, evt.Sender))
 				return;
 			OnModelPropertyChanged(evt.Sender, evt.PropertyName);

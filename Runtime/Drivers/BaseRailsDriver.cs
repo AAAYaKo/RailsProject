@@ -10,17 +10,17 @@ namespace Rails.Runtime.Drivers
 		[NonSerialized, DontCreateProperty] protected T? storedValue;
 
 
-		public T Value()
+		public T Value(UnityEngine.Object reference)
 		{
-			storedValue ??= ComputeValue();
+			storedValue ??= ComputeValue(reference);
 			return storedValue.Value;
 		}
 
-		public abstract T ComputeValue();
+		public abstract T ComputeValue(UnityEngine.Object reference);
 
-		public void UpdateValue()
+		public void UpdateValue(UnityEngine.Object reference)
 		{
-			storedValue = ComputeValue();
+			storedValue = ComputeValue(reference);
 		}
 	}
 }

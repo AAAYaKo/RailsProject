@@ -9,7 +9,7 @@ namespace Rails.Runtime.Drivers
 		[SerializeField] private RectTransform target;
 
 
-		public override Vector2 ComputeValue()
+		public override Vector2 ComputeValue(UnityEngine.Object reference)
 		{
 			if (target == null)
 				return Vector2.zero;

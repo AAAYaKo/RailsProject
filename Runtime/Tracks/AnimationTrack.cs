@@ -21,11 +21,20 @@ namespace Rails.Runtime.Tracks
 			set
 			{
 				if (value is TReference reference)
+				{
+					AnimationKeys.ForEach(x => x.Reference = reference);
 					sceneReference = reference;
+				}
 				else if (value == null)
+				{
+					AnimationKeys.ForEach(x => x.Reference = null);
 					sceneReference = null;
+				}
 				else
+				{
+					AnimationKeys.ForEach(x => x.Reference = null);
 					throw new InvalidCastException($"Cannot cast {value} to {typeof(TReference).Name}");
+				}
 			}
 		}
 		[CreateProperty]
@@ -69,7 +78,7 @@ namespace Rails.Runtime.Tracks
 			if (recomputeDrivers)
 			{
 				for (int i = 0; i < sorted.Length - 1; i++)
-					sorted[i].Driver?.UpdateValue();
+					sorted[i].Driver?.UpdateValue(Reference);
 			}
 
 			for (int i = 0; i < sorted.Length - 1; i++)
@@ -131,7 +140,7 @@ namespace Rails.Runtime.Tracks
 
 		public void RecomputeDrivers()
 		{
-			AnimationKeys.ForEach(x => x.Driver?.UpdateValue());
+			AnimationKeys.ForEach(x => x.Driver?.UpdateValue(Reference));
 		}
 
 		protected IAnimationKey CreateKey(int frame, bool constrainedProportions, TValue value = default)
@@ -141,6 +150,7 @@ namespace Rails.Runtime.Tracks
 				TimePosition = frame,
 				Value = value,
 				ConstrainedProportions = constrainedProportions,
+				Reference = Reference,
 			};
 		}
 
@@ -195,10 +205,13 @@ namespace Rails.Runtime.Tracks
 
 		protected void InsertInstantChange(IAnimationKey key, Sequence sequence, float frameTime)
 		{
-			sequence.InsertCallback(key.TimePosition * frameTime, () =>
+			if (key.Value is TValue end)
 			{
-				InstantChange(key);
-			});
+				Tween tween = CreateInstantTween(end);
+				sequence.Insert(key.TimePosition * frameTime, tween);
+			}
+			else
+				throw new InvalidCastException($"Cannot cast {key.Value} to {typeof(TValue)}");
 		}
 
 		protected void InsertTween(IAnimationKey keyStart, IAnimationKey keyEnd, Sequence sequence, float frameTime)
@@ -217,6 +230,7 @@ namespace Rails.Runtime.Tracks
 		}
 
 		protected abstract Tween CreateTween(TValue start, TValue end, float duration);
+		protected abstract Tween CreateInstantTween(TValue end);
 		protected abstract void InstantChange(TValue value);
 
 		protected Tween CreateTween(IAnimationKey keyStart, IAnimationKey keyEnd, float frameTime)
@@ -227,11 +241,12 @@ namespace Rails.Runtime.Tracks
 				return CreateTween(start, end, duration);
 			}
 			else
-				throw new InvalidCastException($"Cannot cast {keyStart.Value} and {keyEnd.Value} to float");
+				throw new InvalidCastException($"Cannot cast {keyStart.Value} and {keyEnd.Value} to {typeof(TValue)}");
 		}
 
 		protected void InstantChange(IAnimationKey key)
 		{
+			Debug.Log("d");
 			if (key.Value is TValue value)
 				InstantChange(value);
 			else

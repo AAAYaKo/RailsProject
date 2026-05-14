@@ -34,7 +34,7 @@ namespace Rails.Editor.Drivers
 		public static List<Type> GetAssignableTypes(Type propertyType)
 		{
 			var derivedTypes = TypeCache.GetTypesDerivedFrom(propertyType);
-			var nonUnityTypes = derivedTypes.Where(IsAssignableNonUnityType).ToList();
+			var nonUnityTypes = derivedTypes.Where(IsAssignableNonUnityType).OrderBy(x => x.Name).ToList();
 
 			return nonUnityTypes;
 
