@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 using Rails.Editor.Drivers;
 using Rails.Editor.ViewModel;
 using Rails.Runtime;
@@ -77,6 +78,7 @@ namespace Rails.Editor.Controls
 					return;
 				vector2Value = value;
 				vector2Field?.SetValueWithoutNotify(vector2Value.Value);
+				UpdateFields();
 				NotifyPropertyChanged(Vector2ValueProperty);
 			}
 		}
@@ -90,6 +92,7 @@ namespace Rails.Editor.Controls
 					return;
 				vector3Value = value;
 				vector3Field?.SetValueWithoutNotify(vector3Value.Value);
+				UpdateFields();
 				NotifyPropertyChanged(Vector3ValueProperty);
 			}
 		}
@@ -174,6 +177,7 @@ namespace Rails.Editor.Controls
 		private bool hasDriver;
 		private SerializedProperty driverProperty;
 
+
 		public AnimationValueControl()
 		{
 			firstLine = new VisualElement();
@@ -199,34 +203,19 @@ namespace Rails.Editor.Controls
 			menuButton = new Button(() =>
 			{
 				var menu = this.panel.CreateMenu();
-				if (driverProperty.managedReferenceValue == null)
-				{
-					menu.AddItem("Add Driver", false, () =>
-					{
-						Type propertyType = DriversUtils.ExtractTypeFromString(driverProperty.managedReferenceFieldTypename);
-						var driverTypes = DriversUtils.GetAssignableTypes(propertyType);
-
-						GenericDropdownMenu genericMenu = new();
-						foreach (var type in driverTypes)
-						{
-							genericMenu.AddItem(type.Name, false, () =>
-							{
-								driverProperty.managedReferenceValue = DriversUtils.CreateObjectFromType(type);
-								driverProperty.serializedObject.ApplyModifiedProperties();
-							});
-						}
-
-						genericMenu.DropDown(firstLine.worldBound, firstLine, DropdownMenuSizeMode.Auto);
-					});
-				}
+				menu.AddItem("Copy", false, CopyValue);
+				bool canPaste = CheckBuffer(EditorGUIUtility.systemCopyBuffer, out Match match) && !HasDriver;
+				if (canPaste)
+					menu.AddItem("Paste", false, () => PasteValue(match));
 				else
-				{
-					menu.AddItem("Remove Driver", false, () =>
-					{
-						driverProperty.managedReferenceValue = null;
-						driverProperty.serializedObject.ApplyModifiedProperties();
-					});
-				}
+					menu.AddDisabledItem("Paste", false);
+
+				menu.AddSeparator("");
+				if (driverProperty.managedReferenceValue == null)
+					menu.AddItem("Add Driver", false, AddDriver);
+				else
+					menu.AddItem("Remove Driver", false, RemoveDriver);
+
 				menu.DropDown(firstLine.worldBound, firstLine, DropdownMenuSizeMode.Auto);
 			});
 			menuButton.AddToClassList("icon-button");
@@ -246,11 +235,10 @@ namespace Rails.Editor.Controls
 
 			firstLine.AddManipulator(new ContextualMenuManipulator(x =>
 			{
-				if (!ShowMenu)
-					return;
 				FillMenu(x.menu);
 			}));
 		}
+
 
 		protected override void OnAttach(AttachToPanelEvent evt)
 		{
@@ -272,34 +260,70 @@ namespace Rails.Editor.Controls
 
 		private void FillMenu(DropdownMenu menu)
 		{
+			menu.AppendAction("Copy", x => CopyValue(), DropdownMenuAction.Status.Normal);
+			bool canPaste = CheckBuffer(EditorGUIUtility.systemCopyBuffer, out Match match) && !HasDriver;
+			menu.AppendAction("Paste", x => PasteValue(match), canPaste ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+
+			if (!ShowMenu)
+				return;
+
+			menu.AppendSeparator();
+
 			if (driverProperty.managedReferenceValue == null)
-			{
-				menu.AppendAction("Add Driver", x =>
-				{
-					Type propertyType = DriversUtils.ExtractTypeFromString(driverProperty.managedReferenceFieldTypename);
-					var driverTypes = DriversUtils.GetAssignableTypes(propertyType);
-
-					GenericDropdownMenu genericMenu = new();
-					foreach (var type in driverTypes)
-					{
-						genericMenu.AddItem(type.Name, false, () =>
-						{
-							driverProperty.managedReferenceValue = DriversUtils.CreateObjectFromType(type);
-							driverProperty.serializedObject.ApplyModifiedProperties();
-						});
-					}
-
-					genericMenu.DropDown(firstLine.worldBound, firstLine, DropdownMenuSizeMode.Auto);
-				}, DropdownMenuAction.Status.Normal);
-			}
+				menu.AppendAction("Add Driver", x => AddDriver(), DropdownMenuAction.Status.Normal);
 			else
+				menu.AppendAction("Remove Driver", x => RemoveDriver(), DropdownMenuAction.Status.Normal);
+		}
+
+		private bool CheckBuffer(in string buffer, out Match match) => type switch
+		{
+			IAnimationTrack.ValueType.Vector2 => EditorUtils.IsOfSerializedType<Vector2>(buffer, out match),
+			IAnimationTrack.ValueType.Vector3 => EditorUtils.IsOfSerializedType<Vector3>(buffer, out match),
+			_ => EditorUtils.IsOfSerializedType<float>(buffer, out match),
+		};
+
+		private void CopyValue()
+		{
+			EditorGUIUtility.systemCopyBuffer = type switch
 			{
-				menu.AppendAction("Remove Driver", x =>
+				IAnimationTrack.ValueType.Vector3 => EditorUtils.ToCopyBuffer(Vector3Value),
+				IAnimationTrack.ValueType.Vector2 => EditorUtils.ToCopyBuffer(Vector2Value),
+				_ => EditorUtils.ToCopyBuffer(SingleValue),
+			};
+		}
+
+		private void PasteValue(Match match)
+		{
+			if (type is IAnimationTrack.ValueType.Vector2)
+				ValueEditCommand.Execute(new ValueEditArgs(EditorUtils.FromCopyBuffer<Vector2>(EditorGUIUtility.systemCopyBuffer, match)));
+			else if (type is IAnimationTrack.ValueType.Vector3)
+				ValueEditCommand.Execute(new ValueEditArgs(EditorUtils.FromCopyBuffer<Vector3>(EditorGUIUtility.systemCopyBuffer, match)));
+			else if (type is IAnimationTrack.ValueType.Single)
+				ValueEditCommand.Execute(new ValueEditArgs(EditorUtils.FromCopyBuffer<float>(EditorGUIUtility.systemCopyBuffer, match)));
+		}
+
+		private void AddDriver()
+		{
+			Type propertyType = DriversUtils.ExtractTypeFromString(driverProperty.managedReferenceFieldTypename);
+			var driverTypes = DriversUtils.GetAssignableTypes(propertyType);
+
+			GenericDropdownMenu genericMenu = new();
+			foreach (var type in driverTypes)
+			{
+				genericMenu.AddItem(type.Name, false, () =>
 				{
-					driverProperty.managedReferenceValue = null;
+					driverProperty.managedReferenceValue = DriversUtils.CreateObjectFromType(type);
 					driverProperty.serializedObject.ApplyModifiedProperties();
-				}, DropdownMenuAction.Status.Normal);
+				});
 			}
+
+			genericMenu.DropDown(firstLine.worldBound, firstLine, DropdownMenuSizeMode.Auto);
+		}
+
+		private void RemoveDriver()
+		{
+			driverProperty.managedReferenceValue = null;
+			driverProperty.serializedObject.ApplyModifiedProperties();
 		}
 
 		private void UpdateValueView()

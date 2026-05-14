@@ -14,7 +14,7 @@ namespace Rails.Runtime.Tracks
 				.From(start);
 		}
 
-		protected override float GetCurrentValue()
+		protected override float GetCurrentValue_Internal()
 		{
 			return Reference.alpha;
 		}

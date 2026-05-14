@@ -14,7 +14,7 @@ namespace Rails.Runtime.Tracks
 				.From(start);
 		}
 
-		protected override Vector2 GetCurrentValue()
+		protected override Vector2 GetCurrentValue_Internal()
 		{
 			return Reference.anchoredPosition;
 		}

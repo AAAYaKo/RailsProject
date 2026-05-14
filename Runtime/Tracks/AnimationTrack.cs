@@ -40,7 +40,7 @@ namespace Rails.Runtime.Tracks
 		{
 			if (Reference == null)
 				return;
-			storedValue = GetCurrentValue();
+			storedValue = GetCurrentValue_Internal();
 		}
 
 		public void RestoreValue()
@@ -184,7 +184,14 @@ namespace Rails.Runtime.Tracks
 				throw new InvalidCastException($"Cannot cast {value} to {typeof(TValue).Name}");
 		}
 
-		protected abstract TValue GetCurrentValue();
+		public object GetCurrentValue()
+		{
+			if (Reference == null)
+				return default(TValue);
+			return GetCurrentValue_Internal();
+		}
+
+		protected abstract TValue GetCurrentValue_Internal();
 
 		protected void InsertInstantChange(IAnimationKey key, Sequence sequence, float frameTime)
 		{
@@ -240,6 +247,8 @@ namespace Rails.Runtime.Tracks
 		public void SaveCurrentValue();
 
 		public void RestoreValue();
+
+		public object GetCurrentValue();
 
 		public void InsertNewKeyAt(int frame, object value, bool constrainedProportions);
 

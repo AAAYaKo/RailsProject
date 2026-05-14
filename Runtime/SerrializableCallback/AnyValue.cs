@@ -99,6 +99,7 @@ namespace Rails.Runtime.Callback
 			ValueType.Int => typeof(int),
 			ValueType.Float => typeof(float),
 			ValueType.String => typeof(string),
+			ValueType.Vector2 => typeof(Vector2),
 			ValueType.Vector3 => typeof(Vector3),
 			_ => throw new NotSupportedException($"Unsupported ValueType: {valueType}")
 		};

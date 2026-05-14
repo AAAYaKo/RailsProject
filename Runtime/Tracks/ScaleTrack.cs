@@ -14,7 +14,7 @@ namespace Rails.Runtime.Tracks
 				.From(start);
 		}
 
-		protected override Vector3 GetCurrentValue()
+		protected override Vector3 GetCurrentValue_Internal()
 		{
 			return Reference.localScale;
 		}

@@ -219,6 +219,7 @@ namespace Rails.Editor.ViewModel
 			if (propertyName == nameof(IAnimationTrack.SceneReference))
 			{
 				Reference = model.SceneReference;
+				OnTimeHeadPositionChanged(currentFrame);
 			}
 		}
 
@@ -229,7 +230,7 @@ namespace Rails.Editor.ViewModel
 				case IAnimationTrack.ValueType.Single:
 					if (previousKey == null)
 					{
-						CurrentSingleValue = 0;
+						CurrentSingleValue = (float)(model?.GetCurrentValue() ?? 0);
 						return;
 					}
 					if (previousKey.TimePosition == frame || nextKey == null)
@@ -242,7 +243,7 @@ namespace Rails.Editor.ViewModel
 				case IAnimationTrack.ValueType.Vector2:
 					if (previousKey == null)
 					{
-						CurrentVector2Value = Vector2.zero;
+						CurrentVector2Value = (Vector2)(model?.GetCurrentValue() ?? Vector2.zero);
 						return;
 					}
 					if (previousKey.TimePosition == frame || nextKey == null)
@@ -255,7 +256,7 @@ namespace Rails.Editor.ViewModel
 				case IAnimationTrack.ValueType.Vector3:
 					if (previousKey == null)
 					{
-						CurrentVector3Value = Vector3.zero;
+						CurrentVector3Value = (Vector3)(model?.GetCurrentValue() ?? Vector2.zero);
 						return;
 					}
 					if (previousKey.TimePosition == frame || nextKey == null)
