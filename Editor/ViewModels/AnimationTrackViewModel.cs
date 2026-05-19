@@ -13,6 +13,7 @@ namespace Rails.Editor.ViewModel
 {
 	public class AnimationTrackViewModel : BaseTrackViewModel<IAnimationTrack, IAnimationKey, AnimationKeyViewModel>
 	{
+		public const string RandomColorClass = "random-color-";
 		[CreateProperty]
 		public UnityEngine.Object Reference
 		{
@@ -30,7 +31,15 @@ namespace Rails.Editor.ViewModel
 		[CreateProperty]
 		public IAnimationTrack.ValueType ValueType => trackData?.ValueType ?? IAnimationTrack.ValueType.Single;
 		[CreateProperty]
-		public override string TrackClass => trackData?.TrackClass;
+		public override string TrackClass
+		{
+			get
+			{
+				if (useRandomColor)
+					return RandomColorClass + (trackIndex % 8);
+				return trackData?.TrackClass;
+			}
+		}
 		[CreateProperty]
 		public float CurrentSingleValue
 		{
@@ -114,6 +123,8 @@ namespace Rails.Editor.ViewModel
 		private ICommand<ValueEditArgs> valueEditCommand;
 		private ICommand<bool> constrainedProportionsChangeCommand;
 		private int trackIndex;
+		private bool useRandomColor;
+
 
 		public AnimationTrackViewModel(int trackIndex) : base()
 		{
@@ -196,6 +207,12 @@ namespace Rails.Editor.ViewModel
 			CurrentHasDriver = IsKeyFrame && Keys[previousIndex].HasDriver;
 			int nextIndex = previousIndex + 1;
 			UpdateCurrentValue(Keys[previousIndex], nextIndex >= Keys.Count ? null : Keys[nextIndex], frame);
+		}
+
+		public void SetUseRandomColor(bool use)
+		{
+			useRandomColor = use;
+			NotifyPropertyChanged(nameof(TrackClass));
 		}
 
 		protected override void OnModelChanged()

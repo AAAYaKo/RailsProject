@@ -19,6 +19,7 @@
 	--rails-icon-loop-ping-pong: resource('Icons/ping_pong');
 	--rails-icon-menu: resource('Icons/menu_dots');
 	--rails-icon-move: resource('Icons/move_icon');
+	--rails-icon-graph: resource('Icons/graph');
 	--rails-button-icon-color: #C4C4C4;
 	--rails-button-icon-hover-color: #F0F0F0;
 	--rails-ruler-background-color: #303030;
@@ -78,4 +79,44 @@
 .rotate{
 	--color-active: #E26161;
 	--color-not-active: #8F6565;
+}
+
+.random-color-0{
+	--color-active: #75DDDD;
+	--color-not-active: #608F8F;
+}
+
+.random-color-1{
+	--color-active: #009CCC;
+	--color-not-active: #37606D;
+}
+
+.random-color-2{
+	--color-active: #FF8A5B;
+	--color-not-active: #A56851;
+}
+
+.random-color-3{
+	--color-active: #DCED31;
+	--color-not-active: #919844;
+}
+
+.random-color-4{
+	--color-active: #EF3054;
+	--color-not-active: #834853;
+}
+
+.random-color-5{
+	--color-active: #9381FF;
+	--color-not-active: #665E9B;
+}
+
+.random-color-6{
+	--color-active: #895E97;
+	--color-not-active: #5A505E;
+}
+
+.random-color-7{
+	--color-active: #479A89;
+	--color-not-active: #455A56;
 }

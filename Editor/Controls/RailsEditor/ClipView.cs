@@ -69,7 +69,8 @@ namespace Rails.Editor.Controls
 		private float framePixelSize = 30;
 		private bool isForwardMove;
 		private bool isFastMove;
-		private EditorCoroutine movingRoutine;
+		private IVisualElementScheduledItem moveWork;
+		//private EditorCoroutine movingRoutine;
 		private static readonly HashSet<int> keyFrames = new();
 
 
@@ -131,7 +132,7 @@ namespace Rails.Editor.Controls
 			selectionBoxManipulator.SelectionComplete += OnSelectionComplete;
 			EventBus.Subscribe<FramePixelSizeChangedEvent>(OnFramePixelSizeChanged);
 			EventBus.Subscribe<TimePositionChangedEvent>(OnTimePositionChanged);
-			EventBus.Subscribe<KeyDragEvent>(OnKeyDragged);
+			EventBus.Subscribe<KeyDragChangedEvent>(OnKeyDragged);
 			EventBus.Subscribe<PerformMove>(OnPerformMove);
 			OnFramePixelSizeChanged(EditorContext.Instance.FramePixelSize);
 			OnTimePositionChanged(EditorContext.Instance.TimePosition);
@@ -151,7 +152,7 @@ namespace Rails.Editor.Controls
 			selectionBoxManipulator.SelectionComplete -= OnSelectionComplete;
 			EventBus.Unsubscribe<FramePixelSizeChangedEvent>(OnFramePixelSizeChanged);
 			EventBus.Unsubscribe<TimePositionChangedEvent>(OnTimePositionChanged);
-			EventBus.Unsubscribe<KeyDragEvent>(OnKeyDragged);
+			EventBus.Unsubscribe<KeyDragChangedEvent>(OnKeyDragged);
 			EventBus.Unsubscribe<PerformMove>(OnPerformMove);
 		}
 
@@ -182,29 +183,29 @@ namespace Rails.Editor.Controls
 
 		private void OnKeyDown(KeyDownEvent evt)
 		{
-			if (evt.keyCode is KeyCode.Period && !evt.actionKey && !evt.altKey && movingRoutine == null)
+			if (evt.keyCode is KeyCode.Period && !evt.actionKey && !evt.altKey && (!moveWork?.isActive ?? true))
 			{
-				movingRoutine = EditorCoroutineUtility.StartCoroutine(MovePlayHeadRoutine(true, DeltaNextFrame), EditorContext.Instance.Editor);
+				MovePlayHeadSchedule(true, DeltaNextFrame);
 			}
-			else if (evt.keyCode is KeyCode.Comma && !evt.actionKey && !evt.altKey && movingRoutine == null)
+			else if (evt.keyCode is KeyCode.Comma && !evt.actionKey && !evt.altKey && (!moveWork?.isActive ?? true))
 			{
-				movingRoutine = EditorCoroutineUtility.StartCoroutine(MovePlayHeadRoutine(false, DeltaNextFrame), EditorContext.Instance.Editor);
+				MovePlayHeadSchedule(false, DeltaNextFrame);
 			}
-			if (evt.keyCode is KeyCode.Period && evt.actionKey && movingRoutine == null)
+			else if (evt.keyCode is KeyCode.Period && evt.actionKey && (!moveWork?.isActive ?? true))
 			{
-				movingRoutine = EditorCoroutineUtility.StartCoroutine(MovePlayHeadRoutine(true, DeltaNextKeyFrame), EditorContext.Instance.Editor);
+				MovePlayHeadSchedule(true, DeltaNextKeyFrame);
 			}
-			else if (evt.keyCode is KeyCode.Comma && evt.actionKey && movingRoutine == null)
+			else if (evt.keyCode is KeyCode.Comma && evt.actionKey && (!moveWork?.isActive ?? true))
 			{
-				movingRoutine = EditorCoroutineUtility.StartCoroutine(MovePlayHeadRoutine(false, DeltaNextKeyFrame), EditorContext.Instance.Editor);
+				MovePlayHeadSchedule(false, DeltaNextKeyFrame);
 			}
-			if (evt.keyCode is KeyCode.Period && evt.altKey && movingRoutine == null)
+			else if (evt.keyCode is KeyCode.Period && evt.altKey && (!moveWork?.isActive ?? true))
 			{
-				movingRoutine = EditorCoroutineUtility.StartCoroutine(MoveSelectedKeysRoutine(true, DeltaNextFrame), EditorContext.Instance.Editor);
+				MoveSelectedSchedule(true, DeltaNextKeyFrame);
 			}
-			else if (evt.keyCode is KeyCode.Comma && evt.altKey && movingRoutine == null)
+			else if (evt.keyCode is KeyCode.Comma && evt.altKey && (!moveWork?.isActive ?? true))
 			{
-				movingRoutine = EditorCoroutineUtility.StartCoroutine(MoveSelectedKeysRoutine(false, DeltaNextFrame), EditorContext.Instance.Editor);
+				MoveSelectedSchedule(false, DeltaNextKeyFrame);
 			}
 			else if (evt.shiftKey)
 			{
@@ -233,27 +234,38 @@ namespace Rails.Editor.Controls
 			}
 		}
 
-		private IEnumerator MovePlayHeadRoutine(bool isForward, Func<bool, bool, int> delta)
+		private void MovePlayHeadSchedule(bool isForward, Func<bool, bool, int> delta)
 		{
 			isForwardMove = isForward;
-			while ((isForward && TimeHeadPosition < Duration) || (!isForward && TimeHeadPosition > 0))
-			{
+			if (CanMove())
 				TimeHeadPosition += delta(isForward, isFastMove);
-				yield return new EditorWaitForSeconds(0.1f);
-			}
-			movingRoutine = null;
+
+			moveWork = schedule
+				.Execute(() => TimeHeadPosition += delta(isForward, isFastMove))
+				.Every(50)
+				.Until(() => !CanMove())
+				.StartingIn(150);
+
+			bool CanMove() => (isForward && TimeHeadPosition < Duration) || (!isForward && TimeHeadPosition > 0);
 		}
 
-		private IEnumerator MoveSelectedKeysRoutine(bool isForward, Func<bool, bool, int> delta)
+		private void MoveSelectedSchedule(bool isForward, Func<bool, bool, int> delta)
 		{
 			isForwardMove = isForward;
-			while (HasAnySelected())
+			if (HasAnySelected())
+				Move();
+
+			moveWork = schedule
+				.Execute(Move)
+				.Every(50)
+				.Until(() => !HasAnySelected())
+				.StartingIn(150);
+
+			void Move()
 			{
 				MoveSelectedKeys(delta(isForward, isFastMove));
 				EventBus.Publish(new KeyDragCompleteEvent());
-				yield return new EditorWaitForSeconds(0.1f);
 			}
-			movingRoutine = null;
 		}
 
 		private int DeltaNextFrame(bool isForward, bool isFastMove)
@@ -287,15 +299,15 @@ namespace Rails.Editor.Controls
 
 		private void OnKeyUp(KeyUpEvent evt)
 		{
-			if (evt.keyCode is KeyCode.Period && isForwardMove && movingRoutine != null)
+			if (evt.keyCode is KeyCode.Period && isForwardMove && moveWork != null)
 			{
-				EditorCoroutineUtility.StopCoroutine(movingRoutine);
-				movingRoutine = null;
+				moveWork.Pause();
+				moveWork = null;
 			}
-			else if (evt.keyCode is KeyCode.Comma && !isForwardMove && movingRoutine != null)
+			else if (evt.keyCode is KeyCode.Comma && !isForwardMove && moveWork != null)
 			{
-				EditorCoroutineUtility.StopCoroutine(movingRoutine);
-				movingRoutine = null;
+				moveWork.Pause();
+				moveWork = null;
 			}
 			else if (evt.keyCode is KeyCode.LeftShift or KeyCode.RightShift)
 			{
@@ -366,7 +378,7 @@ namespace Rails.Editor.Controls
 			eventsContainer.style.width = framePixelSize * Duration + TrackLinesView.StartAdditional;
 		}
 
-		private void OnKeyDragged(KeyDragEvent evt)
+		private void OnKeyDragged(KeyDragChangedEvent evt)
 		{
 			MoveSelectedKeys(evt.DragFrames);
 		}

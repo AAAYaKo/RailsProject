@@ -26,7 +26,7 @@ namespace Rails.Editor.Controls
 			}
 		}
 
-		private TrackKeyMoveDragManipulator manipulator;
+		private TrackMoveDragManipulator manipulator;
 		private int? timePosition;
 		private float framePixelSize = 30;
 
@@ -37,7 +37,7 @@ namespace Rails.Editor.Controls
 		{
 			AddToClassList("track-key");
 			SetBinding(TimePositionProperty, new ToTargetBinding(nameof(AnimationKeyViewModel.TimePosition)));
-			manipulator = new TrackKeyMoveDragManipulator();
+			manipulator = new TrackMoveDragManipulator();
 			this.AddManipulator(manipulator);
 		}
 
@@ -45,10 +45,11 @@ namespace Rails.Editor.Controls
 		{
 			base.OnAttach(evt);
 			RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
-			RegisterCallback<MouseDownEvent>(OnClick, TrickleDown.TrickleDown);
-			manipulator.KeyDragBegin += OnKeyDragBegin;
-			manipulator.KeyDragChanged += OnKeyDragChanged;
-			manipulator.KeyDragComplete += OnKeyDragComplete;
+			manipulator.RightClick += OnRightClick;
+			manipulator.Click += OnClick;
+			manipulator.DragBegin += OnKeyDragBegin;
+			manipulator.DragChanged += OnKeyDragChanged;
+			manipulator.DragComplete += OnKeyDragComplete;
 			EventBus.Subscribe<FramePixelSizeChangedEvent>(OnFramePixelSizeChanged);
 			OnFramePixelSizeChanged(EditorContext.Instance.FramePixelSize);
 		}
@@ -57,10 +58,10 @@ namespace Rails.Editor.Controls
 		{
 			base.OnDetach(evt);
 			UnregisterCallback<GeometryChangedEvent>(OnGeometryChanged);
-			UnregisterCallback<MouseDownEvent>(OnClick, TrickleDown.TrickleDown);
-			manipulator.KeyDragBegin -= OnKeyDragBegin;
-			manipulator.KeyDragChanged -= OnKeyDragChanged;
-			manipulator.KeyDragComplete -= OnKeyDragComplete;
+			manipulator.RightClick -= OnRightClick;
+			manipulator.DragBegin -= OnKeyDragBegin;
+			manipulator.DragChanged -= OnKeyDragChanged;
+			manipulator.DragComplete -= OnKeyDragComplete;
 			EventBus.Unsubscribe<FramePixelSizeChangedEvent>(OnFramePixelSizeChanged);
 		}
 
@@ -68,6 +69,7 @@ namespace Rails.Editor.Controls
 		{
 			OnFramePixelSizeChanged(evt.FramePixelSize);
 		}
+
 		private void OnFramePixelSizeChanged(float framePixelSize)
 		{
 			this.framePixelSize = framePixelSize;
@@ -75,12 +77,14 @@ namespace Rails.Editor.Controls
 			UpdatePosition();
 		}
 
-		private void OnClick(MouseDownEvent evt)
+		private void OnRightClick()
 		{
-			if (evt.button == 0)
-				EventBus.Publish(new KeyClickEvent(this, evt.actionKey));
-			else if (evt.button == 1)
-				EventBus.Publish(new KeyRightClickEvent(this));
+			EventBus.Publish(new KeyRightClickEvent(this));
+		}
+
+		private void OnClick(bool actionKey)
+		{
+			EventBus.Publish(new KeyClickEvent(this, actionKey));
 		}
 
 		private void OnGeometryChanged(GeometryChangedEvent evt)
@@ -90,12 +94,12 @@ namespace Rails.Editor.Controls
 
 		private void OnKeyDragBegin(bool actionKey)
 		{
-			EventBus.Publish(new KeyClickEvent(this, actionKey));
+			EventBus.Publish(new KeyDragBeginEvent(this));
 		}
 
 		private void OnKeyDragChanged(int deltaFrames, bool actionKey)
 		{
-			EventBus.Publish(new KeyDragEvent(deltaFrames));
+			EventBus.Publish(new KeyDragChangedEvent(deltaFrames));
 		}
 
 		private void OnKeyDragComplete(int deltaFrames, bool actionKey)

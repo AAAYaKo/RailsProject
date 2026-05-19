@@ -23,7 +23,7 @@ namespace Rails.Editor.Controls
 
 		private TextField nameField;
 		private Label nameLabel;
-		private EditorCoroutine delayedClick;
+		private IVisualElementScheduledItem delayedClick;
 
 
 		static ClipItemView()
@@ -63,15 +63,16 @@ namespace Rails.Editor.Controls
 				{
 					if (x.clickCount == 1)
 					{
-						delayedClick = EditorCoroutineUtility.StartCoroutine(DelayedClick(), EditorContext.Instance.Editor);
+						delayedClick = schedule.Execute(() =>
+						{
+							EventBus.Publish(new ClipClickEvent(this));
+							delayedClick = null;
+						}).StartingIn(200);
 					}
 					else
 					{
-						if (delayedClick != null)
-						{
-							EditorCoroutineUtility.StopCoroutine(delayedClick);
-							delayedClick = null;
-						}
+						delayedClick?.Pause();
+						delayedClick = null;
 						nameField.style.display = DisplayStyle.Flex;
 						nameLabel.style.display = DisplayStyle.None;
 						nameField.Focus();
@@ -105,13 +106,6 @@ namespace Rails.Editor.Controls
 		private void OnNameFieldChanged(ChangeEvent<string> evt)
 		{
 			nameField.Blur();
-		}
-
-		private IEnumerator DelayedClick()
-		{
-			yield return new EditorWaitForSeconds(0.2f);
-			EventBus.Publish(new ClipClickEvent(this));
-			delayedClick = null;
 		}
 	}
 }

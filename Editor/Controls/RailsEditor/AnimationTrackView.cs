@@ -61,6 +61,17 @@ namespace Rails.Editor.Controls
 			}
 		}
 		[CreateProperty]
+		public Color RandomColorActive
+		{
+			get => randomColorActive ?? Color.white;
+			set
+			{
+				if (randomColorActive == value)
+					return;
+				randomColorActive = value;
+			}
+		}
+		[CreateProperty]
 		public ICommand RemoveCommand { get; set; }
 		[CreateProperty]
 		public ICommand KeyFrameAddCommand { get; set; }
@@ -75,6 +86,9 @@ namespace Rails.Editor.Controls
 		private string trackClass;
 		private bool? isKeyFrame;
 		private Object reference;
+		private Color? randomColorActive;
+		private Color? randomColorNotActive;
+
 
 		static AnimationTrackView()
 		{

@@ -447,6 +447,15 @@
     background-image: var(--rails-icon-stop);
 }
 
+.graph-toggle > .unity-toggle__input > .unity-toggle__checkmark {
+    background-image: var(--rails-icon-graph);
+}
+
+.graph-toggle > .unity-toggle__input:checked > .unity-toggle__checkmark {
+    background-image: var(--rails-icon-graph);
+    -unity-background-image-tint-color: var(--rails-play-head-color);
+}
+
 .move-icon {
     --unity-image: var(--rails-icon-move);
 }

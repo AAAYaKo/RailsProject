@@ -4,12 +4,12 @@ namespace Rails.Editor
 {
 	public readonly struct DeselectAllKeysEvent
 	{
-		public TrackKeyView Key { get; }
+		public TrackKeyView[] IgnoreKeys { get; }
 
 
-		public DeselectAllKeysEvent(TrackKeyView key)
+		public DeselectAllKeysEvent(params TrackKeyView[] ignoreKeys)
 		{
-			Key = key;
+			IgnoreKeys = ignoreKeys;
 		}
 	}
 }

@@ -2,21 +2,22 @@
     <Style src="project://database/Assets/Rails/Editor/Resources/RailsEditor.uss?fileID=7433441132597879392&amp;guid=a52f72ccd09932d4795d5bf54f12136c&amp;type=3#RailsEditor"/>
     <ui:VisualElement name="clip-controls" class="clip-controls">
         <ui:VisualElement name="controls" style="flex-grow: 1; flex-direction: row; padding-top: 10px; padding-right: 16px; padding-bottom: 10px; padding-left: 16px; width: 100%; height: 100%;">
-            <ui:Toggle name="preview" class="icon-toggle preview-toggle" style="margin-top: 0; margin-bottom: 0; margin-left: 0;"/>
+            <ui:Toggle name="preview" tooltip="Start/Stop preview" class="icon-toggle preview-toggle" style="margin-top: 0; margin-bottom: 0; margin-left: 0;"/>
             <ui:VisualElement name="play-controls" enabled="false" style="flex-grow: 0; flex-direction: row; flex-shrink: 0;">
-                <ui:Toggle name="play" class="icon-toggle play-toggle" style="margin-top: 0; margin-bottom: 0; margin-left: 0;"/>
-                <ui:Button text="" name="next" class="icon-button next"/>
+                <ui:Toggle name="play" tooltip="Play/Pause preview" class="icon-toggle play-toggle" style="margin-top: 0; margin-bottom: 0; margin-left: 0;"/>
+                <ui:Button text="" name="next" tooltip="Move playhead to next frame" class="icon-button next"/>
             </ui:VisualElement>
-            <ui:VisualElement name="move" class="clip-drop-down">
-                <ui:Image name="icon" class="clip-drop-down-icon move-icon"/>
-                <ui:VisualElement name="drop-down-icon" class="drop-down-icon" style="-unity-background-scale-mode: scale-and-crop; background-image: resource(&quot;Icons/drop_down_icon&quot;);"/>
-            </ui:VisualElement>
-            <ui:VisualElement name="loop" class="clip-drop-down">
+            <ui:VisualElement name="loop" tooltip="Change looping behaviour" class="clip-drop-down">
                 <ui:Image name="loop-icon" class="clip-drop-down-icon"/>
                 <ui:VisualElement name="drop-down-icon" class="drop-down-icon" style="-unity-background-scale-mode: scale-and-crop; background-image: resource(&quot;Icons/drop_down_icon&quot;);"/>
             </ui:VisualElement>
+            <ui:VisualElement name="move" tooltip="Navigate timeline" class="clip-drop-down">
+                <ui:Image name="icon" class="clip-drop-down-icon move-icon"/>
+                <ui:VisualElement name="drop-down-icon" class="drop-down-icon" style="-unity-background-scale-mode: scale-and-crop; background-image: resource(&quot;Icons/drop_down_icon&quot;);"/>
+            </ui:VisualElement>
+            <ui:Toggle name="graph" tooltip="Graph editor" class="icon-toggle graph-toggle" style="margin-top: 0; margin-bottom: 0; margin-left: 0;"/>
             <ui:VisualElement name="space" style="flex-grow: 1;"/>
-            <ui:VisualElement name="time" class="time-drop-down" style="flex-direction: row; align-self: center;">
+            <ui:VisualElement name="time" tooltip="Change duration" class="time-drop-down" style="flex-direction: row; align-self: center;">
                 <ui:Label text="00:00" name="time-text" style="font-size: 14px;">
                     <Bindings>
                         <ui:DataBinding property="text" data-source-path="TimeHeadPositionText" binding-mode="ToTarget"/>

@@ -32,6 +32,12 @@ namespace Rails.Editor.Controls
 				keyToTweenLines[keyIndex].RemoveFromClassList(SelectedClass);
 		}
 
+		protected override void OnAttach(AttachToPanelEvent evt)
+		{
+			base.OnAttach(evt);
+			UpdateTweenLines();
+		}
+
 		private void UpdateTweenLines()
 		{
 			if (Values.IsNullOrEmpty())
@@ -51,6 +57,7 @@ namespace Rails.Editor.Controls
 				var line = CreateTweenLine();
 				container.Add(line);
 				tweenLines.Add(line);
+				line.SendToBack();
 			}
 			while (count < tweenLines.Count)
 			{

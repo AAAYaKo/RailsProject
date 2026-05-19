@@ -19,6 +19,7 @@
 	--rails-icon-loop-ping-pong: resource('Icons/ping_pong');
 	--rails-icon-menu: resource('Icons/menu_dots');
 	--rails-icon-move: resource('Icons/move_icon');
+	--rails-icon-graph: resource('Icons/graph');
 	--rails-button-icon-color: #555555;
 	--rails-button-icon-hover-color: #787878;
 	--rails-ruler-background-color: #C8C8C8;
@@ -78,4 +79,11 @@
 .rotate{
 	--color-active: #C82929;
 	--color-not-active: #D6BABA;
+}
+
+.random-color{
+	--color-random-active: rgb(255, 255, 255);
+	--color-random-not-active: rgb(255, 255, 255);
+	--color-active: var(--color-random-active);
+	--color-not-active: var(--color-random-not-active);
 }

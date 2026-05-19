@@ -33,7 +33,7 @@ namespace Rails.Editor.ViewModel
 			get => name;
 			set
 			{
-				if(SetProperty(ref name, value))
+				if (SetProperty(ref name, value))
 				{
 					EditorContext.Instance.Record($"Rename clip: {model.Name} to {name}");
 					model.Name = name;
@@ -217,6 +217,19 @@ namespace Rails.Editor.ViewModel
 			}
 		}
 		[CreateProperty]
+		public bool IsGraph
+		{
+			get => isGraph;
+			set
+			{
+				if (SetProperty(ref isGraph, value))
+				{
+					foreach (var track in Tracks)
+						track.SetUseRandomColor(isGraph);
+				}
+			}
+		}
+		[CreateProperty]
 		public ICommand<Type> AddTrackCommand
 		{
 			get => addTrackCommand;
@@ -255,11 +268,11 @@ namespace Rails.Editor.ViewModel
 		private bool selected = false;
 		private bool isPreview;
 		private bool isPlay;
+		private bool isGraph;
 		private ICommand<Type> addTrackCommand;
 		private ICommand removeCommand;
 		private ICommand removeSelectedKeysCommand;
 		private ICommand gotoNextFrameCommand;
-		private EditorCoroutine reloadRoutine;
 		private readonly int clipIndex;
 		private string clipProperty;
 
@@ -368,7 +381,10 @@ namespace Rails.Editor.ViewModel
 				viewModelBindCallback: (vm, m) =>
 				{
 					if (selected)
+					{
 						vm.OnClipSelect(OnKeysSelectionChanged);
+						vm.SetUseRandomColor(IsGraph);
+					}
 					vm.RemoveCommand = new RelayCommand(() =>
 					{
 						EditorContext.Instance.Record($"Removed {m.GetType().Name} from {name}");
@@ -399,17 +415,7 @@ namespace Rails.Editor.ViewModel
 		{
 			if (!IsPreview)
 				return;
-			if (reloadRoutine != null)
-				return;
-			reloadRoutine = EditorCoroutineUtility.StartCoroutineOwnerless(Routine());
-			IEnumerator Routine()
-			{
-				yield return null;
-				if (!IsPreview)
-					yield break;
-				ReloadPreview();
-				reloadRoutine = null;
-			}
+			ReloadPreview();
 		}
 
 		private void StartPreview()

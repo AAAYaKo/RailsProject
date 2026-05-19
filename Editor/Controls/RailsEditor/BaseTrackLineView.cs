@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Rails.Editor.Context;
@@ -113,12 +114,14 @@ namespace Rails.Editor.Controls
 			if (selectedIndexes != null)
 				selectedIndexes.ListChanged += OnSelectionChanged;
 			EventBus.Subscribe<KeyClickEvent>(OnClickKey);
+			EventBus.Subscribe<TweenLineClickEvent>(OnTweenLine);
 			EventBus.Subscribe<KeyRightClickEvent>(OnRightClickKey);
-			EventBus.Subscribe<KeyMoveEvent>(OnMoveKey);
 			EventBus.Subscribe<DeselectAllKeysEvent>(OnDeselectAll);
 			EventBus.Subscribe<SelectionBoxBeginEvent>(OnSelectionBoxBegin);
 			EventBus.Subscribe<SelectionBoxChangeEvent>(OnSelectionBoxChange);
 			EventBus.Subscribe<SelectionBoxCompleteEvent>(OnSelectionBoxComplete);
+			EventBus.Subscribe<KeyDragBeginEvent>(OnKeyDragBegin);
+			EventBus.Subscribe<KeyMoveEvent>(OnMoveKey);
 			EventBus.Subscribe<KeyDragCompleteEvent>(OnKeyDragComplete);
 		}
 
@@ -128,12 +131,14 @@ namespace Rails.Editor.Controls
 			if (selectedIndexes != null)
 				selectedIndexes.ListChanged -= OnSelectionChanged;
 			EventBus.Unsubscribe<KeyClickEvent>(OnClickKey);
+			EventBus.Unsubscribe<TweenLineClickEvent>(OnTweenLine);
 			EventBus.Unsubscribe<KeyRightClickEvent>(OnRightClickKey);
-			EventBus.Unsubscribe<KeyMoveEvent>(OnMoveKey);
 			EventBus.Unsubscribe<DeselectAllKeysEvent>(OnDeselectAll);
 			EventBus.Unsubscribe<SelectionBoxBeginEvent>(OnSelectionBoxBegin);
 			EventBus.Unsubscribe<SelectionBoxChangeEvent>(OnSelectionBoxChange);
 			EventBus.Unsubscribe<SelectionBoxCompleteEvent>(OnSelectionBoxComplete);
+			EventBus.Unsubscribe<KeyDragBeginEvent>(OnKeyDragBegin);
+			EventBus.Unsubscribe<KeyMoveEvent>(OnMoveKey);
 			EventBus.Unsubscribe<KeyDragCompleteEvent>(OnKeyDragComplete);
 		}
 
@@ -175,13 +180,13 @@ namespace Rails.Editor.Controls
 			DeselectVisually(key, keyIndex);
 		}
 
-		private void DeselectAllKeys(TrackKeyView keyIgnore = null)
+		private void DeselectAllKeys(params TrackKeyView[] keysIgnore)
 		{
 			bool wasSelected = false;
 			selectedViewKeys.ForEach(x =>
 			{
 				var key = views[x];
-				if (keyIgnore == key)
+				if (keysIgnore.Contains(key))
 				{
 					wasSelected = true;
 					return;
@@ -191,9 +196,12 @@ namespace Rails.Editor.Controls
 			selectedViewKeys.Clear();
 			if (wasSelected)
 			{
-				int keyIgnoreIndex = views.IndexOf(keyIgnore);
-				if (keyIgnoreIndex >= 0)
-					selectedViewKeys.Add(keyIgnoreIndex);
+				foreach (var key in keysIgnore)
+				{
+					int keyIgnoreIndex = views.IndexOf(key);
+					if (keyIgnoreIndex >= 0)
+						selectedViewKeys.Add(keyIgnoreIndex);
+				}
 			}
 		}
 
@@ -263,17 +271,14 @@ namespace Rails.Editor.Controls
 			if (index < 0)
 				return;
 
-			if (!evt.ActionKey && !selectedViewKeys.Contains(index))
+			if (!evt.ActionKey)
 				EventBus.Publish(new DeselectAllKeysEvent(key));
-			
-			if (!selectedViewKeys.Contains(index))
-			{
+
+			bool selected = selectedViewKeys.Contains(index);
+			if (!selected)
 				SelectKey(index);
-			}
-			else if (evt.ActionKey && selectedViewKeys.Contains(index))
-			{
+			else if (evt.ActionKey && selected)
 				DeselectKey(index);
-			}
 
 			ChangeSelectionCommand.Execute(selectedViewKeys);
 		}
@@ -295,9 +300,52 @@ namespace Rails.Editor.Controls
 			ChangeSelectionCommand.Execute(selectedViewKeys);
 		}
 
+		private void OnKeyDragBegin(KeyDragBeginEvent evt)
+		{
+			TrackKeyView[] keys = evt.Keys ?? new TrackKeyView[0];
+			var indexes = keys.Select(x => views.IndexOf(x)).ToArray();
+
+			if (indexes.Any(x => x < 0))
+				return;
+
+			if (!indexes.All(x => selectedViewKeys.Contains(x)))
+				EventBus.Publish(new DeselectAllKeysEvent());
+
+			if (!indexes.All(x => selectedViewKeys.Contains(x)))
+				indexes.ForEach(x => SelectKey(x));
+
+			ChangeSelectionCommand.Execute(selectedViewKeys);
+		}
+
+		private void OnTweenLine(TweenLineClickEvent evt)
+		{
+			TrackKeyView start = evt.Start;
+			TrackKeyView end = evt.End;
+			int startIndex = views.IndexOf(start);
+			int endIndex = views.IndexOf(end);
+
+			if (startIndex < 0 || endIndex < 0)
+				return;
+
+			if (!evt.ActionKey && (!selectedViewKeys.Contains(startIndex) || !selectedViewKeys.Contains(endIndex)))
+				EventBus.Publish(new DeselectAllKeysEvent());
+
+			if (!selectedViewKeys.Contains(startIndex))
+				SelectKey(startIndex);
+			else if (evt.ActionKey && selectedViewKeys.Contains(startIndex))
+				DeselectKey(startIndex);
+
+			if (!selectedViewKeys.Contains(endIndex))
+				SelectKey(endIndex);
+			else if (evt.ActionKey && selectedViewKeys.Contains(endIndex))
+				DeselectKey(endIndex);
+
+			ChangeSelectionCommand.Execute(selectedViewKeys);
+		}
+
 		private void OnDeselectAll(DeselectAllKeysEvent evt)
 		{
-			DeselectAllKeys(evt.Key);
+			DeselectAllKeys(evt.IgnoreKeys ?? new TrackKeyView[0]);
 			ChangeSelectionCommand.Execute(selectedViewKeys);
 		}
 

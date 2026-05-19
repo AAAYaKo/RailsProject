@@ -4,11 +4,13 @@ using UnityEngine.UIElements;
 
 namespace Rails.Editor.Manipulator
 {
-	public class TrackKeyMoveDragManipulator : MouseManipulator
+	public class TrackMoveDragManipulator : MouseManipulator
 	{
-		public Action<bool> KeyDragBegin;
-		public Action<int, bool> KeyDragChanged;
-		public Action<int, bool> KeyDragComplete;
+		public event Action RightClick;
+		public event Action<bool> Click;
+		public event Action<bool> DragBegin;
+		public event Action<int, bool> DragChanged;
+		public event Action<int, bool> DragComplete;
 
 		private bool isDragging = false;
 		private bool isDragBegan = false;
@@ -16,9 +18,14 @@ namespace Rails.Editor.Manipulator
 		private float framePixelSize = 30;
 
 
-		public TrackKeyMoveDragManipulator()
+		public TrackMoveDragManipulator()
 		{
 			activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse });
+			activators.Add(new ManipulatorActivationFilter { button = MouseButton.RightMouse });
+			if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)
+				activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse, modifiers = EventModifiers.Command });
+			else
+				activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse, modifiers = EventModifiers.Control });
 		}
 
 		public void OnFramePixelSizeChanged(float framePixels)
@@ -44,6 +51,11 @@ namespace Rails.Editor.Manipulator
 		{
 			if (!CanStartManipulation(evt))
 				return;
+			if (evt.button == 1)
+			{
+				RightClick.Invoke();
+				return;
+			}
 			startPosition = evt.mousePosition;
 			isDragging = true;
 			isDragBegan = false;
@@ -60,7 +72,7 @@ namespace Rails.Editor.Manipulator
 
 			if (!isDragBegan && Mathf.Abs(delta) > 0.01f)
 			{
-				KeyDragBegin?.Invoke(evt.actionKey);
+				DragBegin?.Invoke(evt.actionKey);
 				target.CaptureMouse();
 				isDragBegan = true;
 			}
@@ -70,7 +82,7 @@ namespace Rails.Editor.Manipulator
 				deltaFrames = -deltaFrames;
 			if (deltaFrames != 0)
 			{
-				KeyDragChanged?.Invoke(deltaFrames, evt.actionKey);
+				DragChanged?.Invoke(deltaFrames, evt.actionKey);
 			}
 			evt.StopPropagation();
 		}
@@ -85,9 +97,10 @@ namespace Rails.Editor.Manipulator
 			if (delta < 0)
 				deltaFrames = -deltaFrames;
 			if (deltaFrames != 0)
-			{
-				KeyDragComplete?.Invoke(deltaFrames, evt.actionKey);
-			}
+				DragComplete?.Invoke(deltaFrames, evt.actionKey);
+
+			if (!isDragBegan)
+				Click?.Invoke(evt.actionKey);
 
 			isDragBegan = false;
 			isDragging = false;

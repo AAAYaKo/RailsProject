@@ -13,6 +13,7 @@ namespace Rails.Editor.Controls
 		private static readonly BindingId IsPreviewProperty = nameof(IsPreview);
 		private static readonly BindingId IsPlayProperty = nameof(IsPlay);
 		private static readonly BindingId GotoNextFrameCommandProperty = nameof(GotoNextFrameCommand);
+		private static readonly BindingId IsGraphProperty = nameof(IsGraph);
 
 		[UxmlAttribute("can-edit"), CreateProperty]
 		public bool CanEdit
@@ -66,6 +67,19 @@ namespace Rails.Editor.Controls
 				NotifyPropertyChanged(IsPlayProperty);
 			}
 		}
+		[UxmlAttribute("is-graph"), CreateProperty]
+		public bool IsGraph
+		{
+			get => isGraph;
+			set
+			{
+				if (isGraph == value)
+					return;
+				isGraph = value;
+				graph.SetValueWithoutNotify(value);
+				NotifyPropertyChanged(IsGraphProperty);
+			}
+		}
 		[CreateProperty]
 		public ICommand GotoNextFrameCommand { get; set; }
 
@@ -75,10 +89,12 @@ namespace Rails.Editor.Controls
 		private VisualElement loopIcon;
 		private Toggle preview;
 		private Toggle play;
+		private Toggle graph;
 		private bool? canEdit;
 		private string loopIconStyle;
 		private bool isPreview;
 		private bool isPlay;
+		private bool isGraph;
 
 		static ClipControl()
 		{
@@ -96,6 +112,7 @@ namespace Rails.Editor.Controls
 			loopIcon = loop.Q<Image>("loop-icon");
 			preview = this.Q<Toggle>("preview");
 			play = this.Q<Toggle>("play");
+			graph = this.Q<Toggle>("graph");
 			Button next = this.Q<Button>("next");
 			RailsClipTimePopupContent timeContent = new();
 			RailsClipLoopPopupContent loopContent = new();
@@ -182,6 +199,10 @@ namespace Rails.Editor.Controls
 			play.RegisterValueChangedCallback(x =>
 			{
 				IsPlay = x.newValue;
+			});
+			graph.RegisterValueChangedCallback(x =>
+			{
+				IsGraph = x.newValue;
 			});
 			next.clicked += () =>
 			{
