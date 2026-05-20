@@ -109,7 +109,7 @@ namespace Rails.Editor.Controls
 
 		private void UpdatePosition()
 		{
-			style.left = TrackLinesView.StartAdditional - layout.width / 2 + TimePosition * framePixelSize;
+			style.left = ClipView.StartAdditional - layout.width / 2 + TimePosition * framePixelSize;
 		}
 	}
 }

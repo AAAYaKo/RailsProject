@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Rails.Editor.Context;
 using Rails.Editor.Manipulator;
 using Rails.Editor.ViewModel;
 using Rails.Runtime;
-using Unity.EditorCoroutines.Editor;
+using Unity.Mathematics;
 using Unity.Properties;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -19,6 +18,9 @@ namespace Rails.Editor.Controls
 		private static readonly BindingId TimeHeadPositionProperty = new("TimeHeadPosition");
 		private const string FixedDimensionKey = "clipFixedDimension";
 
+		public const int EndAdditional = 60;
+		public const int StartAdditional = 10;
+
 		[UxmlAttribute("duration"), CreateProperty]
 		public int Duration
 		{
@@ -28,7 +30,27 @@ namespace Rails.Editor.Controls
 				if (duration == value)
 					return;
 				duration = value;
-				AdjustContainer(framePixelSize);
+				slider.highLimit = duration;
+				slider.enabledSelf = duration > 2;
+				if (float.IsNaN(currentDelta))
+				{
+					slider.value = new Vector2(0, duration);
+					CurrentDelta = duration;
+				}
+				else if (currentDelta > duration)
+				{
+					slider.value = new Vector2(0, duration);
+					CurrentDelta = duration;
+				}
+				else if (currentDelta < 2 && duration >= 2)
+				{
+					slider.value = new Vector2(0, duration);
+					CurrentDelta = duration;
+				}
+				else
+				{
+					AdjustContainer(FramePixelSize);
+				}
 			}
 		}
 		[UxmlAttribute("time-position"), CreateProperty]
@@ -43,18 +65,76 @@ namespace Rails.Editor.Controls
 				NotifyPropertyChanged(TimeHeadPositionProperty);
 			}
 		}
+		[UxmlAttribute("is-graph"), CreateProperty]
+		public bool IsGraph
+		{
+			get => isGraph ?? false;
+			set
+			{
+				if (isGraph == value)
+					return;
+				isGraph = value;
+				//graphView.style.display = IsGraph? DisplayStyle.Flex : DisplayStyle.None;
+				trackView.style.display = IsGraph ? DisplayStyle.None : DisplayStyle.Flex;
+			}
+		}
+		[UxmlAttribute("can-edit"), CreateProperty]
+		public bool CanEdit
+		{
+			get => canEdit ?? false;
+			set
+			{
+				if (canEdit == value)
+					return;
+				canEdit = value;
+				slider.enabledSelf = canEdit.Value;
+			}
+		}
 		[CreateProperty]
 		public ICommand RemoveSelectedKeysCommand { get; set; }
+
+		public float FramePixelSize
+		{
+			get => framePixelSize;
+			set
+			{
+				if (framePixelSize == value)
+					return;
+				framePixelSize = value;
+
+				EventBus.Publish(new FramePixelSizeChangedEvent(framePixelSize));
+			}
+		}
+		public float CurrentDelta
+		{
+			get => currentDelta;
+			set
+			{
+				if (currentDelta == value)
+					return;
+				currentDelta = value;
+				AdjustFramePixelSize();
+			}
+		}
+
+		public MinMaxSlider Slider => slider;
 
 		private TracksListView tracksListView;
 		private ClipControl clipControl;
 		private TrackLinesView trackView;
+		private GraphView graphView;
 		private RailsRuler ruler;
 		private RailsPlayHead playHead;
 		private TwoPanelsView split;
 		private VisualElement events;
 		private EventTrackLineView eventsTrackLine;
 		private VisualElement eventsContainer;
+
+		private ScrollView scrollView;
+		private Scroller verticalScroller;
+		private MinMaxSlider slider;
+		private VisualElement keysContainer;
+		private VisualElement viewport;
 
 		private VisualElement selectionBoxContainer;
 		private VisualElement selectionBoxManipulatorLayer;
@@ -66,12 +146,18 @@ namespace Rails.Editor.Controls
 		private int duration = -1;
 		private int timeHeadPosition = -1;
 		private float timePosition;
+		private bool? canEdit;
 		private float framePixelSize = 30;
+		private float currentDelta = float.NaN;
+		private float containerSize = 0;
 		private bool isForwardMove;
 		private bool isFastMove;
+		private bool? isGraph;
+		private Vector2 currentMousePosition;
 		private IVisualElementScheduledItem moveWork;
-		//private EditorCoroutine movingRoutine;
+		private IVisualElementScheduledItem mouseScroll;
 		private static readonly HashSet<int> keyFrames = new();
+		private float maxOffset => containerSize - viewport.layout.width;
 
 
 		static ClipView()
@@ -97,8 +183,16 @@ namespace Rails.Editor.Controls
 			clipControl = split.FirstPanel.Q<ClipControl>();
 			tracksListView = split.FirstPanel.Q<TracksListView>();
 			trackView = split.SecondPanel.Q<TrackLinesView>();
+			//graphView = split.SecondPanel.Q<GraphView>();
 			ruler = split.SecondPanel.Q<RailsRuler>();
 			playHead = split.SecondPanel.Q<RailsPlayHead>();
+
+			scrollView = this.Q<ScrollView>("keys-scroll");
+			verticalScroller = scrollView.verticalScroller;
+			slider = this.Q<MinMaxSlider>();
+			slider.lowLimit = 0;
+			keysContainer = scrollView.Q<VisualElement>("content-container");
+			viewport = scrollView.contentViewport;
 
 			events = split.SecondPanel.Q<VisualElement>("events");
 			eventsTrackLine = events.Q<EventTrackLineView>();
@@ -110,12 +204,16 @@ namespace Rails.Editor.Controls
 
 			SetBinding(nameof(Duration), new ToTargetBinding("SelectedClip.Duration"));
 			SetBinding(nameof(TimeHeadPosition), new TwoWayBinding("SelectedClip.TimeHeadPosition"));
+			SetBinding(nameof(IsGraph), new ToTargetBinding("SelectedClip.IsGraph"));
 			SetBinding(nameof(RemoveSelectedKeysCommand), new CommandBinding("SelectedClip.RemoveSelectedKeysCommand"));
+			SetBinding(nameof(CanEdit), new ToTargetBinding("SelectedClip.CanEdit"));
 			ContextualMenuManipulator contextMenuTracks = new(ShowContextMenu);
 			ContextualMenuManipulator contextMenuEvents = new(ShowContextMenu);
 			events.AddManipulator(contextMenuTracks);
 			trackView.AddManipulator(contextMenuEvents);
 			focusable = true;
+			trackView.Viewport = viewport;
+			//graphView.style.display = DisplayStyle.None;
 		}
 
 		protected override void OnAttach(AttachToPanelEvent evt)
@@ -125,7 +223,11 @@ namespace Rails.Editor.Controls
 			RegisterCallback<KeyUpEvent>(OnKeyClick, TrickleDown.TrickleDown);
 			RegisterCallback<KeyDownEvent>(OnKeyDown, TrickleDown.TrickleDown);
 			RegisterCallback<KeyUpEvent>(OnKeyUp, TrickleDown.TrickleDown);
-			trackView.VerticalScroller.valueChanged += OnVerticalScroller;
+			viewport.RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
+			slider.RegisterCallback<ChangeEvent<Vector2>>(SliderChangedHandler);
+			trackView.DoubleClicked += OnDoubleClick;
+			trackView.ScrollPerformed += ScrollPerformed;
+			verticalScroller.valueChanged += OnVerticalScroller;
 			split.FixedPanelDimensionChanged += OnDimensionChanged;
 			selectionBoxManipulator.SelectionBegin += OnSelectionBegin;
 			selectionBoxManipulator.SelectionChanged += OnSelectionChanged;
@@ -145,7 +247,11 @@ namespace Rails.Editor.Controls
 			UnregisterCallback<KeyUpEvent>(OnKeyClick, TrickleDown.TrickleDown);
 			UnregisterCallback<KeyDownEvent>(OnKeyDown, TrickleDown.TrickleDown);
 			UnregisterCallback<KeyUpEvent>(OnKeyUp, TrickleDown.TrickleDown);
-			trackView.VerticalScroller.valueChanged -= OnVerticalScroller;
+			viewport.UnregisterCallback<GeometryChangedEvent>(OnGeometryChanged);
+			slider.RegisterCallback<ChangeEvent<Vector2>>(SliderChangedHandler);
+			trackView.DoubleClicked -= OnDoubleClick;
+			trackView.ScrollPerformed -= ScrollPerformed;
+			verticalScroller.valueChanged -= OnVerticalScroller;
 			split.FixedPanelDimensionChanged -= OnDimensionChanged;
 			selectionBoxManipulator.SelectionBegin -= OnSelectionBegin;
 			selectionBoxManipulator.SelectionChanged -= OnSelectionChanged;
@@ -156,21 +262,68 @@ namespace Rails.Editor.Controls
 			EventBus.Unsubscribe<PerformMove>(OnPerformMove);
 		}
 
+		private void ScrollPerformed(Vector2 delta)
+		{
+			Scroll(delta);
+		}
+
 		private void OnVerticalScroller(float value)
 		{
 			tracksListView.Scroll.verticalScroller.value = value;
 		}
 
+		private void AdjustFramePixelSize()
+		{
+			float width = scrollView.contentViewport.contentRect.width;
+			if (width == float.NaN || width == 0)
+				return;
+			FramePixelSize = (scrollView.contentViewport.contentRect.width - EndAdditional - StartAdditional) / currentDelta;
+			AdjustContainer(FramePixelSize);
+		}
+
+		private void OnDoubleClick(Vector2 localPosition)
+		{
+			float x = localPosition.x;
+			float globalPixelsPosition = x - StartAdditional + slider.value.x * framePixelSize;
+			int frames = Mathf.RoundToInt(globalPixelsPosition / framePixelSize);
+			TimeHeadPosition = frames;
+		}
+
+		private void OnGeometryChanged(GeometryChangedEvent evt)
+		{
+			AdjustFramePixelSize();
+		}
+
 		private void ScrollHandler(WheelEvent evt)
 		{
-			float size = trackView.ScrollView.mouseWheelScrollSize;
-			float y = evt.delta.y * ((trackView.VerticalScroller.lowValue < trackView.VerticalScroller.highValue) ? 1f : (-1f)) * size;
-			float x = evt.delta.x * size;
-
-			trackView.Scroll(new Vector2(x, y));
-			tracksListView.Scroll.scrollOffset += new Vector2(0, y);
+			 Scroll(evt.delta);
 
 			evt.StopPropagation();
+		}
+
+		private void Scroll(Vector2 delta)
+		{
+			float size = scrollView.mouseWheelScrollSize;
+			float y = delta.y * ((verticalScroller.lowValue < verticalScroller.highValue) ? 1f : (-1f)) * size;
+			float x = delta.x * size;
+
+			tracksListView.Scroll.scrollOffset += new Vector2(0, y);
+			scrollView.scrollOffset += new Vector2(0, y);
+
+			if (maxOffset <= 0)
+				return;
+
+			float positionDelta = math.remap(
+				0, maxOffset,
+				slider.lowLimit, slider.highLimit - currentDelta,
+				x);
+			if (slider.minValue + positionDelta < slider.lowLimit)
+				positionDelta = slider.lowLimit - slider.minValue;
+			else if (slider.maxValue + positionDelta > slider.highLimit)
+				positionDelta = slider.highLimit - slider.maxValue;
+			if (Mathf.Approximately(0, positionDelta))
+				return;
+			slider.value += new Vector2(positionDelta, positionDelta);
 		}
 
 		private void OnKeyClick(KeyUpEvent evt)
@@ -179,6 +332,34 @@ namespace Rails.Editor.Controls
 			{
 				RemoveSelectedKeysCommand.Execute();
 			}
+		}
+
+		private void SliderChangedHandler(ChangeEvent<Vector2> evt)
+		{
+			Vector2 value = evt.newValue;
+			float delta = value.y - value.x;
+			if (delta < 2)
+			{
+				value = Mathf.Approximately(value.x, evt.previousValue.x) ?
+				new(value.x, value.x + 2) : new(value.y - 2, value.y);
+				slider.SetValueWithoutNotify(value);
+				delta = 2;
+			}
+			if (Utils.Approximately(value, evt.previousValue))
+				return;
+
+			if (!Mathf.Approximately(delta, currentDelta))
+				CurrentDelta = delta;
+
+			if (evt.previousValue.x != value.x)
+				EventBus.Publish(new TimePositionChangedEvent(value.x));
+
+			float position = math.remap(
+				slider.lowLimit, slider.highLimit - delta,
+				0, maxOffset,
+				value.x);
+			if (!Mathf.Approximately(keysContainer.layout.position.x, position))
+				keysContainer.style.left = -position;
 		}
 
 		private void OnKeyDown(KeyDownEvent evt)
@@ -330,13 +511,6 @@ namespace Rails.Editor.Controls
 		{
 			Rect selectionWorldRect = selectionBoxContainer.LocalToWorld(selectionRect);
 			EventBus.Publish(new SelectionBoxChangeEvent(selectionWorldRect, evt.actionKey));
-
-			Vector2 mousePosition = events.WorldToLocal(evt.mousePosition);
-			if (!events.ContainsPoint(mousePosition))
-			{
-				Vector2 delta = new((mousePosition - events.layout.size).x, 0);
-				trackView.Scroll(delta);
-			}
 		}
 
 		private void OnSelectionComplete(Rect selectionRect, MouseUpEvent evt)
@@ -375,7 +549,9 @@ namespace Rails.Editor.Controls
 
 		private void AdjustContainer(float framePixelSize)
 		{
-			eventsContainer.style.width = framePixelSize * Duration + TrackLinesView.StartAdditional;
+			containerSize = StartAdditional + duration * framePixelSize + EndAdditional;
+			keysContainer.style.width = containerSize;
+			eventsContainer.style.width = containerSize;
 		}
 
 		private void OnKeyDragged(KeyDragChangedEvent evt)
@@ -429,7 +605,7 @@ namespace Rails.Editor.Controls
 				Vector2 mousePosition = track.parent.WorldToLocal(evt.mousePosition);
 				if (track.layout.Contains(mousePosition))
 				{
-					float globalPixelsPosition = trackView.WorldToLocal(evt.mousePosition).x - TrackLinesView.StartAdditional + timePosition * framePixelSize;
+					float globalPixelsPosition = trackView.WorldToLocal(evt.mousePosition).x - StartAdditional + timePosition * framePixelSize;
 					int frames = Mathf.RoundToInt(globalPixelsPosition / framePixelSize);
 					if (!track.Values.Any(x => x.TimePosition == frames))
 					{

@@ -58,7 +58,7 @@ namespace Rails.Editor.Controls
 			AddToClassList("ruler");
 			this.AddManipulator(new RulerDragManipulator(x =>
 			{
-				float globalPixelsPosition = x - TrackLinesView.StartAdditional + timePosition * framePixelSize;
+				float globalPixelsPosition = x - ClipView.StartAdditional + timePosition * framePixelSize;
 				int frames = Mathf.RoundToInt(globalPixelsPosition / framePixelSize);
 				TimeHeadPosition = frames;
 			}));
@@ -141,7 +141,7 @@ namespace Rails.Editor.Controls
 			int firstFrame = Mathf.FloorToInt(timePosition / stepFrames) * stepFrames;
 
 			int currentFrame = firstFrame - stepFrames;
-			float shift = -timePosition * framePixelSize + TrackLinesView.StartAdditional;
+			float shift = -timePosition * framePixelSize + ClipView.StartAdditional;
 			float currenShift = shift;
 			int i = 0;
 			bool hasExtra = false;

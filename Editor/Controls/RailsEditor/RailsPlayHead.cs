@@ -59,7 +59,7 @@ namespace Rails.Editor.Controls
 			Add(tail);
 			style.alignItems = Align.Center;
 			style.position = Position.Absolute;
-			style.left = TrackLinesView.StartAdditional;
+			style.left = ClipView.StartAdditional;
 			style.height = new Length(100, LengthUnit.Percent);
 			style.width = new Length(2);
 		}

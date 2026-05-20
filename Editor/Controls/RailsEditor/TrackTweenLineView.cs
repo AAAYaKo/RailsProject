@@ -1,4 +1,3 @@
-using System;
 using Rails.Editor.Context;
 using Rails.Editor.Manipulator;
 using UnityEngine.UIElements;
@@ -109,7 +108,7 @@ namespace Rails.Editor.Controls
 		private void OnStartPositionChanged(int position)
 		{
 			startTimePosition = position;
-			style.left = framePixelSize * startTimePosition + TrackLinesView.StartAdditional;
+			style.left = framePixelSize * startTimePosition + ClipView.StartAdditional;
 			OnEndPositionChanged(endTimePosition);
 		}
 

@@ -56,7 +56,11 @@ namespace Rails.Editor.Controls
 			}
 		}
 		[CreateProperty]
-		public ICommand<List<int>> ChangeSelectionCommand { get; set; }
+		public ICommand<List<int>> ChangeSelectionCommand 
+		{
+			get;
+			set;
+		}
 		[CreateProperty]
 		public ICommand<Dictionary<int, int>> MoveKeysCommand { get; set; }
 		[CreateProperty]
