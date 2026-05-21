@@ -99,7 +99,7 @@ namespace Rails.Editor.ViewModel
 		private float? singleValue;
 		private Vector2? vector2Value;
 		private Vector3? vector3Value;
-		private EaseViewModel ease = new();
+		private EaseViewModel ease;
 		private bool constrainedProportions;
 		private IAnimationTrack.ValueType? valueType;
 		private UnityEngine.Object reference;

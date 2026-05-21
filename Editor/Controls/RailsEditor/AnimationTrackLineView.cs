@@ -50,7 +50,7 @@ namespace Rails.Editor.Controls
 				tweenLines.Clear();
 				return;
 			}
-			int count = Values.Take(Values.Count - 1).Count(x => x.Ease.EaseType is not Runtime.RailsEase.EaseType.NoAnimation);
+			int count = Values.Take(Values.Count - 1).Count(x => x.Ease?.EaseType is not Runtime.RailsEase.EaseType.NoAnimation);
 
 			while (count > tweenLines.Count)
 			{
@@ -72,7 +72,7 @@ namespace Rails.Editor.Controls
 			for (int i = 0; i < Values.Count - 1; i++)
 			{
 				var previous = Values[i];
-				if (previous.Ease.EaseType is not Runtime.RailsEase.EaseType.NoAnimation)
+				if (previous.Ease?.EaseType is not Runtime.RailsEase.EaseType.NoAnimation)
 				{
 					TrackTweenLineView line = tweenLines[lineI];
 					keyToTweenLines.Add(i, line);
