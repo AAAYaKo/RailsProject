@@ -101,7 +101,7 @@ namespace Rails.Editor.Controls
 					if (mousePosition.y < 0)
 						delta.y = mousePosition.y;
 					else if (mousePosition.y > Viewport.layout.size.y)
-						delta.y = (mousePosition - Viewport.layout.size).y;
+						delta.y = mousePosition.y - Viewport.layout.size.y;
 					else
 						delta.y = 0;
 

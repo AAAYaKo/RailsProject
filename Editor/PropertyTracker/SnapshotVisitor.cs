@@ -25,7 +25,7 @@ namespace Rails.Editor.Property
 						.Append(property.Name)
 						.Append(": ")
 						.Append(value);
-					Debug.Log(builder.ToString());
+					//Debug.Log(builder.ToString());
 					EventBus.Publish(new PropertyChanged(container, property.Name));
 				}
 			}
@@ -61,7 +61,7 @@ namespace Rails.Editor.Property
 					builder.Append("null");
 				}
 
-				Debug.Log(builder.ToString());
+				//Debug.Log(builder.ToString());
 				EventBus.Publish(new PropertyChanged(container, property.Name));
 			}
 		}

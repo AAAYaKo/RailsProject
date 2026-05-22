@@ -6,13 +6,17 @@ namespace Rails.Editor.Manipulator
 {
 	public class EaseDragManipulator : MouseManipulator
 	{
+		private VisualElement container;
 		private bool isDragging = false;
-		private Vector2 startPosition;
 		private Action<Vector2> updateValue;
+		private Vector2 startTransition;
+		private Vector2 startPosition;
+		private Vector2 currentPosition;
 
 
-		public EaseDragManipulator(Action<Vector2> updateValue)
+		public EaseDragManipulator(VisualElement container, Action<Vector2> updateValue)
 		{
+			this.container = container;
 			this.updateValue = updateValue;
 			activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse });
 		}
@@ -35,8 +39,13 @@ namespace Rails.Editor.Manipulator
 		{
 			if (!CanStartManipulation(evt))
 				return;
-			startPosition = evt.localMousePosition;
+			startPosition = evt.mousePosition;
+			startTransition = target.resolvedStyle.translate;
 			isDragging = true;
+
+			currentPosition = evt.mousePosition;
+			UpdateValue(currentPosition - startPosition);
+
 			target.CaptureMouse();
 			evt.StopPropagation();
 		}
@@ -46,11 +55,9 @@ namespace Rails.Editor.Manipulator
 			if (!isDragging || !target.HasMouseCapture() || !CanStartManipulation(evt))
 				return;
 
-			Vector2 delta = evt.localMousePosition - startPosition;
-			Vector2 position = target.layout.position + (Vector2)target.resolvedStyle.translate + delta;
+			currentPosition = evt.mousePosition;
 
-			updateValue(position);
-			target.MarkDirtyRepaint();
+			UpdateValue(currentPosition - startPosition);
 			evt.StopPropagation();
 		}
 
@@ -61,6 +68,14 @@ namespace Rails.Editor.Manipulator
 			isDragging = false;
 			target.ReleaseMouse();
 			evt.StopPropagation();
+		}
+
+		private void UpdateValue(Vector2 delta)
+		{
+			Vector2 position = target.layout.position + startTransition + delta;
+
+			updateValue(position);
+			target.MarkDirtyRepaint();
 		}
 	}
 }

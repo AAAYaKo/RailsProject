@@ -100,7 +100,6 @@
     border-bottom-left-radius: 10px;
     background-color: var(--rails-ease-background-color);
     position: absolute;
-    overflow: hidden;
     top: 0;
     left: 0;
     right: 0;

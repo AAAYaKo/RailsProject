@@ -18,7 +18,7 @@ namespace Rails.Editor.Controls
 					return;
 				originValue = value;
 				UpdateOriginPosition();
-				UpdateTranslation();
+				UpdateTranslation(Value);
 			}
 		}
 		public Vector2 Value
@@ -27,9 +27,9 @@ namespace Rails.Editor.Controls
 			set
 			{
 				if (Utils.Approximately(this.value, value))
-					return; 
+					return;
 				this.value = value;
-				UpdateTranslation();
+				UpdateTranslation(Value);
 			}
 		}
 		public Scope Scope
@@ -42,10 +42,10 @@ namespace Rails.Editor.Controls
 					return;
 				scope = value;
 				UpdateOriginPosition();
-				UpdateTranslation();
+				UpdateTranslation(Value);
 			}
 		}
-		public Offsets Paddings => new(0, 0, 0, 0);
+		public Offsets Paddings => new(-layout.height / 2, -layout.height / 2, -layout.width / 2, -layout.width / 2);
 
 		private Color handlerColor = Color.white;
 		private Vector2 originValue;
@@ -54,14 +54,17 @@ namespace Rails.Editor.Controls
 		private Scope scope;
 
 
-		public CurveDragHandler(Action<Vector2> setter)
+		public CurveDragHandler(Action<Vector2> setter, VisualElement container)
 		{
 			generateVisualContent = OnGenerateVisualContent;
 			AddToClassList("ease-handle");
 			RegisterCallback<CustomStyleResolvedEvent>(CustomStylesResolved);
-			this.AddManipulator(new EaseDragManipulator(x =>
+			this.AddManipulator(new EaseDragManipulator(container, x =>
 			{
-				setter.Invoke(Scope.CalculateValue(x, Paddings));
+				BringToFront();
+				Vector2 value = Scope.CalculateValue(x, Paddings);
+				//UpdateTranslation(value);
+				setter.Invoke(value);
 			}));
 			RegisterCallback<GeometryChangedEvent>(OnGeometryChange);
 		}
@@ -69,7 +72,7 @@ namespace Rails.Editor.Controls
 		private void OnGeometryChange(GeometryChangedEvent evt)
 		{
 			UpdateOriginPosition();
-			UpdateTranslation();
+			UpdateTranslation(value);
 		}
 
 		private void CustomStylesResolved(CustomStyleResolvedEvent evt)
@@ -103,18 +106,17 @@ namespace Rails.Editor.Controls
 		private void UpdateOriginPosition()
 		{
 			originPosition = Scope.CalculatePlace(OriginValue, Paddings);
-			originPosition -= new Vector2(layout.width / 2, layout.height / 2);
 			style.left = originPosition.x;
 			style.top = originPosition.y;
 			MarkDirtyRepaint();
 		}
 
-		private void UpdateTranslation()
+		private void UpdateTranslation(Vector2 value)
 		{
-			Vector2 position = Scope.CalculatePlace(Value, Paddings);
-			position -= new Vector2(layout.width / 2, layout.height / 2);
+			Vector2 position = Scope.CalculatePlace(value, Paddings);
 			Vector2 translate = position - originPosition;
 			style.translate = translate;
+			Debug.Log(translate);
 			MarkDirtyRepaint();
 		}
 	}

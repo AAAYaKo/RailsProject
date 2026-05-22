@@ -110,11 +110,7 @@ namespace Rails.Editor.Controls
 			container = new VisualElement();
 			container.name = "ease-container";
 			container.AddToClassList("ease-container");
-
-			var border = new VisualElement();
-			border.name = "border";
-			border.pickingMode = PickingMode.Ignore;
-			border.AddToClassList("ease-border");
+			container.AddToClassList("ease-border");
 
 			axes = new VisualElement();
 			axes.name = "axes";
@@ -124,7 +120,7 @@ namespace Rails.Editor.Controls
 			secondHandle = new CurveDragHandler((x) =>
 			{
 				SecondPointChanged?.Invoke(x);
-			});
+			}, container);
 			secondHandle.name = "ease-second-handle";
 			secondHandle.style.position = Position.Absolute;
 			secondHandle.OriginValue = new Vector2(1, 1);
@@ -133,7 +129,7 @@ namespace Rails.Editor.Controls
 			firstHandle = new CurveDragHandler((x) =>
 			{
 				FirstPointChanged?.Invoke(x);
-			});
+			}, container);
 			firstHandle.name = "ease-first-handle";
 			firstHandle.style.position = Position.Absolute;
 			firstHandle.OriginValue = new Vector2(0, 0);
@@ -150,7 +146,6 @@ namespace Rails.Editor.Controls
 			container.Add(secondHandle);
 			container.Add(firstHandle);
 			hierarchy.Add(container);
-			hierarchy.Add(border);
 
 			AddToClassList("ease-view");
 			RegisterCallback<GeometryChangedEvent>(OnGeometryChange);
